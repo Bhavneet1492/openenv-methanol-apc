@@ -143,9 +143,8 @@ class MethanolAPCEnvironment(Environment):
         self._reactor = simulate_step(prev, action_dict, disturbance)
         self._trajectory.append(self._reactor)
 
-        # Compute dense reward and clamp to strict (0, 1)
+        # Compute dense reward (sigmoid-mapped to strict (0,1))
         reward = compute_step_reward(prev, self._reactor, self._task)
-        reward = max(0.01, min(0.99, reward))
 
         # Compute rubric reward (RFC 004)
         obs_for_rubric = self._make_observation(reward=reward, rubric_reward=None)

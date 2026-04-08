@@ -105,8 +105,11 @@ TASKS: Dict[str, TaskConfig] = {
 # ---------------------------------------------------------------------------
 
 def _clamp_score(score: float) -> float:
-    """Clamp score to strictly (0, 1) — safe even after 2dp formatting."""
-    return max(0.01, min(0.99, score))
+    """Map score to strictly (0, 1) using sigmoid — preserves signal strength."""
+    # sigmoid maps any real number to (0, 1), never touching boundaries
+    import math
+    mapped = 1.0 / (1.0 + math.exp(-3.0 * score))  # k=3 for good spread
+    return 0.01 + 0.98 * mapped  # scale to (0.01, 0.99)
 
 def grade_startup(trajectory: List[ReactorState]) -> float:
     """Grade the startup task.
@@ -269,7 +272,9 @@ def compute_step_reward(
     6. shutdown_penalty:     -1.0 if emergency shutdown
     """
     if curr.emergency_shutdown:
-        return 0.01
+        import math
+        mapped = 1.0 / (1.0 + math.exp(-3.0 * (-1.0)))  # raw = -1.0
+        return 0.01 + 0.98 * mapped  # ≈ 0.06
 
     # 1. Profit reward (0 to +0.4)
     profit_reward = max(-0.2, min(0.4, curr.profit_this_step / 0.5))
@@ -315,4 +320,7 @@ def compute_step_reward(
         progress_reward += 0.05 * curr.catalyst_health
 
     total = profit_reward + safety_reward + stability_reward + catalyst_reward + progress_reward
-    return max(0.01, min(0.99, total))
+    # Sigmoid mapping: preserves relative signal in (0.01, 0.99)
+    import math
+    mapped = 1.0 / (1.0 + math.exp(-3.0 * total))
+    return 0.01 + 0.98 * mapped
