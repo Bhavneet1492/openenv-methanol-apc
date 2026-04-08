@@ -1,5 +1,5 @@
-"""
-Inference Script — Methanol APC Environment
+﻿"""
+Inference Script - Methanol APC Environment
 ============================================
 MANDATORY:
 - inference.py at project root
@@ -22,9 +22,6 @@ from typing import Dict, List, Optional
 import websockets.sync.client as ws_sync
 from openai import OpenAI
 
-# ---------------------------------------------------------------------------
-# Environment variables (MANDATORY per guidelines)
-# ---------------------------------------------------------------------------
 API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
 HF_TOKEN = os.getenv("HF_TOKEN")
@@ -33,771 +30,130 @@ SPACE_URL = os.getenv("SPACE_URL") or "https://glitchfilter-methanol-apc-env.hf.
 if HF_TOKEN is None:
     raise ValueError("HF_TOKEN environment variable is required")
 
-# Initialize OpenAI client (MANDATORY: must use OpenAI Client)
 client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
 
-# ---------------------------------------------------------------------------
-# Task configurations
-# ---------------------------------------------------------------------------
 TASKS = [
     {"name": "startup", "max_steps": 50},
     {"name": "optimization", "max_steps": 100},
     {"name": "disturbance_rejection", "max_steps": 100},
 ]
-
 BENCHMARK = "methanol_apc"
-TEMPERATURE = 0.3
-MAX_TOKENS = 200
-
 SYSTEM_PROMPT = textwrap.dedent("""
     You are an AI operator controlling a methanol synthesis reactor.
     Each turn you receive sensor readings and must output a JSON control action:
     {"feed_rate_h2": <0-10>, "feed_rate_co": <0-5>,
      "cooling_water_flow": <0-100>, "compressor_power": <0-100>}
-
-    PHYSICS RULES:
-    - Reaction: CO + 2H2 -> CH3OH (exothermic, generates heat)
-    - Higher feed rates = more reaction = more heat = more methanol = more profit
-    - Cooling water removes heat. If temperature > 300C: EMERGENCY SHUTDOWN
-    - Temperature 270-300C: catalyst degrades faster (permanent damage)
-    - Ideal H2/CO ratio is 2.0 (feed_rate_h2 should be ~2x feed_rate_co)
-    - Higher compressor power = higher pressure = faster reaction
-
-    RESPOND WITH ONLY the JSON object. No explanation, no markdown.
+    PHYSICS: CO + 2H2 -> CH3OH (exothermic). Higher feed = more heat + methanol.
+    Cooling removes heat. T>300C = SHUTDOWN. T>270C = catalyst damage.
+    Ideal H2/CO ratio = 2.0. Higher compressor = higher pressure = faster reaction.
+    RESPOND WITH ONLY the JSON object.
 """).strip()
 
 
-# ---------------------------------------------------------------------------
-# WebSocket environment client (self-contained, no package dependency)
-# ---------------------------------------------------------------------------
 class SimpleEnvClient:
-    def __init__(self, base_url: str):
-        self.base_url = base_url.rstrip("/")
-        ws_url = self.base_url.replace("https://", "wss://").replace("http://", "ws://")
-        self.ws_url = f"{ws_url}/ws"
+    def __init__(self, base_url):
+        ws_url = base_url.rstrip("/").replace("https://", "wss://").replace("http://", "ws://")
+        self.ws_url = ws_url + "/ws"
         self.ws = None
 
     def _connect(self):
         if self.ws is None:
             self.ws = ws_sync.connect(self.ws_url)
 
-    def reset(self, task_name: str = "startup") -> Dict:
+    def reset(self, task_name="startup"):
         self._connect()
         self.ws.send(json.dumps({"type": "reset", "data": {"task_name": task_name}}))
-        response = json.loads(self.ws.recv())
-        return response.get("data", response)
+        return json.loads(self.ws.recv()).get("data", {})
 
-    def step(self, action: Dict) -> Dict:
+    def step(self, action):
         self._connect()
         self.ws.send(json.dumps({"type": "step", "data": action}))
-        response = json.loads(self.ws.recv())
-        return response.get("data", response)
+        return json.loads(self.ws.recv()).get("data", {})
 
     def close(self):
         if self.ws:
-            try:
-                self.ws.close()
-            except Exception:
-                pass
+            try: self.ws.close()
+            except: pass
             self.ws = None
 
 
-# ---------------------------------------------------------------------------
-# Logging (exact format per guidelines)
-# ---------------------------------------------------------------------------
-def log_start(task: str, env: str, model: str) -> None:
+def log_start(task, env, model):
     print(f"[START] task={task} env={env} model={model}", flush=True)
 
+def log_step(step, action, reward, done, error):
+    print(f"[STEP] step={step} action={action} reward={reward:.2f} done={str(done).lower()} error={error if error else 'null'}", flush=True)
 
-def log_step(step: int, action: str, reward: float, done: bool, error: Optional[str]) -> None:
-    error_val = error if error else "null"
-    done_val = str(done).lower()
-    print(f"[STEP] step={step} action={action} reward={reward:.2f} done={done_val} error={error_val}", flush=True)
-
-
-def log_end(success: bool, steps: int, rewards: List[float]) -> None:
-    rewards_str = ",".join(f"{r:.2f}" for r in rewards)
-    print(f"[END] success={str(success).lower()} steps={steps} rewards={rewards_str}", flush=True)
+def log_end(success, steps, rewards):
+    print(f"[END] success={str(success).lower()} steps={steps} rewards={','.join(f'{r:.2f}' for r in rewards)}", flush=True)
 
 
-# ---------------------------------------------------------------------------
-# LLM interaction
-# ---------------------------------------------------------------------------
-def parse_action(text: str) -> Dict:
+def parse_action(text):
     try:
-        cleaned = text.strip()
-        if cleaned.startswith("```"):
-            cleaned = cleaned.split("\n", 1)[1]
-        if cleaned.endswith("```"):
-            cleaned = cleaned.rsplit("```", 1)[0]
-        cleaned = cleaned.strip()
-        data = json.loads(cleaned)
-        return {
-            "feed_rate_h2": float(data.get("feed_rate_h2", 2.0)),
-            "feed_rate_co": float(data.get("feed_rate_co", 1.0)),
-            "cooling_water_flow": float(data.get("cooling_water_flow", 60.0)),
-            "compressor_power": float(data.get("compressor_power", 40.0)),
-        }
-    except Exception:
+        c = text.strip()
+        if c.startswith("```"): c = c.split("\n", 1)[1]
+        if c.endswith("```"): c = c.rsplit("```", 1)[0]
+        d = json.loads(c.strip())
+        return {"feed_rate_h2": float(d.get("feed_rate_h2", 2)), "feed_rate_co": float(d.get("feed_rate_co", 1)), "cooling_water_flow": float(d.get("cooling_water_flow", 60)), "compressor_power": float(d.get("compressor_power", 40))}
+    except:
         return {"feed_rate_h2": 2.0, "feed_rate_co": 1.0, "cooling_water_flow": 80.0, "compressor_power": 40.0}
 
-
-def get_action_from_llm(obs_text: str, history: List[str]) -> str:
-    history_block = "\n".join(history[-3:]) if history else "None"
-    user_prompt = f"Current sensor readings:\n{obs_text}\n\nRecent history:\n{history_block}\n\nOutput your control action as JSON:"
+def get_llm_action(obs_text, history):
+    h = "\n".join(history[-3:]) if history else "None"
     try:
-        completion = client.chat.completions.create(
-            model=MODEL_NAME,
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": user_prompt},
-            ],
-            temperature=TEMPERATURE,
-            max_tokens=MAX_TOKENS,
-            stream=False,
-        )
-        return (completion.choices[0].message.content or "{}").strip()
-    except Exception as exc:
-        print(f"[DEBUG] LLM error: {exc}", file=sys.stderr, flush=True)
+        r = client.chat.completions.create(model=MODEL_NAME, messages=[{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": f"Sensors:\n{obs_text}\n\nHistory:\n{h}\n\nAction JSON:"}], temperature=0.3, max_tokens=200, stream=False)
+        return (r.choices[0].message.content or "{}").strip()
+    except Exception as e:
+        print(f"[DEBUG] LLM error: {e}", file=sys.stderr, flush=True)
         return "{}"
 
-
-def obs_to_text(obs: Dict) -> str:
-    lines = [
-        f"Temperature: {obs.get('temperature', 0)}C (trend: {obs.get('temperature_trend', 0):+.1f}C/step)",
-        f"Pressure: {obs.get('pressure', 0):.1f} bar",
-        f"H2 feed: {obs.get('feed_rate_h2', 0):.2f} mol/s, CO feed: {obs.get('feed_rate_co', 0):.2f} mol/s",
-        f"H2/CO ratio: {obs.get('h2_co_ratio', 0):.2f} (ideal: 2.0)",
-        f"Cooling flow: {obs.get('cooling_water_flow', 0):.1f} L/min",
-        f"Catalyst health: {obs.get('catalyst_health', 1):.2%}",
-        f"Reaction rate: {obs.get('reaction_rate', 0):.4f} mol/s",
-        f"Methanol produced: {obs.get('methanol_produced', 0):.1f} kg",
-        f"Profit: ${obs.get('profit_this_step', 0):.3f}, Total: ${obs.get('cumulative_profit', 0):.2f}",
-        f"Step: {obs.get('step_number', 0)}/{obs.get('max_steps', 0)}, Task: {obs.get('task_name', '')}",
-    ]
-    warning = obs.get("safety_warning")
-    if warning:
-        lines.insert(0, f"WARNING: {warning}")
+def obs_text(obs):
+    lines = [f"T={obs.get('temperature',0)}C trend={obs.get('temperature_trend',0):+.1f}", f"P={obs.get('pressure',0):.1f}bar", f"H2={obs.get('feed_rate_h2',0):.2f} CO={obs.get('feed_rate_co',0):.2f} ratio={obs.get('h2_co_ratio',0):.2f}", f"cool={obs.get('cooling_water_flow',0):.0f}L/min cat={obs.get('catalyst_health',1):.2%}", f"rate={obs.get('reaction_rate',0):.4f} MeOH={obs.get('methanol_produced',0):.1f}kg", f"profit={obs.get('profit_this_step',0):.3f} total={obs.get('cumulative_profit',0):.2f}", f"step={obs.get('step_number',0)}/{obs.get('max_steps',0)}"]
+    w = obs.get("safety_warning")
+    if w: lines.insert(0, f"WARNING: {w}")
     return "\n".join(lines)
 
 
-# ---------------------------------------------------------------------------
-# Task runner
-# ---------------------------------------------------------------------------
-def run_task(env: SimpleEnvClient, task_info: Dict) -> None:
-    task_name = task_info["name"]
-    max_steps = task_info["max_steps"]
-    rewards: List[float] = []
-    steps_taken = 0
-    success = False
-    history: List[str] = []
-
-    log_start(task=task_name, env=BENCHMARK, model=MODEL_NAME)
-
+def run_task(env, task_info):
+    name, max_steps = task_info["name"], task_info["max_steps"]
+    rewards, steps_taken, history = [], 0, []
+    log_start(task=name, env=BENCHMARK, model=MODEL_NAME)
     try:
-        result = env.reset(task_name=task_name)
+        result = env.reset(task_name=name)
         obs = result.get("observation", {})
         done = result.get("done", False)
-
         for step in range(1, max_steps + 1):
-            if done:
-                break
-
-            obs_text = obs_to_text(obs)
-            raw_response = get_action_from_llm(obs_text, history)
-            action = parse_action(raw_response)
-
+            if done: break
+            raw = get_llm_action(obs_text(obs), history)
+            action = parse_action(raw)
             result = env.step(action)
             obs = result.get("observation", {})
             reward = result.get("reward") or 0.0
             done = result.get("done", False)
-
             rewards.append(reward)
             steps_taken = step
-
-            action_str = json.dumps(action)
-            log_step(step=step, action=action_str, reward=reward, done=done, error=None)
-
-            history.append(f"Step {step}: T={obs.get('temperature', 0)}C")
-
-            if done:
-                break
-
-        if rewards:
-            avg = sum(rewards) / len(rewards)
-            success = avg > 0.0
-        else:
-            success = False
-
-    except Exception as exc:
-        print(f"[DEBUG] Task {task_name} error: {exc}", file=sys.stderr, flush=True)
+            log_step(step=step, action=json.dumps(action), reward=reward, done=done, error=None)
+            history.append(f"S{step}:T={obs.get('temperature',0)}C")
+            if done: break
+    except Exception as e:
+        print(f"[DEBUG] Task {name} error: {e}", file=sys.stderr, flush=True)
     finally:
+        success = len(rewards) > 0 and sum(rewards) / len(rewards) > 0.0 if rewards else False
         log_end(success=success, steps=steps_taken, rewards=rewards)
 
 
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
-def main() -> None:
+def main():
     env = SimpleEnvClient(base_url=SPACE_URL)
     try:
-        for task_info in TASKS:
-            run_task(env, task_info)
+        for t in TASKS:
+            run_task(env, t)
     except Exception as e:
-        print(f"[DEBUG] Fatal error: {e}", file=sys.stderr, flush=True)
+        print(f"[DEBUG] Fatal: {e}", file=sys.stderr, flush=True)
     finally:
         env.close()
-
 
 if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        print(f"[DEBUG] Top-level error: {e}", file=sys.stderr, flush=True)
+        print(f"[DEBUG] Top: {e}", file=sys.stderr, flush=True)
         sys.exit(0)
-"""
-Inference Script — Methanol APC Environment
-============================================
-
-MANDATORY REQUIREMENTS:
-- Named inference.py at project root
-- Uses OpenAI Client for all LLM calls
-- Reads API_BASE_URL (with default), MODEL_NAME (with default), HF_TOKEN (required)
-- Emits [START], [STEP], [END] structured stdout logs
-
-STDOUT FORMAT:
-    [START] task=<task_name> env=methanol_apc model=<model_name>
-    [STEP]  step=<n> action=<action_str> reward=<0.00> done=<true|false> error=<msg|null>
-    [END]   success=<true|false> steps=<n> score=<score> rewards=<r1,r2,...,rn>
-"""
-
-import json
-import os
-import sys
-import textwrap
-from typing import Dict, List, Optional
-
-import websockets.sync.client as ws_sync
-from openai import OpenAI
-
-# ---------------------------------------------------------------------------
-# Environment variables (MANDATORY)
-# ---------------------------------------------------------------------------
-API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
-MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
-HF_TOKEN = os.getenv("HF_TOKEN")
-SPACE_URL = os.getenv("SPACE_URL") or "https://glitchfilter-methanol-apc-env.hf.space"
-
-if HF_TOKEN is None:
-    raise ValueError("HF_TOKEN environment variable is required")
-
-# ---------------------------------------------------------------------------
-# Task configurations
-# ---------------------------------------------------------------------------
-TASKS = [
-    {"name": "startup", "max_steps": 50},
-    {"name": "optimization", "max_steps": 100},
-    {"name": "disturbance_rejection", "max_steps": 100},
-]
-
-BENCHMARK = "methanol_apc"
-TEMPERATURE = 0.3
-MAX_TOKENS = 200
-
-SYSTEM_PROMPT = textwrap.dedent("""
-    You are an AI operator controlling a methanol synthesis reactor.
-    Each turn you receive sensor readings and must output a JSON control action:
-    {"feed_rate_h2": <0-10>, "feed_rate_co": <0-5>,
-     "cooling_water_flow": <0-100>, "compressor_power": <0-100>}
-
-    PHYSICS RULES:
-    - Reaction: CO + 2H2 -> CH3OH (exothermic, generates heat)
-    - Higher feed rates = more reaction = more heat = more methanol = more profit
-    - Cooling water removes heat. If temperature > 300C: EMERGENCY SHUTDOWN
-    - Temperature 270-300C: catalyst degrades faster (permanent damage)
-    - Ideal H2/CO ratio is 2.0 (feed_rate_h2 should be ~2x feed_rate_co)
-    - Higher compressor power = higher pressure = faster reaction
-
-    RESPOND WITH ONLY the JSON object. No explanation, no markdown.
-""").strip()
-
-
-# ---------------------------------------------------------------------------
-# WebSocket environment client (self-contained, no package dependency)
-# ---------------------------------------------------------------------------
-class SimpleEnvClient:
-    """Minimal WebSocket client for the OpenEnv environment.
-    Uses the /ws endpoint which maintains session state across reset/step.
-    """
-
-    def __init__(self, base_url: str):
-        self.base_url = base_url.rstrip("/")
-        ws_url = self.base_url.replace("https://", "wss://").replace("http://", "ws://")
-        self.ws_url = f"{ws_url}/ws"
-        self.ws = None
-
-    def _connect(self):
-        if self.ws is None:
-            self.ws = ws_sync.connect(self.ws_url)
-
-    def reset(self, task_name: str = "startup") -> Dict:
-        self._connect()
-        msg = json.dumps({"type": "reset", "data": {"task_name": task_name}})
-        self.ws.send(msg)
-        response = json.loads(self.ws.recv())
-        return response.get("data", response)
-
-    def step(self, action: Dict) -> Dict:
-        self._connect()
-        msg = json.dumps({"type": "step", "data": action})
-        self.ws.send(msg)
-        response = json.loads(self.ws.recv())
-        return response.get("data", response)
-
-    def close(self):
-        if self.ws:
-            try:
-                self.ws.close()
-            except Exception:
-                pass
-            self.ws = None
-
-
-# ---------------------------------------------------------------------------
-# Logging helpers
-# ---------------------------------------------------------------------------
-def log_start(task: str, env: str, model: str) -> None:
-    print(f"[START] task={task} env={env} model={model}", flush=True)
-
-
-def log_step(step: int, action: str, reward: float, done: bool, error: Optional[str]) -> None:
-    error_val = error if error else "null"
-    done_val = str(done).lower()
-    print(f"[STEP] step={step} action={action} reward={reward:.2f} done={done_val} error={error_val}", flush=True)
-
-
-def log_end(success: bool, steps: int, score: float, rewards: List[float]) -> None:
-    rewards_str = ",".join(f"{r:.2f}" for r in rewards)
-    print(f"[END] success={str(success).lower()} steps={steps} score={score:.3f} rewards={rewards_str}", flush=True)
-
-
-# ---------------------------------------------------------------------------
-# LLM interaction
-# ---------------------------------------------------------------------------
-def parse_action(text: str) -> Dict:
-    """Parse LLM JSON response into action dict. Falls back to safe defaults."""
-    try:
-        cleaned = text.strip()
-        if cleaned.startswith("```"):
-            cleaned = cleaned.split("\n", 1)[1]
-        if cleaned.endswith("```"):
-            cleaned = cleaned.rsplit("```", 1)[0]
-        cleaned = cleaned.strip()
-        data = json.loads(cleaned)
-        return {
-            "feed_rate_h2": float(data.get("feed_rate_h2", 2.0)),
-            "feed_rate_co": float(data.get("feed_rate_co", 1.0)),
-            "cooling_water_flow": float(data.get("cooling_water_flow", 60.0)),
-            "compressor_power": float(data.get("compressor_power", 40.0)),
-        }
-    except Exception:
-        return {
-            "feed_rate_h2": 2.0,
-            "feed_rate_co": 1.0,
-            "cooling_water_flow": 80.0,
-            "compressor_power": 40.0,
-        }
-
-
-def get_action_from_llm(client: OpenAI, obs_text: str, history: List[str]) -> str:
-    """Call LLM and return raw response text."""
-    history_block = "\n".join(history[-3:]) if history else "None"
-    user_prompt = (
-        f"Current sensor readings:\n{obs_text}\n\n"
-        f"Recent history:\n{history_block}\n\n"
-        f"Output your control action as JSON:"
-    )
-    try:
-        completion = client.chat.completions.create(
-            model=MODEL_NAME,
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": user_prompt},
-            ],
-            temperature=TEMPERATURE,
-            max_tokens=MAX_TOKENS,
-            stream=False,
-        )
-        return (completion.choices[0].message.content or "{}").strip()
-    except Exception as exc:
-        print(f"[DEBUG] LLM error: {exc}", file=sys.stderr, flush=True)
-        return "{}"
-
-
-def obs_to_text(obs: Dict) -> str:
-    """Format observation dict as readable text for the LLM."""
-    lines = [
-        f"Temperature: {obs.get('temperature', 0)}C (trend: {obs.get('temperature_trend', 0):+.1f}C/step)",
-        f"Pressure: {obs.get('pressure', 0):.1f} bar",
-        f"H2 feed: {obs.get('feed_rate_h2', 0):.2f} mol/s, CO feed: {obs.get('feed_rate_co', 0):.2f} mol/s",
-        f"H2/CO ratio: {obs.get('h2_co_ratio', 0):.2f} (ideal: 2.0)",
-        f"Cooling flow: {obs.get('cooling_water_flow', 0):.1f} L/min, Coolant temp: {obs.get('cooling_water_temp', 25):.1f}C",
-        f"Catalyst health: {obs.get('catalyst_health', 1):.2%}",
-        f"Reaction rate: {obs.get('reaction_rate', 0):.4f} mol/s",
-        f"Methanol produced: {obs.get('methanol_produced', 0):.1f} kg",
-        f"Step profit: ${obs.get('profit_this_step', 0):.3f}, Cumulative: ${obs.get('cumulative_profit', 0):.2f}",
-        f"Step: {obs.get('step_number', 0)}/{obs.get('max_steps', 0)}, Task: {obs.get('task_name', '')}",
-    ]
-    warning = obs.get("safety_warning")
-    if warning:
-        lines.insert(0, f"WARNING: {warning}")
-    return "\n".join(lines)
-
-
-# ---------------------------------------------------------------------------
-# Task runner
-# ---------------------------------------------------------------------------
-def run_task(llm_client: OpenAI, env: SimpleEnvClient, task_info: Dict) -> None:
-    """Run one task with structured logging."""
-    task_name = task_info["name"]
-    max_steps = task_info["max_steps"]
-    rewards: List[float] = []
-    steps_taken = 0
-    score = 0.0
-    success = False
-    history: List[str] = []
-
-    log_start(task=task_name, env=BENCHMARK, model=MODEL_NAME)
-
-    try:
-        result = env.reset(task_name=task_name)
-        obs = result.get("observation", {})
-        done = result.get("done", False)
-
-        for step in range(1, max_steps + 1):
-            if done:
-                break
-
-            obs_text = obs_to_text(obs)
-            raw_response = get_action_from_llm(llm_client, obs_text, history)
-            action = parse_action(raw_response)
-
-            result = env.step(action)
-            obs = result.get("observation", {})
-            reward = result.get("reward") or 0.0
-            done = result.get("done", False)
-
-            rewards.append(reward)
-            steps_taken = step
-
-            action_str = json.dumps(action)
-            log_step(step=step, action=action_str, reward=reward, done=done, error=None)
-
-            history.append(
-                f"Step {step}: T={obs.get('temperature', 0)}C profit=${obs.get('profit_this_step', 0):.3f}"
-            )
-
-            if done:
-                break
-
-        if rewards:
-            score = sum(rewards) / len(rewards)
-            score = (score + 1.0) / 2.0
-            score = max(0.0, min(1.0, score))
-        success = score > 0.3
-
-    except Exception as exc:
-        print(f"[DEBUG] Task {task_name} error: {exc}", file=sys.stderr, flush=True)
-    finally:
-        log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
-
-
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
-def main() -> None:
-    llm_client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
-    env = SimpleEnvClient(base_url=SPACE_URL)
-
-    try:
-        for task_info in TASKS:
-            run_task(llm_client, env, task_info)
-    except Exception as e:
-        print(f"[DEBUG] Fatal error: {e}", file=sys.stderr, flush=True)
-    finally:
-        env.close()
-
-
-if __name__ == "__main__":
-    try:
-        main()
-    except Exception as e:
-        print(f"[DEBUG] Top-level error: {e}", file=sys.stderr, flush=True)
-        sys.exit(0)  # Exit cleanly even on error
-"""
-Inference Script — Methanol APC Environment
-============================================
-
-MANDATORY REQUIREMENTS:
-- Named inference.py at project root
-- Uses OpenAI Client for all LLM calls
-- Reads API_BASE_URL (with default), MODEL_NAME (with default), HF_TOKEN (required)
-- Emits [START], [STEP], [END] structured stdout logs
-
-STDOUT FORMAT:
-    [START] task=<task_name> env=methanol_apc model=<model_name>
-    [STEP]  step=<n> action=<action_str> reward=<0.00> done=<true|false> error=<msg|null>
-    [END]   success=<true|false> steps=<n> score=<score> rewards=<r1,r2,...,rn>
-"""
-
-import asyncio
-import json
-import os
-import sys
-import textwrap
-from typing import List, Optional
-
-from openai import OpenAI
-
-# ---------------------------------------------------------------------------
-# Environment variables (MANDATORY)
-# ---------------------------------------------------------------------------
-LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")  # Docker image name for from_docker_image()
-API_KEY = os.getenv("HF_TOKEN") or os.getenv("API_KEY")
-
-API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"
-MODEL_NAME = os.getenv("MODEL_NAME") or "Qwen/Qwen2.5-72B-Instruct"
-SPACE_URL = os.getenv("SPACE_URL")  # For remote HF Space
-
-if API_KEY is None:
-    raise ValueError("HF_TOKEN environment variable is required")
-
-from methanol_apc_env import MethanolAPCEnv, MethanolAPCAction
-
-# ---------------------------------------------------------------------------
-# Task configurations
-# ---------------------------------------------------------------------------
-TASKS = [
-    {"name": "startup", "max_steps": 50},
-    {"name": "optimization", "max_steps": 100},
-    {"name": "disturbance_rejection", "max_steps": 100},
-]
-# long_horizon_production has 500 steps which may exceed 20 min with LLM calls.
-# Include it only if SPACE_URL is set (remote, faster) or explicitly requested.
-if os.getenv("INCLUDE_LONG_HORIZON", "false").lower() == "true":
-    TASKS.append({"name": "long_horizon_production", "max_steps": 500})
-
-BENCHMARK = "methanol_apc"
-TEMPERATURE = 0.3
-MAX_TOKENS = 200
-
-SYSTEM_PROMPT = textwrap.dedent("""
-    You are an AI operator controlling a methanol synthesis reactor.
-    Each turn you receive sensor readings and must output a JSON control action:
-    {"feed_rate_h2": <0-10>, "feed_rate_co": <0-5>,
-     "cooling_water_flow": <0-100>, "compressor_power": <0-100>}
-
-    PHYSICS RULES:
-    - Reaction: CO + 2H2 -> CH3OH (exothermic, generates heat)
-    - Higher feed rates = more reaction = more heat = more methanol = more profit
-    - Cooling water removes heat. If temperature > 300C: EMERGENCY SHUTDOWN
-    - Temperature 270-300C: catalyst degrades faster (permanent damage)
-    - Ideal H2/CO ratio is 2.0 (feed_rate_h2 should be ~2x feed_rate_co)
-    - Higher compressor power = higher pressure = faster reaction
-
-    RESPOND WITH ONLY the JSON object. No explanation, no markdown.
-""").strip()
-
-
-# ---------------------------------------------------------------------------
-# Logging helpers
-# ---------------------------------------------------------------------------
-def log_start(task: str, env: str, model: str) -> None:
-    print(f"[START] task={task} env={env} model={model}", flush=True)
-
-
-def log_step(step: int, action: str, reward: float, done: bool, error: Optional[str]) -> None:
-    error_val = error if error else "null"
-    done_val = str(done).lower()
-    print(f"[STEP] step={step} action={action} reward={reward:.2f} done={done_val} error={error_val}", flush=True)
-
-
-def log_end(success: bool, steps: int, score: float, rewards: List[float]) -> None:
-    rewards_str = ",".join(f"{r:.2f}" for r in rewards)
-    print(f"[END] success={str(success).lower()} steps={steps} score={score:.3f} rewards={rewards_str}", flush=True)
-
-
-# ---------------------------------------------------------------------------
-# LLM interaction
-# ---------------------------------------------------------------------------
-def parse_llm_response(text: str) -> MethanolAPCAction:
-    """Parse LLM JSON response into action. Falls back to safe defaults."""
-    try:
-        # Strip markdown code fences if present
-        cleaned = text.strip()
-        if cleaned.startswith("```"):
-            cleaned = cleaned.split("\n", 1)[1]
-        if cleaned.endswith("```"):
-            cleaned = cleaned.rsplit("```", 1)[0]
-        cleaned = cleaned.strip()
-
-        data = json.loads(cleaned)
-        return MethanolAPCAction(
-            feed_rate_h2=float(data.get("feed_rate_h2", 2.0)),
-            feed_rate_co=float(data.get("feed_rate_co", 1.0)),
-            cooling_water_flow=float(data.get("cooling_water_flow", 60.0)),
-            compressor_power=float(data.get("compressor_power", 40.0)),
-        )
-    except Exception:
-        # Safe fallback: low feed, high cooling
-        return MethanolAPCAction(
-            feed_rate_h2=2.0,
-            feed_rate_co=1.0,
-            cooling_water_flow=80.0,
-            compressor_power=40.0,
-        )
-
-
-def get_action_from_llm(
-    client: OpenAI,
-    obs_text: str,
-    history: List[str],
-) -> str:
-    """Call LLM and return raw response text."""
-    history_block = "\n".join(history[-3:]) if history else "None"
-    user_prompt = f"Current sensor readings:\n{obs_text}\n\nRecent history:\n{history_block}\n\nOutput your control action as JSON:"
-
-    try:
-        completion = client.chat.completions.create(
-            model=MODEL_NAME,
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": user_prompt},
-            ],
-            temperature=TEMPERATURE,
-            max_tokens=MAX_TOKENS,
-            stream=False,
-        )
-        return (completion.choices[0].message.content or "{}").strip()
-    except Exception as exc:
-        print(f"[DEBUG] LLM error: {exc}", file=sys.stderr, flush=True)
-        return "{}"
-
-
-def obs_to_text(obs) -> str:
-    """Format observation as readable text for the LLM."""
-    lines = [
-        f"Temperature: {obs.temperature}°C (trend: {obs.temperature_trend:+.1f}°C/step)",
-        f"Pressure: {obs.pressure:.1f} bar",
-        f"H2 feed: {obs.feed_rate_h2:.2f} mol/s, CO feed: {obs.feed_rate_co:.2f} mol/s",
-        f"H2/CO ratio: {obs.h2_co_ratio:.2f} (ideal: 2.0)",
-        f"Cooling flow: {obs.cooling_water_flow:.1f} L/min, Coolant temp: {obs.cooling_water_temp:.1f}°C",
-        f"Catalyst health: {obs.catalyst_health:.2%}",
-        f"Reaction rate: {obs.reaction_rate:.4f} mol/s",
-        f"Methanol produced: {obs.methanol_produced:.1f} kg",
-        f"Step profit: ${obs.profit_this_step:.3f}, Cumulative: ${obs.cumulative_profit:.2f}",
-        f"Step: {obs.step_number}/{obs.max_steps}, Task: {obs.task_name}",
-    ]
-    if obs.safety_warning:
-        lines.insert(0, f"⚠ {obs.safety_warning}")
-    return "\n".join(lines)
-
-
-# ---------------------------------------------------------------------------
-# Task runner
-# ---------------------------------------------------------------------------
-async def run_task(client: OpenAI, env: MethanolAPCEnv, task_info: dict) -> None:
-    """Run one task with structured logging."""
-    task_name = task_info["name"]
-    max_steps = task_info["max_steps"]
-    rewards: List[float] = []
-    steps_taken = 0
-    score = 0.0
-    success = False
-    history: List[str] = []
-
-    log_start(task=task_name, env=BENCHMARK, model=MODEL_NAME)
-
-    try:
-        result = await env.reset(task_name=task_name)
-        obs = result.observation
-
-        for step in range(1, max_steps + 1):
-            if result.done:
-                break
-
-            obs_text = obs_to_text(obs)
-            raw_response = get_action_from_llm(client, obs_text, history)
-            action = parse_llm_response(raw_response)
-
-            result = await env.step(action)
-            obs = result.observation
-            reward = result.reward or 0.0
-            done = result.done
-
-            rewards.append(reward)
-            steps_taken = step
-
-            action_str = json.dumps({
-                "feed_rate_h2": action.feed_rate_h2,
-                "feed_rate_co": action.feed_rate_co,
-                "cooling_water_flow": action.cooling_water_flow,
-                "compressor_power": action.compressor_power,
-            })
-
-            log_step(
-                step=step,
-                action=action_str,
-                reward=reward,
-                done=done,
-                error=None,
-            )
-
-            history.append(
-                f"Step {step}: T={obs.temperature}°C profit=${obs.profit_this_step:.3f}"
-            )
-
-            if done:
-                break
-
-        # Calculate final score
-        if rewards:
-            score = sum(rewards) / len(rewards)
-            score = (score + 1.0) / 2.0  # normalize from [-1,1] to [0,1]
-            score = max(0.0, min(1.0, score))
-        success = score > 0.3
-
-    except Exception as exc:
-        print(f"[DEBUG] Task {task_name} error: {exc}", file=sys.stderr, flush=True)
-    finally:
-        log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
-
-
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
-async def main() -> None:
-    client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
-
-    if SPACE_URL:
-        env = MethanolAPCEnv(base_url=SPACE_URL)
-    elif LOCAL_IMAGE_NAME:
-        env = await MethanolAPCEnv.from_docker_image(LOCAL_IMAGE_NAME)
-    else:
-        raise ValueError(
-            "Set either SPACE_URL (for remote HF Space) or "
-            "LOCAL_IMAGE_NAME (for local Docker) environment variable"
-        )
-
-    try:
-        for task_info in TASKS:
-            await run_task(client, env, task_info)
-    finally:
-        try:
-            await env.close()
-        except Exception as e:
-            print(f"[DEBUG] env.close() error: {e}", file=sys.stderr, flush=True)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
