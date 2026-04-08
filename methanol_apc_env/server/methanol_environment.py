@@ -149,7 +149,9 @@ class MethanolAPCEnvironment(Environment):
 
         # Compute rubric reward (RFC 004)
         obs_for_rubric = self._make_observation(reward=reward, rubric_reward=None)
-        rubric_reward = self._rubric(action, obs_for_rubric) if self._rubric else None
+        rubric_reward = self._rubric(action, obs_for_rubric) if self._rubric else 0.01
+        if rubric_reward is not None:
+            rubric_reward = max(0.01, min(0.99, rubric_reward))
 
         # Check termination
         if self._reactor.emergency_shutdown:

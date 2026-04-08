@@ -52,7 +52,7 @@ class MethanolStepRubric(Rubric):
     def forward(self, action: Any, observation: Any) -> float:
         if self._prev_obs is None:
             self._prev_obs = observation
-            return 0.0
+            return 0.01
 
         reward = _obs_step_reward(self._prev_obs, observation, self._task)
         self._prev_obs = observation
@@ -60,11 +60,10 @@ class MethanolStepRubric(Rubric):
 
 
 class MethanolStartupRubric(TrajectoryRubric):
-    """Trajectory rubric for the startup task.
+    """Trajectory rubric for the startup task."""
 
-    Returns 0.0 during the episode, then scores the full trajectory
-    on done based on overshoot and target achievement.
-    """
+    def __init__(self):
+        super().__init__(intermediate_reward=0.01)
 
     def score_trajectory(self, trajectory: List[Tuple[Any, Any]]) -> float:
         states = _extract_reactor_states(trajectory)
@@ -78,6 +77,9 @@ class MethanolStartupRubric(TrajectoryRubric):
 class MethanolOptimizationRubric(TrajectoryRubric):
     """Trajectory rubric for the optimization task."""
 
+    def __init__(self):
+        super().__init__(intermediate_reward=0.01)
+
     def score_trajectory(self, trajectory: List[Tuple[Any, Any]]) -> float:
         states = _extract_reactor_states(trajectory)
         return grade_optimization(states)
@@ -90,6 +92,9 @@ class MethanolOptimizationRubric(TrajectoryRubric):
 class MethanolDisturbanceRubric(TrajectoryRubric):
     """Trajectory rubric for the disturbance rejection task."""
 
+    def __init__(self):
+        super().__init__(intermediate_reward=0.01)
+
     def score_trajectory(self, trajectory: List[Tuple[Any, Any]]) -> float:
         states = _extract_reactor_states(trajectory)
         return grade_disturbance(states)
@@ -101,6 +106,9 @@ class MethanolDisturbanceRubric(TrajectoryRubric):
 
 class MethanolLongHorizonRubric(TrajectoryRubric):
     """Trajectory rubric for long-horizon production task."""
+
+    def __init__(self):
+        super().__init__(intermediate_reward=0.01)
 
     def score_trajectory(self, trajectory: List[Tuple[Any, Any]]) -> float:
         states = _extract_reactor_states(trajectory)
@@ -138,15 +146,11 @@ class MethanolAPCRubric(Rubric):
         self.trajectory_rubric = rubric_cls()
 
     def forward(self, action: Any, observation: Any) -> float:
-        # Feed both rubrics
         step_reward = self.step_rubric(action, observation)
         traj_reward = self.trajectory_rubric(action, observation)
-
-        # During episode: use dense step reward
-        # At terminal: use trajectory score
         if getattr(observation, "done", False):
-            return traj_reward
-        return step_reward
+            return max(0.01, min(0.99, traj_reward))
+        return max(0.01, min(0.99, step_reward))
 
 
 # ---------------------------------------------------------------------------
