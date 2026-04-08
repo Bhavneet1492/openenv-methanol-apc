@@ -95,7 +95,36 @@ def parse_action(text):
         d = json.loads(c.strip())
         return {"feed_rate_h2": float(d.get("feed_rate_h2", 2)), "feed_rate_co": float(d.get("feed_rate_co", 1)), "cooling_water_flow": float(d.get("cooling_water_flow", 60)), "compressor_power": float(d.get("compressor_power", 40))}
     except:
-        return {"feed_rate_h2": 2.0, "feed_rate_co": 1.0, "cooling_water_flow": 80.0, "compressor_power": 40.0}
+        return None  # signal to use adaptive fallback
+
+
+def adaptive_fallback(obs):
+    """Rule-based controller when LLM is unavailable. Adapts to current state."""
+    T = obs.get("temperature", 150)
+    task = obs.get("task_name", "startup")
+
+    if task == "startup":
+        # Ramp up: high feed, low cooling until near target, then stabilize
+        if T < 200:
+            return {"feed_rate_h2": 8.0, "feed_rate_co": 4.0, "cooling_water_flow": 0.0, "compressor_power": 70.0}
+        elif T < 240:
+            return {"feed_rate_h2": 6.0, "feed_rate_co": 3.0, "cooling_water_flow": 20.0, "compressor_power": 60.0}
+        elif T < 255:
+            return {"feed_rate_h2": 4.0, "feed_rate_co": 2.0, "cooling_water_flow": 45.0, "compressor_power": 50.0}
+        else:
+            return {"feed_rate_h2": 4.0, "feed_rate_co": 2.0, "cooling_water_flow": 60.0, "compressor_power": 50.0}
+    else:
+        # Steady-state: adjust cooling based on temperature
+        if T > 280:
+            return {"feed_rate_h2": 2.0, "feed_rate_co": 1.0, "cooling_water_flow": 90.0, "compressor_power": 40.0}
+        elif T > 265:
+            return {"feed_rate_h2": 4.0, "feed_rate_co": 2.0, "cooling_water_flow": 70.0, "compressor_power": 50.0}
+        elif T > 250:
+            return {"feed_rate_h2": 6.0, "feed_rate_co": 3.0, "cooling_water_flow": 55.0, "compressor_power": 60.0}
+        elif T > 230:
+            return {"feed_rate_h2": 8.0, "feed_rate_co": 4.0, "cooling_water_flow": 35.0, "compressor_power": 70.0}
+        else:
+            return {"feed_rate_h2": 8.0, "feed_rate_co": 4.0, "cooling_water_flow": 10.0, "compressor_power": 70.0}
 
 def get_llm_action(obs_text, history):
     h = "\n".join(history[-3:]) if history else "None"
@@ -125,6 +154,8 @@ def run_task(env, task_info):
             if done: break
             raw = get_llm_action(obs_text(obs), history)
             action = parse_action(raw)
+            if action is None:
+                action = adaptive_fallback(obs)
             result = env.step(action)
             obs = result.get("observation", {})
             reward = result.get("reward") or 0.0
