@@ -1,0 +1,246 @@
+{
+    "active_config": "ici_low_pressure_apac",
+    "configs": {
+        "ici_low_pressure_apac": {
+            "description": "ICI Low-Pressure Process, Asia Pacific pricing (current v1.0)",
+            "reactor": {
+                "type": "fixed_bed_shell_and_tube",
+                "volume_m3": 10.0,
+                "mass_kg": 5000.0,
+                "heat_capacity_J_per_kgK": 500.0,
+                "heat_exchange_area_m2": 8.0,
+                "U_base_W_per_m2K": 250.0,
+                "max_cooling_flow_L_per_min": 100.0,
+                "max_dT_per_step_C": 5.0,
+                "timestep_seconds": 60.0
+            },
+            "catalyst": {
+                "type": "Cu/ZnO/Al2O3 (ICI 51-2)",
+                "Ea_J_per_mol": 76000.0,
+                "k0_mol_per_s_bar": 3.5e8,
+                "T_optimal_max_C": 270.0,
+                "T_sintering_C": 300.0,
+                "lifetime_years": "2-4"
+            },
+            "reaction": {
+                "primary": "CO + 2H2 -> CH3OH",
+                "delta_H_J_per_mol": -90500.0,
+                "ideal_h2_co_ratio": 2.0,
+                "selectivity_pct": 99.8,
+                "MW_product_kg_per_mol": 0.03204,
+                "pressure_ref_bar": 50.0,
+                "K_eq_ref": 1000.0,
+                "T_ref_eq_K": 523.15
+            },
+            "coolant": {
+                "type": "boiler_feed_water",
+                "inlet_temp_C": 25.0,
+                "Cp_kJ_per_kgK": 4.18
+            },
+            "economics": {
+                "region": "Asia Pacific (India import CIF)",
+                "methanol_price_USD_per_kg": 0.74,
+                "methanol_price_source": "Methanex APCP April 2026",
+                "syngas_price_USD_per_mol": 0.002,
+                "syngas_price_source": "Henry Hub $2.95/MMBtu + reforming opex",
+                "electricity_price_USD_per_kWh": 0.08,
+                "cooling_water_price_USD_per_L": 0.0005
+            },
+            "safety": {
+                "emergency_shutdown_temp_C": 300.0,
+                "pressure_min_bar": 20.0,
+                "pressure_max_bar": 100.0
+            },
+            "actuator_limits": {
+                "valve_rate_limit_mol_per_s": 2.0,
+                "cooling_rate_limit_L_per_min": 20.0,
+                "compressor_rate_limit_kW": 15.0,
+                "feed_h2_max_mol_per_s": 10.0,
+                "feed_co_max_mol_per_s": 5.0,
+                "compressor_max_kW": 100.0
+            }
+        },
+        "ici_low_pressure_north_america": {
+            "description": "ICI Low-Pressure Process, North America pricing",
+            "reactor": { "_inherit": "ici_low_pressure_apac" },
+            "catalyst": { "_inherit": "ici_low_pressure_apac" },
+            "reaction": { "_inherit": "ici_low_pressure_apac" },
+            "coolant": { "_inherit": "ici_low_pressure_apac" },
+            "economics": {
+                "region": "North America",
+                "methanol_price_USD_per_kg": 1.25,
+                "methanol_price_source": "Methanex NDRP $1247/MT April 2026",
+                "syngas_price_USD_per_mol": 0.002,
+                "syngas_price_source": "Henry Hub $2.95/MMBtu",
+                "electricity_price_USD_per_kWh": 0.08,
+                "cooling_water_price_USD_per_L": 0.0005
+            },
+            "safety": { "_inherit": "ici_low_pressure_apac" },
+            "actuator_limits": { "_inherit": "ici_low_pressure_apac" }
+        },
+        "ici_low_pressure_india_landed": {
+            "description": "ICI Low-Pressure Process, India landed cost (with BCD+IGST)",
+            "reactor": { "_inherit": "ici_low_pressure_apac" },
+            "catalyst": { "_inherit": "ici_low_pressure_apac" },
+            "reaction": { "_inherit": "ici_low_pressure_apac" },
+            "coolant": {
+                "type": "boiler_feed_water",
+                "inlet_temp_C": 32.0,
+                "Cp_kJ_per_kgK": 4.18,
+                "_note": "Gujarat coast summer design temp"
+            },
+            "economics": {
+                "region": "India (imported, landed)",
+                "methanol_price_USD_per_kg": 0.94,
+                "methanol_price_source": "APCP $740 + BCD 7.5% + SWS 10% + IGST 18% + port $15",
+                "syngas_price_USD_per_mol": 0.003,
+                "syngas_price_source": "India domestic APM $6.50/MMBtu (MoPNG)",
+                "electricity_price_USD_per_kWh": 0.09,
+                "cooling_water_price_USD_per_L": 0.0003
+            },
+            "safety": { "_inherit": "ici_low_pressure_apac" },
+            "actuator_limits": { "_inherit": "ici_low_pressure_apac" }
+        },
+        "ici_low_pressure_middle_east": {
+            "description": "ICI Low-Pressure Process, Middle East (cheapest feedstock)",
+            "reactor": { "_inherit": "ici_low_pressure_apac" },
+            "catalyst": { "_inherit": "ici_low_pressure_apac" },
+            "reaction": { "_inherit": "ici_low_pressure_apac" },
+            "coolant": {
+                "type": "boiler_feed_water",
+                "inlet_temp_C": 35.0,
+                "Cp_kJ_per_kgK": 4.18,
+                "_note": "Qatar/UAE summer design temp — hotter = less cooling"
+            },
+            "economics": {
+                "region": "Middle East (FOB)",
+                "methanol_price_USD_per_kg": 0.33,
+                "methanol_price_source": "Platts/Argus FOB AG ~$330/MT",
+                "syngas_price_USD_per_mol": 0.001,
+                "syngas_price_source": "Subsidized domestic gas $1.5/MMBtu",
+                "electricity_price_USD_per_kWh": 0.04,
+                "cooling_water_price_USD_per_L": 0.0008
+            },
+            "safety": { "_inherit": "ici_low_pressure_apac" },
+            "actuator_limits": { "_inherit": "ici_low_pressure_apac" }
+        },
+        "basf_high_pressure_legacy": {
+            "description": "BASF High-Pressure Process (1923-1966), ZnO/Cr2O3 catalyst",
+            "reactor": {
+                "type": "fixed_bed_high_pressure",
+                "volume_m3": 5.0,
+                "mass_kg": 8000.0,
+                "heat_capacity_J_per_kgK": 500.0,
+                "heat_exchange_area_m2": 6.0,
+                "U_base_W_per_m2K": 200.0,
+                "max_cooling_flow_L_per_min": 100.0,
+                "max_dT_per_step_C": 5.0,
+                "timestep_seconds": 60.0
+            },
+            "catalyst": {
+                "type": "ZnO/Cr2O3",
+                "Ea_J_per_mol": 120000.0,
+                "k0_mol_per_s_bar": 1.0e10,
+                "T_optimal_max_C": 380.0,
+                "T_sintering_C": 450.0,
+                "lifetime_years": "1-2"
+            },
+            "reaction": {
+                "primary": "CO + 2H2 -> CH3OH",
+                "delta_H_J_per_mol": -90500.0,
+                "ideal_h2_co_ratio": 2.0,
+                "selectivity_pct": 95.0,
+                "MW_product_kg_per_mol": 0.03204,
+                "pressure_ref_bar": 250.0,
+                "K_eq_ref": 500.0,
+                "T_ref_eq_K": 623.15
+            },
+            "coolant": {
+                "type": "pressurized_water",
+                "inlet_temp_C": 25.0,
+                "Cp_kJ_per_kgK": 4.18
+            },
+            "economics": {
+                "region": "Historical (not actively traded)",
+                "methanol_price_USD_per_kg": 0.74,
+                "methanol_price_source": "Using APCP as proxy",
+                "syngas_price_USD_per_mol": 0.002,
+                "syngas_price_source": "Using Henry Hub as proxy",
+                "electricity_price_USD_per_kWh": 0.08,
+                "cooling_water_price_USD_per_L": 0.0005
+            },
+            "safety": {
+                "emergency_shutdown_temp_C": 450.0,
+                "pressure_min_bar": 100.0,
+                "pressure_max_bar": 350.0
+            },
+            "actuator_limits": {
+                "valve_rate_limit_mol_per_s": 2.0,
+                "cooling_rate_limit_L_per_min": 20.0,
+                "compressor_rate_limit_kW": 15.0,
+                "feed_h2_max_mol_per_s": 10.0,
+                "feed_co_max_mol_per_s": 5.0,
+                "compressor_max_kW": 100.0
+            }
+        },
+        "green_methanol_co2": {
+            "description": "Green methanol from CO2 + H2 (Cu/ZnO/ZrO2 catalyst)",
+            "reactor": {
+                "type": "fixed_bed_shell_and_tube",
+                "volume_m3": 10.0,
+                "mass_kg": 5000.0,
+                "heat_capacity_J_per_kgK": 500.0,
+                "heat_exchange_area_m2": 10.0,
+                "U_base_W_per_m2K": 250.0,
+                "max_cooling_flow_L_per_min": 100.0,
+                "max_dT_per_step_C": 5.0,
+                "timestep_seconds": 60.0
+            },
+            "catalyst": {
+                "type": "Cu/ZnO/ZrO2",
+                "Ea_J_per_mol": 70000.0,
+                "k0_mol_per_s_bar": 2.0e8,
+                "T_optimal_max_C": 260.0,
+                "T_sintering_C": 280.0,
+                "lifetime_years": "2-3"
+            },
+            "reaction": {
+                "primary": "CO2 + 3H2 -> CH3OH + H2O",
+                "delta_H_J_per_mol": -49500.0,
+                "ideal_h2_co_ratio": 3.0,
+                "selectivity_pct": 98.0,
+                "MW_product_kg_per_mol": 0.03204,
+                "pressure_ref_bar": 50.0,
+                "K_eq_ref": 500.0,
+                "T_ref_eq_K": 523.15
+            },
+            "coolant": {
+                "type": "boiler_feed_water",
+                "inlet_temp_C": 25.0,
+                "Cp_kJ_per_kgK": 4.18
+            },
+            "economics": {
+                "region": "Europe (e-methanol premium)",
+                "methanol_price_USD_per_kg": 1.50,
+                "methanol_price_source": "Green methanol premium ~$1500/MT (IRENA 2021)",
+                "syngas_price_USD_per_mol": 0.005,
+                "syngas_price_source": "Green H2 via electrolysis + DAC CO2",
+                "electricity_price_USD_per_kWh": 0.15,
+                "cooling_water_price_USD_per_L": 0.0005
+            },
+            "safety": {
+                "emergency_shutdown_temp_C": 280.0,
+                "pressure_min_bar": 20.0,
+                "pressure_max_bar": 80.0
+            },
+            "actuator_limits": {
+                "valve_rate_limit_mol_per_s": 2.0,
+                "cooling_rate_limit_L_per_min": 20.0,
+                "compressor_rate_limit_kW": 15.0,
+                "feed_h2_max_mol_per_s": 15.0,
+                "feed_co_max_mol_per_s": 5.0,
+                "compressor_max_kW": 100.0
+            }
+        }
+    }
+}

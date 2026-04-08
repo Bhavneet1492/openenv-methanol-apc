@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openenv-methanol-apc"
+version = "0.1.0"
+description = "Methanol APC Process Control Environment for OpenEnv — Digital twin of an industrial methanol synthesis reactor"
+requires-python = ">=3.10"
+dependencies = [
+    "openenv-core[core]>=0.2.2",
+    "numpy>=1.24.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.0.0",
+]
+
+[project.scripts]
+server = "methanol_apc_env.server.app:main"
+
+[tool.setuptools]
+include-package-data = true
+packages = ["methanol_apc_env", "methanol_apc_env.server"]
+package-dir = { "methanol_apc_env" = ".", "methanol_apc_env.server" = "server" }
