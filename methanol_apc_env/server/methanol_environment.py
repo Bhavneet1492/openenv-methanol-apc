@@ -18,14 +18,14 @@ try:
 except ImportError:
     from ..models import MethanolAPCAction, MethanolAPCObservation
 
-from .reactor_sim import ReactorState, simulate_step, EMERGENCY_SHUTDOWN_TEMP
-from .tasks import (
-    TASKS,
-    GRADERS,
-    TaskConfig,
-    compute_step_reward,
-)
-from .rubrics import MethanolAPCRubric
+try:
+    from reactor_sim import ReactorState, simulate_step, EMERGENCY_SHUTDOWN_TEMP
+    from tasks import TASKS, GRADERS, TaskConfig, compute_step_reward
+    from rubrics import MethanolAPCRubric
+except ImportError:
+    from .reactor_sim import ReactorState, simulate_step, EMERGENCY_SHUTDOWN_TEMP
+    from .tasks import TASKS, GRADERS, TaskConfig, compute_step_reward
+    from .rubrics import MethanolAPCRubric
 
 
 class MethanolAPCEnvironment(Environment):

@@ -18,7 +18,10 @@ try:
 except ImportError:
     from ..models import MethanolAPCAction, MethanolAPCObservation
 
-from .methanol_environment import MethanolAPCEnvironment
+try:
+    from methanol_environment import MethanolAPCEnvironment
+except ImportError:
+    from .methanol_environment import MethanolAPCEnvironment
 
 app = create_app(
     MethanolAPCEnvironment,
@@ -37,9 +40,4 @@ def main(host: str = "0.0.0.0", port: int = 8000) -> None:
 
 
 if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--port", type=int, default=8000)
-    args = parser.parse_args()
-    main(port=args.port)
+    main()

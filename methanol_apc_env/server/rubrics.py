@@ -22,16 +22,18 @@ from typing import Any, List, Tuple
 from openenv.core.rubrics.base import Rubric
 from openenv.core.rubrics.trajectory import TrajectoryRubric
 
-from .reactor_sim import EMERGENCY_SHUTDOWN_TEMP
-from .tasks import (
-    grade_startup,
-    grade_optimization,
-    grade_disturbance,
-    grade_long_horizon,
-    compute_step_reward,
-    TASKS,
-    TaskConfig,
-)
+try:
+    from reactor_sim import EMERGENCY_SHUTDOWN_TEMP
+    from tasks import (
+        grade_startup, grade_optimization, grade_disturbance, grade_long_horizon,
+        compute_step_reward, TASKS, TaskConfig,
+    )
+except ImportError:
+    from .reactor_sim import EMERGENCY_SHUTDOWN_TEMP
+    from .tasks import (
+        grade_startup, grade_optimization, grade_disturbance, grade_long_horizon,
+        compute_step_reward, TASKS, TaskConfig,
+    )
 
 
 class MethanolStepRubric(Rubric):
