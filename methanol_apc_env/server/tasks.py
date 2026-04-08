@@ -105,8 +105,8 @@ TASKS: Dict[str, TaskConfig] = {
 # ---------------------------------------------------------------------------
 
 def _clamp_score(score: float) -> float:
-    """Clamp score to strictly (0, 1) — validator rejects 0.0 and 1.0."""
-    return max(0.001, min(0.999, score))
+    """Clamp score to strictly (0, 1) — safe even after 2dp formatting."""
+    return max(0.01, min(0.99, score))
 
 def grade_startup(trajectory: List[ReactorState]) -> float:
     """Grade the startup task.
