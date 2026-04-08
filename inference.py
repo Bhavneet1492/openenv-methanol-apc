@@ -129,6 +129,7 @@ def run_task(env, task_info):
             obs = result.get("observation", {})
             reward = result.get("reward") or 0.0
             done = result.get("done", False)
+            reward = max(0.001, min(0.999, reward))  # clamp to strictly (0, 1)
             rewards.append(reward)
             steps_taken = step
             log_step(step=step, action=json.dumps(action), reward=reward, done=done, error=None)

@@ -101,8 +101,12 @@ TASKS: Dict[str, TaskConfig] = {
 
 
 # ---------------------------------------------------------------------------
-# Graders  — each returns float in [0.0, 1.0], deterministic
+# Graders  — each returns float in (0.0, 1.0) strictly, deterministic
 # ---------------------------------------------------------------------------
+
+def _clamp_score(score: float) -> float:
+    """Clamp score to strictly (0, 1) — validator rejects 0.0 and 1.0."""
+    return max(0.001, min(0.999, score))
 
 def grade_startup(trajectory: List[ReactorState]) -> float:
     """Grade the startup task.
@@ -230,11 +234,18 @@ def grade_long_horizon(trajectory: List[ReactorState]) -> float:
     return 0.3 * min(production / target, 1.0)
 
 
+def _clamped_grader(fn):
+    """Wrap a grader to ensure score is strictly in (0, 1)."""
+    def wrapper(trajectory):
+        return _clamp_score(fn(trajectory))
+    return wrapper
+
+
 GRADERS = {
-    "startup": grade_startup,
-    "optimization": grade_optimization,
-    "disturbance_rejection": grade_disturbance,
-    "long_horizon_production": grade_long_horizon,
+    "startup": _clamped_grader(grade_startup),
+    "optimization": _clamped_grader(grade_optimization),
+    "disturbance_rejection": _clamped_grader(grade_disturbance),
+    "long_horizon_production": _clamped_grader(grade_long_horizon),
 }
 
 
