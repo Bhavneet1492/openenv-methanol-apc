@@ -26,13 +26,14 @@ from openai import OpenAI
 # ---------------------------------------------------------------------------
 # Environment variables (MANDATORY)
 # ---------------------------------------------------------------------------
-API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
-MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
-HF_TOKEN = os.getenv("HF_TOKEN")
-IMAGE_NAME = os.getenv("IMAGE_NAME")
-SPACE_URL = os.getenv("SPACE_URL")
+LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")  # Docker image name for from_docker_image()
+API_KEY = os.getenv("HF_TOKEN") or os.getenv("API_KEY")
 
-if HF_TOKEN is None:
+API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"
+MODEL_NAME = os.getenv("MODEL_NAME") or "Qwen/Qwen2.5-72B-Instruct"
+SPACE_URL = os.getenv("SPACE_URL")  # For remote HF Space
+
+if API_KEY is None:
     raise ValueError("HF_TOKEN environment variable is required")
 
 from methanol_apc_env import MethanolAPCEnv, MethanolAPCAction
@@ -79,23 +80,15 @@ def log_start(task: str, env: str, model: str) -> None:
     print(f"[START] task={task} env={env} model={model}", flush=True)
 
 
-def log_step(
-    step: int, action: str, reward: float, done: bool, error: Optional[str]
-) -> None:
-    print(
-        f"[STEP] step={step} action={action} reward={reward:.2f} "
-        f"done={str(done).lower()} error={error if error else 'null'}",
-        flush=True,
-    )
+def log_step(step: int, action: str, reward: float, done: bool, error: Optional[str]) -> None:
+    error_val = error if error else "null"
+    done_val = str(done).lower()
+    print(f"[STEP] step={step} action={action} reward={reward:.2f} done={done_val} error={error_val}", flush=True)
 
 
 def log_end(success: bool, steps: int, score: float, rewards: List[float]) -> None:
     rewards_str = ",".join(f"{r:.2f}" for r in rewards)
-    print(
-        f"[END] success={str(success).lower()} steps={steps} "
-        f"score={score:.2f} rewards={rewards_str}",
-        flush=True,
-    )
+    print(f"[END] success={str(success).lower()} steps={steps} score={score:.3f} rewards={rewards_str}", flush=True)
 
 
 # ---------------------------------------------------------------------------
@@ -248,16 +241,16 @@ async def run_task(client: OpenAI, env: MethanolAPCEnv, task_info: dict) -> None
 # Main
 # ---------------------------------------------------------------------------
 async def main() -> None:
-    client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
+    client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
 
     if SPACE_URL:
         env = MethanolAPCEnv(base_url=SPACE_URL)
-    elif IMAGE_NAME:
-        env = await MethanolAPCEnv.from_docker_image(IMAGE_NAME)
+    elif LOCAL_IMAGE_NAME:
+        env = await MethanolAPCEnv.from_docker_image(LOCAL_IMAGE_NAME)
     else:
         raise ValueError(
             "Set either SPACE_URL (for remote HF Space) or "
-            "IMAGE_NAME (for local Docker) environment variable"
+            "LOCAL_IMAGE_NAME (for local Docker) environment variable"
         )
 
     try:
