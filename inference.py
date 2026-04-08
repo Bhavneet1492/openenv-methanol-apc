@@ -1,6 +1,263 @@
 """
 Inference Script — Methanol APC Environment
 ============================================
+MANDATORY:
+- inference.py at project root
+- Uses OpenAI Client for all LLM calls
+- Reads API_BASE_URL (with default), MODEL_NAME (with default), HF_TOKEN (required)
+- Emits [START], [STEP], [END] structured stdout
+
+STDOUT FORMAT:
+    [START] task=<task_name> env=<benchmark> model=<model_name>
+    [STEP]  step=<n> action=<action_str> reward=<0.00> done=<true|false> error=<msg|null>
+    [END]   success=<true|false> steps=<n> rewards=<r1,r2,...,rn>
+"""
+
+import json
+import os
+import sys
+import textwrap
+from typing import Dict, List, Optional
+
+import websockets.sync.client as ws_sync
+from openai import OpenAI
+
+# ---------------------------------------------------------------------------
+# Environment variables (MANDATORY per guidelines)
+# ---------------------------------------------------------------------------
+API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
+MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
+HF_TOKEN = os.getenv("HF_TOKEN")
+SPACE_URL = os.getenv("SPACE_URL") or "https://glitchfilter-methanol-apc-env.hf.space"
+
+if HF_TOKEN is None:
+    raise ValueError("HF_TOKEN environment variable is required")
+
+# Initialize OpenAI client (MANDATORY: must use OpenAI Client)
+client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
+
+# ---------------------------------------------------------------------------
+# Task configurations
+# ---------------------------------------------------------------------------
+TASKS = [
+    {"name": "startup", "max_steps": 50},
+    {"name": "optimization", "max_steps": 100},
+    {"name": "disturbance_rejection", "max_steps": 100},
+]
+
+BENCHMARK = "methanol_apc"
+TEMPERATURE = 0.3
+MAX_TOKENS = 200
+
+SYSTEM_PROMPT = textwrap.dedent("""
+    You are an AI operator controlling a methanol synthesis reactor.
+    Each turn you receive sensor readings and must output a JSON control action:
+    {"feed_rate_h2": <0-10>, "feed_rate_co": <0-5>,
+     "cooling_water_flow": <0-100>, "compressor_power": <0-100>}
+
+    PHYSICS RULES:
+    - Reaction: CO + 2H2 -> CH3OH (exothermic, generates heat)
+    - Higher feed rates = more reaction = more heat = more methanol = more profit
+    - Cooling water removes heat. If temperature > 300C: EMERGENCY SHUTDOWN
+    - Temperature 270-300C: catalyst degrades faster (permanent damage)
+    - Ideal H2/CO ratio is 2.0 (feed_rate_h2 should be ~2x feed_rate_co)
+    - Higher compressor power = higher pressure = faster reaction
+
+    RESPOND WITH ONLY the JSON object. No explanation, no markdown.
+""").strip()
+
+
+# ---------------------------------------------------------------------------
+# WebSocket environment client (self-contained, no package dependency)
+# ---------------------------------------------------------------------------
+class SimpleEnvClient:
+    def __init__(self, base_url: str):
+        self.base_url = base_url.rstrip("/")
+        ws_url = self.base_url.replace("https://", "wss://").replace("http://", "ws://")
+        self.ws_url = f"{ws_url}/ws"
+        self.ws = None
+
+    def _connect(self):
+        if self.ws is None:
+            self.ws = ws_sync.connect(self.ws_url)
+
+    def reset(self, task_name: str = "startup") -> Dict:
+        self._connect()
+        self.ws.send(json.dumps({"type": "reset", "data": {"task_name": task_name}}))
+        response = json.loads(self.ws.recv())
+        return response.get("data", response)
+
+    def step(self, action: Dict) -> Dict:
+        self._connect()
+        self.ws.send(json.dumps({"type": "step", "data": action}))
+        response = json.loads(self.ws.recv())
+        return response.get("data", response)
+
+    def close(self):
+        if self.ws:
+            try:
+                self.ws.close()
+            except Exception:
+                pass
+            self.ws = None
+
+
+# ---------------------------------------------------------------------------
+# Logging (exact format per guidelines)
+# ---------------------------------------------------------------------------
+def log_start(task: str, env: str, model: str) -> None:
+    print(f"[START] task={task} env={env} model={model}", flush=True)
+
+
+def log_step(step: int, action: str, reward: float, done: bool, error: Optional[str]) -> None:
+    error_val = error if error else "null"
+    done_val = str(done).lower()
+    print(f"[STEP] step={step} action={action} reward={reward:.2f} done={done_val} error={error_val}", flush=True)
+
+
+def log_end(success: bool, steps: int, rewards: List[float]) -> None:
+    rewards_str = ",".join(f"{r:.2f}" for r in rewards)
+    print(f"[END] success={str(success).lower()} steps={steps} rewards={rewards_str}", flush=True)
+
+
+# ---------------------------------------------------------------------------
+# LLM interaction
+# ---------------------------------------------------------------------------
+def parse_action(text: str) -> Dict:
+    try:
+        cleaned = text.strip()
+        if cleaned.startswith("```"):
+            cleaned = cleaned.split("\n", 1)[1]
+        if cleaned.endswith("```"):
+            cleaned = cleaned.rsplit("```", 1)[0]
+        cleaned = cleaned.strip()
+        data = json.loads(cleaned)
+        return {
+            "feed_rate_h2": float(data.get("feed_rate_h2", 2.0)),
+            "feed_rate_co": float(data.get("feed_rate_co", 1.0)),
+            "cooling_water_flow": float(data.get("cooling_water_flow", 60.0)),
+            "compressor_power": float(data.get("compressor_power", 40.0)),
+        }
+    except Exception:
+        return {"feed_rate_h2": 2.0, "feed_rate_co": 1.0, "cooling_water_flow": 80.0, "compressor_power": 40.0}
+
+
+def get_action_from_llm(obs_text: str, history: List[str]) -> str:
+    history_block = "\n".join(history[-3:]) if history else "None"
+    user_prompt = f"Current sensor readings:\n{obs_text}\n\nRecent history:\n{history_block}\n\nOutput your control action as JSON:"
+    try:
+        completion = client.chat.completions.create(
+            model=MODEL_NAME,
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=TEMPERATURE,
+            max_tokens=MAX_TOKENS,
+            stream=False,
+        )
+        return (completion.choices[0].message.content or "{}").strip()
+    except Exception as exc:
+        print(f"[DEBUG] LLM error: {exc}", file=sys.stderr, flush=True)
+        return "{}"
+
+
+def obs_to_text(obs: Dict) -> str:
+    lines = [
+        f"Temperature: {obs.get('temperature', 0)}C (trend: {obs.get('temperature_trend', 0):+.1f}C/step)",
+        f"Pressure: {obs.get('pressure', 0):.1f} bar",
+        f"H2 feed: {obs.get('feed_rate_h2', 0):.2f} mol/s, CO feed: {obs.get('feed_rate_co', 0):.2f} mol/s",
+        f"H2/CO ratio: {obs.get('h2_co_ratio', 0):.2f} (ideal: 2.0)",
+        f"Cooling flow: {obs.get('cooling_water_flow', 0):.1f} L/min",
+        f"Catalyst health: {obs.get('catalyst_health', 1):.2%}",
+        f"Reaction rate: {obs.get('reaction_rate', 0):.4f} mol/s",
+        f"Methanol produced: {obs.get('methanol_produced', 0):.1f} kg",
+        f"Profit: ${obs.get('profit_this_step', 0):.3f}, Total: ${obs.get('cumulative_profit', 0):.2f}",
+        f"Step: {obs.get('step_number', 0)}/{obs.get('max_steps', 0)}, Task: {obs.get('task_name', '')}",
+    ]
+    warning = obs.get("safety_warning")
+    if warning:
+        lines.insert(0, f"WARNING: {warning}")
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# Task runner
+# ---------------------------------------------------------------------------
+def run_task(env: SimpleEnvClient, task_info: Dict) -> None:
+    task_name = task_info["name"]
+    max_steps = task_info["max_steps"]
+    rewards: List[float] = []
+    steps_taken = 0
+    success = False
+    history: List[str] = []
+
+    log_start(task=task_name, env=BENCHMARK, model=MODEL_NAME)
+
+    try:
+        result = env.reset(task_name=task_name)
+        obs = result.get("observation", {})
+        done = result.get("done", False)
+
+        for step in range(1, max_steps + 1):
+            if done:
+                break
+
+            obs_text = obs_to_text(obs)
+            raw_response = get_action_from_llm(obs_text, history)
+            action = parse_action(raw_response)
+
+            result = env.step(action)
+            obs = result.get("observation", {})
+            reward = result.get("reward") or 0.0
+            done = result.get("done", False)
+
+            rewards.append(reward)
+            steps_taken = step
+
+            action_str = json.dumps(action)
+            log_step(step=step, action=action_str, reward=reward, done=done, error=None)
+
+            history.append(f"Step {step}: T={obs.get('temperature', 0)}C")
+
+            if done:
+                break
+
+        if rewards:
+            avg = sum(rewards) / len(rewards)
+            success = avg > 0.0
+        else:
+            success = False
+
+    except Exception as exc:
+        print(f"[DEBUG] Task {task_name} error: {exc}", file=sys.stderr, flush=True)
+    finally:
+        log_end(success=success, steps=steps_taken, rewards=rewards)
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+def main() -> None:
+    env = SimpleEnvClient(base_url=SPACE_URL)
+    try:
+        for task_info in TASKS:
+            run_task(env, task_info)
+    except Exception as e:
+        print(f"[DEBUG] Fatal error: {e}", file=sys.stderr, flush=True)
+    finally:
+        env.close()
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as e:
+        print(f"[DEBUG] Top-level error: {e}", file=sys.stderr, flush=True)
+        sys.exit(0)
+"""
+Inference Script — Methanol APC Environment
+============================================
 
 MANDATORY REQUIREMENTS:
 - Named inference.py at project root
@@ -26,14 +283,12 @@ from openai import OpenAI
 # ---------------------------------------------------------------------------
 # Environment variables (MANDATORY)
 # ---------------------------------------------------------------------------
-LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
-API_KEY = os.getenv("HF_TOKEN") or os.getenv("API_KEY")
-
-API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"
-MODEL_NAME = os.getenv("MODEL_NAME") or "Qwen/Qwen2.5-72B-Instruct"
+API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
+MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
+HF_TOKEN = os.getenv("HF_TOKEN")
 SPACE_URL = os.getenv("SPACE_URL") or "https://glitchfilter-methanol-apc-env.hf.space"
 
-if API_KEY is None:
+if HF_TOKEN is None:
     raise ValueError("HF_TOKEN environment variable is required")
 
 # ---------------------------------------------------------------------------
