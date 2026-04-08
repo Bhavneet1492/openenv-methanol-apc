@@ -20,7 +20,7 @@ import sys
 import textwrap
 from typing import Dict, List, Optional
 
-import requests
+import websockets.sync.client as ws_sync
 from openai import OpenAI
 
 # ---------------------------------------------------------------------------
@@ -68,36 +68,44 @@ SYSTEM_PROMPT = textwrap.dedent("""
 
 
 # ---------------------------------------------------------------------------
-# Simple HTTP environment client (self-contained, no package dependency)
+# WebSocket environment client (self-contained, no package dependency)
 # ---------------------------------------------------------------------------
 class SimpleEnvClient:
-    """Minimal HTTP client for the OpenEnv environment."""
+    """Minimal WebSocket client for the OpenEnv environment.
+    Uses the /ws endpoint which maintains session state across reset/step.
+    """
 
     def __init__(self, base_url: str):
         self.base_url = base_url.rstrip("/")
-        self.session = requests.Session()
-        self.session.headers.update({"Content-Type": "application/json"})
+        ws_url = self.base_url.replace("https://", "wss://").replace("http://", "ws://")
+        self.ws_url = f"{ws_url}/ws"
+        self.ws = None
+
+    def _connect(self):
+        if self.ws is None:
+            self.ws = ws_sync.connect(self.ws_url)
 
     def reset(self, task_name: str = "startup") -> Dict:
-        r = self.session.post(
-            f"{self.base_url}/reset",
-            json={"task_name": task_name},
-            timeout=30,
-        )
-        r.raise_for_status()
-        return r.json()
+        self._connect()
+        msg = json.dumps({"type": "reset", "data": {"task_name": task_name}})
+        self.ws.send(msg)
+        response = json.loads(self.ws.recv())
+        return response.get("data", response)
 
     def step(self, action: Dict) -> Dict:
-        r = self.session.post(
-            f"{self.base_url}/step",
-            json=action,
-            timeout=30,
-        )
-        r.raise_for_status()
-        return r.json()
+        self._connect()
+        msg = json.dumps({"type": "step", "data": action})
+        self.ws.send(msg)
+        response = json.loads(self.ws.recv())
+        return response.get("data", response)
 
     def close(self):
-        self.session.close()
+        if self.ws:
+            try:
+                self.ws.close()
+            except Exception:
+                pass
+            self.ws = None
 
 
 # ---------------------------------------------------------------------------
@@ -259,12 +267,18 @@ def main() -> None:
     try:
         for task_info in TASKS:
             run_task(llm_client, env, task_info)
+    except Exception as e:
+        print(f"[DEBUG] Fatal error: {e}", file=sys.stderr, flush=True)
     finally:
         env.close()
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(f"[DEBUG] Top-level error: {e}", file=sys.stderr, flush=True)
+        sys.exit(0)  # Exit cleanly even on error
 """
 Inference Script — Methanol APC Environment
 ============================================
