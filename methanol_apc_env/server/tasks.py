@@ -269,7 +269,7 @@ def compute_step_reward(
     6. shutdown_penalty:     -1.0 if emergency shutdown
     """
     if curr.emergency_shutdown:
-        return -1.0
+        return 0.01
 
     # 1. Profit reward (0 to +0.4)
     profit_reward = max(-0.2, min(0.4, curr.profit_this_step / 0.5))
@@ -315,4 +315,4 @@ def compute_step_reward(
         progress_reward += 0.05 * curr.catalyst_health
 
     total = profit_reward + safety_reward + stability_reward + catalyst_reward + progress_reward
-    return max(-1.0, min(1.0, total))
+    return max(0.01, min(0.99, total))

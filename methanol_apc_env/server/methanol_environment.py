@@ -105,7 +105,7 @@ class MethanolAPCEnvironment(Environment):
             step_count=0,
         )
 
-        return self._make_observation(reward=0.0)
+        return self._make_observation(reward=0.01)
 
     def step(self, action: MethanolAPCAction) -> MethanolAPCObservation:
         """Execute one control step.
@@ -121,7 +121,7 @@ class MethanolAPCEnvironment(Environment):
             Updated telemetry with reward and done flag.
         """
         if self._done:
-            return self._make_observation(reward=0.0)
+            return self._make_observation(reward=0.01)
 
         if self._reactor is None or self._task is None:
             raise RuntimeError("Must call reset() before step()")
@@ -143,8 +143,9 @@ class MethanolAPCEnvironment(Environment):
         self._reactor = simulate_step(prev, action_dict, disturbance)
         self._trajectory.append(self._reactor)
 
-        # Compute dense reward
+        # Compute dense reward and clamp to strict (0, 1)
         reward = compute_step_reward(prev, self._reactor, self._task)
+        reward = max(0.01, min(0.99, reward))
 
         # Compute rubric reward (RFC 004)
         obs_for_rubric = self._make_observation(reward=reward, rubric_reward=None)
