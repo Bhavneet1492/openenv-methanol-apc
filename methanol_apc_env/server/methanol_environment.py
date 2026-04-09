@@ -172,13 +172,14 @@ class MethanolAPCEnvironment(Environment):
         return self._state
 
     def get_final_score(self) -> float:
-        """Run the grader on the recorded trajectory. Returns score in [0, 1]."""
+        """Run the grader on the recorded trajectory. Returns score in (0, 1)."""
         if self._task is None:
-            return 0.0
+            return 0.01
         grader = GRADERS.get(self._task.name)
         if grader is None:
-            return 0.0
-        return grader(self._trajectory)
+            return 0.01
+        score = grader(self._trajectory)
+        return max(0.01, min(0.99, score))
 
     # ------------------------------------------------------------------
     # Internal helpers

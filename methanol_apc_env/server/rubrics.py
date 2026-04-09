@@ -26,13 +26,13 @@ try:
     from reactor_sim import EMERGENCY_SHUTDOWN_TEMP
     from tasks import (
         grade_startup, grade_optimization, grade_disturbance, grade_long_horizon,
-        compute_step_reward, TASKS, TaskConfig,
+        compute_step_reward, TASKS, TaskConfig, _clamp_score,
     )
 except ImportError:
     from .reactor_sim import EMERGENCY_SHUTDOWN_TEMP
     from .tasks import (
         grade_startup, grade_optimization, grade_disturbance, grade_long_horizon,
-        compute_step_reward, TASKS, TaskConfig,
+        compute_step_reward, TASKS, TaskConfig, _clamp_score,
     )
 
 
@@ -149,8 +149,8 @@ class MethanolAPCRubric(Rubric):
         step_reward = self.step_rubric(action, observation)
         traj_reward = self.trajectory_rubric(action, observation)
         if getattr(observation, "done", False):
-            return max(0.01, min(0.99, traj_reward))
-        return max(0.01, min(0.99, step_reward))
+            return _clamp_score(traj_reward)
+        return _clamp_score(step_reward)
 
 
 # ---------------------------------------------------------------------------

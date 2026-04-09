@@ -105,10 +105,16 @@ TASKS: Dict[str, TaskConfig] = {
 # ---------------------------------------------------------------------------
 
 def _clamp_score(score: float) -> float:
-    """Map score to strictly (0, 1) using sigmoid — preserves signal strength."""
-    # sigmoid maps any real number to (0, 1), never touching boundaries
+    """Map score in [0, 1] to strictly (0, 1) using centered sigmoid.
+
+    sigmoid(k*(x - 0.5)) centers the S-curve so that:
+      0.0 -> ~0.02  (bad stays clearly bad)
+      0.5 -> 0.50   (midpoint preserved)
+      1.0 -> ~0.98  (good stays clearly good)
+    k=10 gives wide spread; final affine scales to [0.01, 0.99].
+    """
     import math
-    mapped = 1.0 / (1.0 + math.exp(-3.0 * score))  # k=3 for good spread
+    mapped = 1.0 / (1.0 + math.exp(-10.0 * (score - 0.5)))
     return 0.01 + 0.98 * mapped  # scale to (0.01, 0.99)
 
 def grade_startup(trajectory: List[ReactorState]) -> float:
