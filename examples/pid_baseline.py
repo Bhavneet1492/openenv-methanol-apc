@@ -47,6 +47,14 @@ class PIDController:
             feed_rate_co=self.feed_co,
             cooling_water_flow=cooling,
             compressor_power=self.compressor,
+            purge_valve_position=2.0,
+            recycle_ratio=3.5,
+            feed_preheat_temp=200.0,
+            reformer_fuel_gas=5.0,
+            reformer_steam_flow=15.0,
+            distillation_reflux=3.0,
+            reboiler_duty=50.0,
+            flare_valve=0.0,
         )
 
 

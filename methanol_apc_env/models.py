@@ -12,35 +12,71 @@ from pydantic import Field
 
 
 class MethanolAPCAction(Action):
-    """Agent control actions for the methanol synthesis reactor.
+    """Agent control actions for the methanol synthesis plant.
 
-    The agent manipulates four continuous control variables each step:
-    feed rates for H2 and CO, cooling water flow, and compressor power.
+    The agent manipulates 13 continuous control variables across the full
+    methanol production chain: feed preparation, synthesis reactor,
+    product separation, and utilities.
     """
 
+    # --- Reactor Feed Controls ---
     feed_rate_h2: float = Field(
-        ...,
-        ge=0.0,
-        le=10.0,
+        ..., ge=0.0, le=10.0,
         description="H2 feed rate setpoint (mol/s). Range: 0-10",
     )
     feed_rate_co: float = Field(
-        ...,
-        ge=0.0,
-        le=5.0,
+        ..., ge=0.0, le=5.0,
         description="CO feed rate setpoint (mol/s). Range: 0-5",
     )
+
+    # --- Reactor Thermal Controls ---
     cooling_water_flow: float = Field(
-        ...,
-        ge=0.0,
-        le=100.0,
+        ..., ge=0.0, le=100.0,
         description="Cooling water flow rate (L/min). Range: 0-100",
     )
     compressor_power: float = Field(
-        ...,
-        ge=0.0,
-        le=100.0,
+        ..., ge=0.0, le=100.0,
         description="Compressor power setpoint (kW). Range: 0-100",
+    )
+
+    # --- Synthesis Loop Controls ---
+    purge_valve_position: float = Field(
+        default=2.0, ge=0.0, le=100.0,
+        description="Purge valve opening (%). Higher = more inerts purged but more feed lost. Range: 0-100",
+    )
+    recycle_ratio: float = Field(
+        default=3.5, ge=0.0, le=8.0,
+        description="Recycle ratio (mol recycled / mol fresh feed). Typical 3-5. Range: 0-8",
+    )
+    feed_preheat_temp: float = Field(
+        default=200.0, ge=100.0, le=300.0,
+        description="Feed preheat temperature setpoint (C). Range: 100-300",
+    )
+
+    # --- Reformer Controls ---
+    reformer_fuel_gas: float = Field(
+        default=5.0, ge=0.0, le=20.0,
+        description="Reformer burner fuel gas flow (mol/s). Controls syngas production rate. Range: 0-20",
+    )
+    reformer_steam_flow: float = Field(
+        default=15.0, ge=0.0, le=50.0,
+        description="Reformer steam flow (mol/s). Steam-to-carbon ratio target ~3.0. Range: 0-50",
+    )
+
+    # --- Distillation Controls ---
+    distillation_reflux: float = Field(
+        default=3.0, ge=0.5, le=10.0,
+        description="Distillation column reflux ratio. Higher = purer product but more energy. Range: 0.5-10",
+    )
+    reboiler_duty: float = Field(
+        default=50.0, ge=0.0, le=200.0,
+        description="Reboiler heat duty (kW). Drives distillation separation. Range: 0-200",
+    )
+
+    # --- Utility Controls ---
+    flare_valve: float = Field(
+        default=0.0, ge=0.0, le=100.0,
+        description="Flare/vent valve position (%). Emergency pressure relief. Range: 0-100",
     )
 
 
@@ -97,4 +133,42 @@ class MethanolAPCObservation(Observation):
     selectivity: float = Field(
         default=0.995,
         description="Methanol selectivity (fraction, rest is DME + methyl formate)",
+    )
+
+    # --- Synthesis Loop Observations ---
+    purge_rate: float = Field(
+        default=0.0, description="Current purge gas rate (mol/s)",
+    )
+    inert_fraction: float = Field(
+        default=0.0, description="Inert gas fraction in recycle loop (0-1)",
+    )
+    recycle_ratio: float = Field(
+        default=3.5, description="Current recycle ratio",
+    )
+
+    # --- Reformer Observations ---
+    reformer_outlet_temp: float = Field(
+        default=850.0, description="Reformer tube outlet temperature (C)",
+    )
+    steam_to_carbon: float = Field(
+        default=3.0, description="Steam-to-carbon molar ratio",
+    )
+    syngas_flow: float = Field(
+        default=0.0, description="Total syngas flow from reformer (mol/s)",
+    )
+
+    # --- Distillation Observations ---
+    product_purity: float = Field(
+        default=0.995, description="Methanol product purity (mass fraction)",
+    )
+    distillation_duty: float = Field(
+        default=0.0, description="Total distillation energy consumption (kW)",
+    )
+
+    # --- Utility Observations ---
+    flare_flow: float = Field(
+        default=0.0, description="Gas being flared (mol/s). Should be ~0 in normal operation.",
+    )
+    total_co2_emissions: float = Field(
+        default=0.0, description="Cumulative CO2 emissions (kg)",
     )

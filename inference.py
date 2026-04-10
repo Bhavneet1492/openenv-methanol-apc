@@ -128,7 +128,20 @@ def parse_action(text):
         if c.startswith("```"): c = c.split("\n", 1)[1]
         if c.endswith("```"): c = c.rsplit("```", 1)[0]
         d = json.loads(c.strip())
-        return {"feed_rate_h2": float(d.get("feed_rate_h2", 2)), "feed_rate_co": float(d.get("feed_rate_co", 1)), "cooling_water_flow": float(d.get("cooling_water_flow", 60)), "compressor_power": float(d.get("compressor_power", 40))}
+        return {
+            "feed_rate_h2": float(d.get("feed_rate_h2", 5)),
+            "feed_rate_co": float(d.get("feed_rate_co", 2.5)),
+            "cooling_water_flow": float(d.get("cooling_water_flow", 40)),
+            "compressor_power": float(d.get("compressor_power", 65)),
+            "purge_valve_position": float(d.get("purge_valve_position", 2)),
+            "recycle_ratio": float(d.get("recycle_ratio", 3.5)),
+            "feed_preheat_temp": float(d.get("feed_preheat_temp", 200)),
+            "reformer_fuel_gas": float(d.get("reformer_fuel_gas", 5)),
+            "reformer_steam_flow": float(d.get("reformer_steam_flow", 15)),
+            "distillation_reflux": float(d.get("distillation_reflux", 3)),
+            "reboiler_duty": float(d.get("reboiler_duty", 50)),
+            "flare_valve": float(d.get("flare_valve", 0)),
+        }
     except:
         return None  # signal to use adaptive fallback
 
@@ -141,25 +154,25 @@ def adaptive_fallback(obs):
     if task == "startup":
         # Ramp up: high feed, low cooling until near target, then stabilize
         if T < 200:
-            return {"feed_rate_h2": 8.0, "feed_rate_co": 4.0, "cooling_water_flow": 0.0, "compressor_power": 70.0}
+            return {"feed_rate_h2": 8.0, "feed_rate_co": 4.0, "cooling_water_flow": 0.0, "compressor_power": 70.0, "purge_valve_position": 1.0, "recycle_ratio": 2.0, "feed_preheat_temp": 250.0, "reformer_fuel_gas": 8.0, "reformer_steam_flow": 20.0, "distillation_reflux": 3.0, "reboiler_duty": 50.0, "flare_valve": 0.0}
         elif T < 240:
-            return {"feed_rate_h2": 6.0, "feed_rate_co": 3.0, "cooling_water_flow": 20.0, "compressor_power": 60.0}
+            return {"feed_rate_h2": 6.0, "feed_rate_co": 3.0, "cooling_water_flow": 20.0, "compressor_power": 60.0, "purge_valve_position": 2.0, "recycle_ratio": 3.0, "feed_preheat_temp": 220.0, "reformer_fuel_gas": 6.0, "reformer_steam_flow": 18.0, "distillation_reflux": 3.0, "reboiler_duty": 50.0, "flare_valve": 0.0}
         elif T < 255:
-            return {"feed_rate_h2": 4.0, "feed_rate_co": 2.0, "cooling_water_flow": 45.0, "compressor_power": 50.0}
+            return {"feed_rate_h2": 4.0, "feed_rate_co": 2.0, "cooling_water_flow": 45.0, "compressor_power": 50.0, "purge_valve_position": 2.0, "recycle_ratio": 3.5, "feed_preheat_temp": 200.0, "reformer_fuel_gas": 5.0, "reformer_steam_flow": 15.0, "distillation_reflux": 3.0, "reboiler_duty": 50.0, "flare_valve": 0.0}
         else:
-            return {"feed_rate_h2": 4.0, "feed_rate_co": 2.0, "cooling_water_flow": 60.0, "compressor_power": 50.0}
+            return {"feed_rate_h2": 4.0, "feed_rate_co": 2.0, "cooling_water_flow": 60.0, "compressor_power": 50.0, "purge_valve_position": 2.0, "recycle_ratio": 3.5, "feed_preheat_temp": 200.0, "reformer_fuel_gas": 5.0, "reformer_steam_flow": 15.0, "distillation_reflux": 3.0, "reboiler_duty": 50.0, "flare_valve": 0.0}
     else:
-        # Steady-state: adjust cooling based on temperature
+        base = {"purge_valve_position": 2.0, "recycle_ratio": 3.5, "feed_preheat_temp": 200.0, "reformer_fuel_gas": 5.0, "reformer_steam_flow": 15.0, "distillation_reflux": 3.0, "reboiler_duty": 50.0, "flare_valve": 0.0}
         if T > 280:
-            return {"feed_rate_h2": 2.0, "feed_rate_co": 1.0, "cooling_water_flow": 90.0, "compressor_power": 40.0}
+            return {**base, "feed_rate_h2": 2.0, "feed_rate_co": 1.0, "cooling_water_flow": 90.0, "compressor_power": 40.0}
         elif T > 265:
-            return {"feed_rate_h2": 4.0, "feed_rate_co": 2.0, "cooling_water_flow": 70.0, "compressor_power": 50.0}
+            return {**base, "feed_rate_h2": 4.0, "feed_rate_co": 2.0, "cooling_water_flow": 70.0, "compressor_power": 50.0}
         elif T > 250:
-            return {"feed_rate_h2": 6.0, "feed_rate_co": 3.0, "cooling_water_flow": 55.0, "compressor_power": 60.0}
+            return {**base, "feed_rate_h2": 6.0, "feed_rate_co": 3.0, "cooling_water_flow": 55.0, "compressor_power": 60.0}
         elif T > 230:
-            return {"feed_rate_h2": 8.0, "feed_rate_co": 4.0, "cooling_water_flow": 35.0, "compressor_power": 70.0}
+            return {**base, "feed_rate_h2": 8.0, "feed_rate_co": 4.0, "cooling_water_flow": 35.0, "compressor_power": 70.0}
         else:
-            return {"feed_rate_h2": 8.0, "feed_rate_co": 4.0, "cooling_water_flow": 10.0, "compressor_power": 70.0}
+            return {**base, "feed_rate_h2": 8.0, "feed_rate_co": 4.0, "cooling_water_flow": 10.0, "compressor_power": 70.0}
 
 def get_llm_action(obs_text, history, task_name="optimization"):
     h = "\n".join(history[-3:]) if history else "None"

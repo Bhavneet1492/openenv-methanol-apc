@@ -103,6 +103,7 @@ class MethanolAPCEnvironment(_BaseClass):
         self._reactor: Optional[ReactorState] = None
         self._task: Optional[TaskConfig] = None
         self._trajectory: List[ReactorState] = []
+        self._last_action: Optional[MethanolAPCAction] = None
         self._done = False
         self._rubric: Optional[MethanolAPCRubric] = None
 
@@ -226,8 +227,17 @@ class MethanolAPCEnvironment(_BaseClass):
             "feed_rate_co": action.feed_rate_co,
             "cooling_water_flow": action.cooling_water_flow,
             "compressor_power": action.compressor_power,
+            "purge_valve_position": action.purge_valve_position,
+            "recycle_ratio": action.recycle_ratio,
+            "feed_preheat_temp": action.feed_preheat_temp,
+            "reformer_fuel_gas": action.reformer_fuel_gas,
+            "reformer_steam_flow": action.reformer_steam_flow,
+            "distillation_reflux": action.distillation_reflux,
+            "reboiler_duty": action.reboiler_duty,
+            "flare_valve": action.flare_valve,
         }
         self._reactor = simulate_step(prev, action_dict, disturbance)
+        self._last_action = action  # store for observation
         self._trajectory.append(self._reactor)
 
         # Compute dense reward (sigmoid-mapped to strict (0,1))
@@ -349,6 +359,20 @@ class MethanolAPCEnvironment(_BaseClass):
             carbon_efficiency=round(
                 r.reaction_rate / max(r.feed_rate_co, 1e-6), 4) if r.feed_rate_co > 0 else 0.0,
             selectivity=round(1.0 - 0.005 * max(0, r.temperature - 250) / 50.0, 4),
+            # Synthesis loop
+            purge_rate=round(r.feed_rate_h2 * 0.044 * (self._last_action.purge_valve_position / 100.0 if self._last_action else 0.02), 4),
+            inert_fraction=round(0.044 * 3.5 / (1.0 + (self._last_action.purge_valve_position / 100.0 if self._last_action else 0.02) * 3.5), 4),
+            recycle_ratio=round(self._last_action.recycle_ratio if self._last_action else 3.5, 2),
+            # Reformer (simplified model)
+            reformer_outlet_temp=round(750 + (self._last_action.reformer_fuel_gas if self._last_action else 5.0) * 10, 1),
+            steam_to_carbon=round((self._last_action.reformer_steam_flow if self._last_action else 15.0) / max(self._last_action.reformer_fuel_gas if self._last_action else 5.0, 0.1), 2),
+            syngas_flow=round(r.feed_rate_h2 + r.feed_rate_co, 2),
+            # Distillation
+            product_purity=round(min(0.999, 0.95 + 0.005 * (self._last_action.distillation_reflux if self._last_action else 3.0)), 4),
+            distillation_duty=round((self._last_action.reboiler_duty if self._last_action else 50.0), 1),
+            # Utilities
+            flare_flow=round(r.feed_rate_h2 * (self._last_action.flare_valve if self._last_action else 0.0) / 100.0, 3),
+            total_co2_emissions=round(r.methanol_produced * 0.6, 2),
             done=self._done,
             reward=reward,
         )

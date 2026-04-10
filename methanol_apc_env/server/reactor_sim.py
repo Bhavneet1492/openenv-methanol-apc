@@ -321,10 +321,9 @@ def simulate_step(
     h2_co_ratio = new_h2 / max(new_co, 1e-6)
 
     # Recycle loop — unreacted gas returns to reactor inlet [LeBlanc Ch.3.2.5]
-    # Typical recycle ratio RR = 3-5 for ICI process
-    # Effective feed = fresh feed + recycle stream
-    # Recycle composition depends on single-pass conversion from previous step
-    RECYCLE_RATIO = 3.5  # moles recycled / moles fresh feed
+    # Agent controls recycle ratio (0-8) and purge valve (0-100%)
+    RECYCLE_RATIO = action.get("recycle_ratio", 3.5)
+    RECYCLE_RATIO = max(0.0, min(8.0, RECYCLE_RATIO))
     prev_conversion = min(0.5, state.reaction_rate / max(new_h2 + new_co, 1e-6))
     # Unreacted fraction returns: (1 - conversion) * total_flow * RR / (1 + RR)
     recycle_factor = RECYCLE_RATIO / (1.0 + RECYCLE_RATIO)
@@ -335,9 +334,8 @@ def simulate_step(
     effective_co = max(0.0, effective_co)
 
     # Purge gas model — inerts accumulate in recycle loop [LeBlanc Ch.3.4.5]
-    # CH4 (~4.3%) and N2 (~0.1%) in feed build up unless purged
     INERT_FRACTION = 0.044  # fraction of fresh feed that is inert (CH4 + N2)
-    PURGE_FRACTION = 0.02   # 2% of recycle stream purged (typical)
+    PURGE_FRACTION = max(0.001, min(1.0, action.get("purge_valve_position", 2.0) / 100.0))
     # Inert buildup factor: at steady state, inerts / total = inert_frac * RR / (1 + PURGE * RR)
     inert_buildup = INERT_FRACTION * RECYCLE_RATIO / (1.0 + PURGE_FRACTION * RECYCLE_RATIO)
     inert_buildup = min(inert_buildup, 0.15)  # cap at 15% inerts
