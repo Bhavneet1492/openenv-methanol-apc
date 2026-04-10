@@ -43,16 +43,45 @@ TASKS = [
     {"name": "multi_disturbance", "max_steps": 150},
 ]
 BENCHMARK = "methanol_apc"
-SYSTEM_PROMPT = textwrap.dedent("""
-    You are an AI operator controlling a methanol synthesis reactor.
+
+SYSTEM_PROMPT_BASE = textwrap.dedent("""
+    You are an AI operator controlling a methanol synthesis reactor (ICI Low-Pressure Process).
     Each turn you receive sensor readings and must output a JSON control action:
     {"feed_rate_h2": <0-10>, "feed_rate_co": <0-5>,
      "cooling_water_flow": <0-100>, "compressor_power": <0-100>}
-    PHYSICS: CO + 2H2 -> CH3OH (exothermic). Higher feed = more heat + methanol.
-    Cooling removes heat. T>300C = SHUTDOWN. T>270C = catalyst damage.
-    Ideal H2/CO ratio = 2.0. Higher compressor = higher pressure = faster reaction.
-    RESPOND WITH ONLY the JSON object.
+
+    PHYSICS:
+    - CO + 2H2 -> CH3OH (exothermic, -90.5 kJ/mol). More feed = more heat + methanol.
+    - Optimal temperature: 240-260C. Above 270C = catalyst damage. Above 300C = EMERGENCY SHUTDOWN.
+    - Ideal H2/CO ratio = 2.0. Higher compressor = higher pressure = faster reaction but more cost.
+    - Cooling water removes heat via shell-side heat exchanger.
+    - Reaction rate depends on temperature (Arrhenius), pressure (partial pressures), and catalyst health.
+
+    ECONOMICS:
+    - Revenue: methanol_kg x $0.74/kg. Costs: feed ($0.002/mol x 60s), electricity ($0.08/kWh), cooling ($0.0005/L).
+    - Profit = Revenue - Costs. Maximize cumulative profit over the episode.
+
+    RESPOND WITH ONLY the JSON object. No explanation.
 """).strip()
+
+TASK_PROMPTS = {
+    "startup": "TASK: Cold Start. Reactor at ~150C. Ramp temperature to 240-260C range efficiently. Early losses are normal -- minimize warmup time while avoiding overshoot above 270C. Increase feed gradually, keep cooling low initially.",
+    "optimization": "TASK: Steady-State Optimization. Reactor near 250C. Find optimal balance of feed/cooling/pressure to maximize profit. Sweet spot: T=245-260C, H2/CO=2.0, moderate cooling.",
+    "disturbance_rejection": "TASK: Disturbance Rejection. At step 25, cooling water temperature will RISE from 25C to 45C (cooling tower malfunction). Prepare by building thermal margin, then compensate by increasing cooling flow or reducing feed after the disturbance.",
+    "emergency_recovery": "TASK: Emergency Recovery. Reactor starts OVERHEATED at ~290C, near shutdown limit (300C). IMMEDIATELY reduce feed and maximize cooling. Do NOT let temperature reach 300C. Gradually stabilize to 250C.",
+    "cost_minimization": "TASK: Cost Minimization. Maintain minimum production while minimizing operating costs. Use lower feed rates and compressor power. Keep temperature in optimal range with minimal cooling.",
+    "day_night_cycle": "TASK: Day/Night Pricing. Electricity prices change over time. Reduce compressor power during expensive periods, increase during cheap periods. Adapt production rate to energy cost cycle.",
+    "aged_catalyst": "TASK: Aged Catalyst. Catalyst health starts at 60%. Reaction rate is reduced. Compensate by running at slightly higher temperature/pressure, but be careful not to degrade catalyst further.",
+    "multi_disturbance": "TASK: Multi-Disturbance. Multiple disturbances will occur: cooling failure at step 25, feed upset at step 50, pressure drop at step 75. Build margins and react quickly to each event.",
+    "long_horizon_production": "TASK: Long Horizon Production. Extended run. Manage catalyst degradation over many steps. Avoid running too hot -- preserve catalyst life for sustained production.",
+    "maximum_yield": "TASK: Maximum Yield. Push for highest possible methanol output. Run at higher temperature and pressure, but stay below safety limits.",
+    "feed_composition_upset": "TASK: Feed Composition Upset. H2/CO ratio will shift mid-run. Monitor h2_co_ratio in observations and adjust feed rates to compensate.",
+    "pressure_loss": "TASK: Pressure Loss. Compressor will degrade mid-run. Compensate by adjusting feed rates to maintain production at lower pressure.",
+}
+
+def get_system_prompt(task_name):
+    task_hint = TASK_PROMPTS.get(task_name, "")
+    return SYSTEM_PROMPT_BASE + ("\n\n" + task_hint if task_hint else "")
 
 
 class SimpleEnvClient:
@@ -132,10 +161,10 @@ def adaptive_fallback(obs):
         else:
             return {"feed_rate_h2": 8.0, "feed_rate_co": 4.0, "cooling_water_flow": 10.0, "compressor_power": 70.0}
 
-def get_llm_action(obs_text, history):
+def get_llm_action(obs_text, history, task_name="optimization"):
     h = "\n".join(history[-3:]) if history else "None"
     try:
-        r = client.chat.completions.create(model=MODEL_NAME, messages=[{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": f"Sensors:\n{obs_text}\n\nHistory:\n{h}\n\nAction JSON:"}], temperature=0.3, max_tokens=200, stream=False)
+        r = client.chat.completions.create(model=MODEL_NAME, messages=[{"role": "system", "content": get_system_prompt(task_name)}, {"role": "user", "content": f"Sensors:\n{obs_text}\n\nHistory:\n{h}\n\nAction JSON:"}], temperature=0.3, max_tokens=200, stream=False)
         return (r.choices[0].message.content or "{}").strip()
     except Exception as e:
         print(f"[DEBUG] LLM error: {e}", file=sys.stderr, flush=True)
@@ -158,7 +187,7 @@ def run_task(env, task_info):
         done = result.get("done", False)
         for step in range(1, max_steps + 1):
             if done: break
-            raw = get_llm_action(obs_text(obs), history)
+            raw = get_llm_action(obs_text(obs), history, task_name=name)
             action = parse_action(raw)
             if action is None:
                 action = adaptive_fallback(obs)

@@ -85,6 +85,41 @@ _ACT = _CFG.get("actuator_limits", {})
 # Physical constants
 # ---------------------------------------------------------------------------
 R_GAS = 8.314  # J/(mol*K), universal gas constant
+
+
+def _fugacity_coefficient(T_K: float, P_bar: float, species: str = "CO") -> float:
+    """SRK fugacity coefficient for key species at reactor conditions.
+
+    Soave-Redlich-Kwong EOS correction for non-ideal gas behavior.
+    At 50-100 bar, ideal gas assumption has ~5-10% error [LeBlanc Ch.3.2.1].
+
+    Returns phi (fugacity coefficient, 0 < phi < 1 at high pressure).
+    """
+    # Critical properties for key species
+    Tc_K = {"H2": 33.2, "CO": 132.9, "CO2": 304.2, "CH3OH": 512.6, "H2O": 647.1}.get(species, 132.9)
+    Pc_bar = {"H2": 13.0, "CO": 35.0, "CO2": 73.8, "CH3OH": 80.9, "H2O": 220.6}.get(species, 35.0)
+    omega = {"H2": -0.22, "CO": 0.066, "CO2": 0.228, "CH3OH": 0.566, "H2O": 0.344}.get(species, 0.066)
+
+    Tr = T_K / Tc_K
+    Pr = P_bar / Pc_bar
+
+    # SRK alpha function
+    m = 0.48 + 1.574 * omega - 0.176 * omega ** 2
+    alpha = (1.0 + m * (1.0 - Tr ** 0.5)) ** 2
+
+    # Simplified fugacity from SRK (truncated virial form)
+    # phi = exp(B*P/(R*T)) where B is second virial coefficient
+    a = 0.42748 * (R_GAS * Tc_K) ** 2 / (Pc_bar * 1e5) * alpha
+    b = 0.08664 * R_GAS * Tc_K / (Pc_bar * 1e5)
+
+    # Approximate Z from SRK at moderate pressures
+    A = a * P_bar * 1e5 / (R_GAS * T_K) ** 2
+    B = b * P_bar * 1e5 / (R_GAS * T_K)
+
+    # For gas phase at moderate pressure: Z ≈ 1 + B - A (simplified)
+    Z = max(0.5, 1.0 + B - A / max(1.0 + B, 0.1))
+    phi = math.exp(Z - 1.0 - math.log(max(Z - B, 0.01)))
+    return max(0.3, min(1.0, phi))
 MW_CH3OH = 32.04e-3  # kg/mol, molecular weight of methanol
 MW_H2O = 18.015e-3  # kg/mol, molecular weight of water
 
@@ -308,11 +343,11 @@ def simulate_step(
     y_CH3OH = 0.02  # ~2% methanol in reactor (most condensed out)
     y_H2O = 0.01    # ~1% water
 
-    P_H2 = y_H2 * pressure
-    P_CO = y_CO * pressure
-    P_CO2 = y_CO2 * pressure
-    P_CH3OH = y_CH3OH * pressure
-    P_H2O = y_H2O * pressure
+    P_H2 = y_H2 * pressure * _fugacity_coefficient(T_kelvin, pressure, "H2")
+    P_CO = y_CO * pressure * _fugacity_coefficient(T_kelvin, pressure, "CO")
+    P_CO2 = y_CO2 * pressure * _fugacity_coefficient(T_kelvin, pressure, "CO2")
+    P_CH3OH = y_CH3OH * pressure * _fugacity_coefficient(T_kelvin, pressure, "CH3OH")
+    P_H2O = y_H2O * pressure * _fugacity_coefficient(T_kelvin, pressure, "H2O")
 
     # --- LHHW-style kinetics (Graaf et al. 1988 simplified) ---
     # Rate = k * driving_force / (1 + adsorption_terms)
