@@ -256,11 +256,6 @@ def create_custom_ui() -> gr.Blocks:
 
     with gr.Blocks(
         title="Methanol APC — Digital Twin",
-        theme=gr.themes.Soft(primary_hue="blue", neutral_hue="slate"),
-        css="""
-        .gradio-container { max-width: 1400px !important; }
-        .status-panel { font-size: 14px; }
-        """
     ) as ui:
         gr.Markdown("# 🧪 Methanol APC — Industrial Digital Twin Control Panel")
         gr.Markdown("*ICI Low-Pressure Process | Cu/ZnO/Al₂O₃ Catalyst | 3-Reaction Model*")
