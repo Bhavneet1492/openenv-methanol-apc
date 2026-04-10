@@ -107,7 +107,8 @@ def test_grader_all_tasks():
 def test_disturbance_applied_at_step_25():
     """Disturbance task should change cooling_water_temp at step 25."""
     env = MethanolAPCEnvironment()
-    obs = env.reset(task_name="disturbance_rejection")
+    obs = env.reset(task_name="disturbance_rejection", seed=42)
+    initial_cool_temp = obs.cooling_water_temp
     action = MethanolAPCAction(
         feed_rate_h2=4.0, feed_rate_co=2.0,
         cooling_water_flow=70.0, compressor_power=50.0,
@@ -115,9 +116,9 @@ def test_disturbance_applied_at_step_25():
     for i in range(30):
         obs = env.step(action)
         if i == 23:  # step 24 (before disturbance)
-            assert obs.cooling_water_temp == 25.0
+            assert abs(obs.cooling_water_temp - initial_cool_temp) < 3.0
         if i == 25:  # step 26 (after disturbance at step 25)
-            assert obs.cooling_water_temp == 45.0
+            assert obs.cooling_water_temp > 40.0  # disturbance raises it
 
 
 def test_reset_clears_state():

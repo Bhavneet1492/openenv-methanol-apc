@@ -35,6 +35,7 @@ from __future__ import annotations
 import json
 import math
 import os
+import random
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Optional
@@ -92,17 +93,17 @@ MW_H2O = 18.015e-3  # kg/mol, molecular weight of water
 # ---------------------------------------------------------------------------
 # Kinetic parameters — R1: CO hydrogenation
 Ea_R1 = _CAT.get("Ea_J_per_mol", 76_000.0)
-k0_R1 = _CAT.get("k0_mol_per_s_bar", 3.5e8)
+k0_R1 = _CAT.get("k0_mol_per_s_bar", 5.0e5)  # LHHW form, calibrated for ~2 mol/s at 250C
 DELTA_H_R1_298 = _RXN.get("delta_H_J_per_mol", -90_500.0)
 
 # Kinetic parameters — R2: CO2 hydrogenation
 Ea_R2 = 68_000.0  # J/mol, CO2 route has lower Ea [4]
-k0_R2 = 1.5e7  # mol/(s*bar), lower pre-exponential (slower reaction)
+k0_R2 = 2.0e4  # mol/(s*bar), LHHW calibrated
 DELTA_H_R2_298 = -49_500.0  # J/mol at 298K [1]
 
 # Kinetic parameters — R3: reverse water-gas shift
 Ea_R3 = 85_000.0  # J/mol [4]
-k0_R3 = 5.0e6  # mol/(s*bar)
+k0_R3 = 1.0e4  # mol/(s*bar), LHHW calibrated
 DELTA_H_R3_298 = 41_200.0  # J/mol at 298K (endothermic) [1]
 
 P_REF = _RXN.get("pressure_ref_bar", 50.0)
@@ -291,50 +292,74 @@ def simulate_step(
     est_co_net = new_co * (1.0 - co2_fraction)
     stoichiometric_number = (new_h2 - est_co2) / max(est_co_net + est_co2, 1e-6)
 
-    # Pressure from compressor
-    pressure = P_MIN + (new_compressor / 100.0) * (P_MAX - P_MIN)
+    # Pressure from compressor (dynamic accumulation)
+    # P_new = P_old * (1 + dt/tau * (P_target - P_old)/P_old) with tau ~ 5 steps
+    P_target = P_MIN + (new_compressor / 100.0) * (P_MAX - P_MIN)
+    P_tau = 300.0  # pressure time constant (seconds) -- 5 steps
+    pressure = state.pressure + (P_target - state.pressure) * (1.0 - math.exp(-DT_SECONDS / P_tau))
 
-    # --- R1: CO + 2H₂ → CH₃OH (primary, ΔH = -90.5 kJ/mol) ---
+    # Partial pressures (species mole fractions * total P)
+    # Total feed flow: H2 + CO + CO2 (+ inerts)
+    F_total = new_h2 + new_co + est_co2 + 0.5  # 0.5 mol/s inerts (CH4, N2)
+    y_H2 = new_h2 / max(F_total, 1e-6)
+    y_CO = est_co_net / max(F_total, 1e-6)
+    y_CO2 = est_co2 / max(F_total, 1e-6)
+    # Product partial pressures (assume small due to separation/recycle)
+    y_CH3OH = 0.02  # ~2% methanol in reactor (most condensed out)
+    y_H2O = 0.01    # ~1% water
+
+    P_H2 = y_H2 * pressure
+    P_CO = y_CO * pressure
+    P_CO2 = y_CO2 * pressure
+    P_CH3OH = y_CH3OH * pressure
+    P_H2O = y_H2O * pressure
+
+    # --- LHHW-style kinetics (Graaf et al. 1988 simplified) ---
+    # Rate = k * driving_force / (1 + adsorption_terms)
+    # Driving force includes forward - reverse (equilibrium approach)
+
+    # R1: CO + 2H2 -> CH3OH
     arr_R1 = k0_R1 * math.exp(-Ea_R1 / (R_GAS * T_kelvin))
-    rate_R1 = arr_R1 * (pressure / P_REF) * state.catalyst_health * ETA
-    rate_R1 *= _equilibrium_factor(DELTA_H_R1_298, K_EQ_R1_REF, T_kelvin)
+    K_eq_R1 = _equilibrium_factor(DELTA_H_R1_298, K_EQ_R1_REF, T_kelvin)
+    driving_R1 = P_CO * P_H2**2 - P_CH3OH / max(K_eq_R1, 1e-6)
+    driving_R1 = max(driving_R1, 0.0)  # no reverse reaction in this direction
 
-    # --- R2: CO₂ + 3H₂ → CH₃OH + H₂O (secondary, ΔH = -49.5 kJ/mol) ---
+    # R2: CO2 + 3H2 -> CH3OH + H2O
     arr_R2 = k0_R2 * math.exp(-Ea_R2 / (R_GAS * T_kelvin))
-    rate_R2 = arr_R2 * (pressure / P_REF) * state.catalyst_health * ETA
-    rate_R2 *= _equilibrium_factor(DELTA_H_R2_298, K_EQ_R2_REF, T_kelvin)
-    # R2 rate depends on CO₂ availability (fraction of total carbon feed)
-    rate_R2 *= co2_fraction
+    K_eq_R2 = _equilibrium_factor(DELTA_H_R2_298, K_EQ_R2_REF, T_kelvin)
+    driving_R2 = P_CO2 * P_H2**3 - P_CH3OH * P_H2O / max(K_eq_R2, 1e-6)
+    driving_R2 = max(driving_R2, 0.0)
 
-    # --- R3: CO₂ + H₂ → CO + H₂O (reverse WGS, ΔH = +41.2 kJ/mol) ---
+    # R3: CO2 + H2 -> CO + H2O (reverse WGS)
     arr_R3 = k0_R3 * math.exp(-Ea_R3 / (R_GAS * T_kelvin))
-    rate_R3 = arr_R3 * (pressure / P_REF) * state.catalyst_health * ETA
-    # R3 is endothermic — favored at HIGH T (opposite of R1/R2)
-    # At low T, equilibrium strongly disfavors R3
     dH_R3_over_R = abs(DELTA_H_R3_298) / R_GAS
     K_eq_R3 = K_EQ_R3_REF * math.exp(-dH_R3_over_R * (1.0 / T_kelvin - 1.0 / T_REF_EQ))
-    rate_R3 *= min(1.0, K_eq_R3)  # R3 limited by its own equilibrium
-    rate_R3 *= co2_fraction
+    driving_R3 = P_CO2 * P_H2 - P_CO * P_H2O / max(K_eq_R3, 1e-6)
+    driving_R3 = max(driving_R3, 0.0)
+
+    # Adsorption denominator (simplified Langmuir-Hinshelwood)
+    K_ads_CO = 0.5   # adsorption equilibrium for CO
+    K_ads_H2 = 0.3   # adsorption equilibrium for H2
+    K_ads_H2O = 0.1  # water competes for sites
+    denom = (1.0 + K_ads_CO * P_CO + K_ads_H2 * P_H2**0.5 + K_ads_H2O * P_H2O)**2
+
+    # Compute rates with LHHW form
+    rate_R1 = arr_R1 * driving_R1 / denom * state.catalyst_health * ETA
+    rate_R2 = arr_R2 * driving_R2 / denom * state.catalyst_health * ETA
+    rate_R3 = arr_R3 * driving_R3 / denom * state.catalyst_health * ETA
 
     # Stoichiometric efficiency (ideal H2/CO = 2.0 for R1)
     stoich_eff = 1.0 - 0.3 * abs(h2_co_ratio - 2.0) / 2.0
     stoich_eff = max(0.1, min(1.0, stoich_eff))
     rate_R1 *= stoich_eff
 
-    # Cap rates by available feed
-    # R1 consumes: 1 CO + 2 H₂ per mol reaction
-    # R2 consumes: 1 CO₂ + 3 H₂ per mol reaction
-    # R3 consumes: 1 CO₂ + 1 H₂ per mol reaction
-    max_rate_by_co = max(est_co_net, 0.0)
-    max_rate_by_h2_r1 = max(new_h2 / 2.0, 0.0)
-    rate_R1 = max(0.0, min(rate_R1, max_rate_by_co, max_rate_by_h2_r1))
-
-    max_rate_by_co2 = max(est_co2, 0.0)
-    max_rate_by_h2_r2 = max((new_h2 - 2.0 * rate_R1) / 3.0, 0.0)
-    rate_R2 = max(0.0, min(rate_R2, max_rate_by_co2, max_rate_by_h2_r2))
-
-    rate_R3 = max(0.0, min(rate_R3, max_rate_by_co2 - rate_R2,
-                           max((new_h2 - 2.0 * rate_R1 - 3.0 * rate_R2), 0.0)))
+    # Soft feed cap (smooth Michaelis-Menten style, not hard min)
+    # rate * feed / (feed + Km) -- rate goes to zero smoothly as feed drops
+    Km_co = 0.5   # half-saturation for CO (mol/s)
+    Km_h2 = 1.0   # half-saturation for H2 (mol/s)
+    rate_R1 *= est_co_net / (est_co_net + Km_co) * new_h2 / (new_h2 + Km_h2)
+    rate_R2 *= est_co2 / (est_co2 + Km_co) * new_h2 / (new_h2 + Km_h2)
+    rate_R3 *= est_co2 / (est_co2 + Km_co) * new_h2 / (new_h2 + Km_h2)
 
     # Total methanol production from R1 + R2
     reaction_rate = rate_R1 + rate_R2  # total CH₃OH production rate
@@ -369,8 +394,8 @@ def simulate_step(
     # Ergun pressure drop across packed bed [Fogler Ch.5, Voß Eq.5]
     # ΔP/L = 150·μ·(1-ε)²/(ε³·dp²)·u + 1.75·ρ·(1-ε)/(ε³·dp)·u²
     # Simplified: use superficial velocity from total molar flow
-    cross_area = math.pi * (PELLET_DIAMETER * 10.0) ** 2 / 4.0  # rough tube area
-    cross_area = max(cross_area, 0.001)  # prevent division by zero
+    # Reactor cross-section area from volume/length: V=10m³, L=6m -> A=1.67m²
+    cross_area = 10.0 / max(BED_LENGTH, 1.0)  # m²
     superficial_velocity = (f_total_in * R_GAS * T_kelvin) / (pressure * 1e5 * cross_area)
     superficial_velocity = min(superficial_velocity, 2.0)  # cap at 2 m/s
     
@@ -402,7 +427,7 @@ def simulate_step(
         + rate_R2 * abs(dH_R2_T)    # R2 exothermic: generates heat
         - rate_R3 * abs(dH_R3_T)    # R3 endothermic: absorbs heat
     )
-    heat_generated = max(0.0, heat_generated)  # net heat cannot be negative at reactor level
+    # Allow net endothermic operation (R3 dominant at very high T)
 
     u_eff = U_BASE * (new_cooling / MAX_COOLING_FLOW) ** 0.8
     heat_removed = u_eff * A_HX * (T - cooling_water_temp)
@@ -411,6 +436,16 @@ def simulate_step(
     dT = max(-MAX_DT_PER_STEP, min(MAX_DT_PER_STEP, dT))
 
     new_temperature = T + dT
+
+    # Process noise -- feed composition fluctuations, measurement noise,
+    # ambient temperature variation [Seborg Ch. 6]
+    temp_noise = random.gauss(0, 1.0)  # +/- 1.0C (realistic for industrial)
+    rate_noise_factor = 1.0 + random.gauss(0, 0.05)  # +/- 5% rate variation
+    pressure_noise = random.gauss(0, 0.3)  # +/- 0.3 bar  
+    new_temperature += temp_noise
+    pressure += pressure_noise
+    reaction_rate *= max(0.0, rate_noise_factor)
+    methanol_this_step *= max(0.0, rate_noise_factor)
 
     # ------------------------------------------------------------------
     # 3.  CATALYST DEACTIVATION (Fogler Ch. 10, Spencer 1999)

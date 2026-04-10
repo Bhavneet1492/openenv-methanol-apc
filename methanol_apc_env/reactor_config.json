@@ -17,7 +17,7 @@
             "catalyst": {
                 "type": "Cu/ZnO/Al2O3 (ICI 51-2)",
                 "Ea_J_per_mol": 76000.0,
-                "k0_mol_per_s_bar": 3.5e8,
+                "k0_mol_per_s_bar": 5.0e5,
                 "T_optimal_max_C": 270.0,
                 "T_sintering_C": 300.0,
                 "lifetime_years": "2-4"
