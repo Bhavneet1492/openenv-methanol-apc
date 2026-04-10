@@ -537,6 +537,23 @@ def simulate_step(
 
     new_temperature = T + dT
 
+    # Multi-bed quench reactor model [LeBlanc Fig.3, ICI 4-bed]
+    # Each bed sees adiabatic temperature rise, then cold-shot quench
+    # Feed preheat temp determines quench gas temperature
+    quench_temp = action.get("feed_preheat_temp", 200.0)
+    bed_rise_per_bed = max(0, dT) / 4.0  # total rise split across 4 beds
+    bed_quench = (new_temperature - quench_temp) * 0.15  # 15% approach to quench temp
+    bed_temps = []
+    T_bed = T  # inlet to bed 1
+    for bed_idx in range(4):
+        T_bed_out = T_bed + bed_rise_per_bed + random.gauss(0, 0.3)
+        bed_temps.append(round(T_bed_out, 1))
+        if bed_idx < 3:  # quench between beds (not after last)
+            T_bed = T_bed_out - bed_quench * (1.0 - 0.2 * bed_idx)  # less quench downstream
+        else:
+            T_bed = T_bed_out
+    new_temperature = bed_temps[-1]  # reactor outlet = last bed outlet
+
     # Process noise -- feed composition fluctuations, measurement noise,
     # ambient temperature variation [Seborg Ch. 6]
     temp_noise = random.gauss(0, 1.0)  # +/- 1.0C (realistic for industrial)
@@ -550,10 +567,12 @@ def simulate_step(
     # ------------------------------------------------------------------
     # 3.  CATALYST DEACTIVATION (Fogler Ch. 10, Spencer 1999)
     # ------------------------------------------------------------------
-    if new_temperature > T_SINTERING:
-        degradation = 0.01 * math.exp(0.1 * (new_temperature - T_SINTERING))
-    elif new_temperature > T_OPTIMAL_MAX:
-        degradation = 0.0005 * (new_temperature - T_OPTIMAL_MAX) / (
+    # Use hottest bed temperature for degradation (worst-case thermal exposure)
+    T_hottest = max(bed_temps) if bed_temps else new_temperature
+    if T_hottest > T_SINTERING:
+        degradation = 0.01 * math.exp(0.1 * (T_hottest - T_SINTERING))
+    elif T_hottest > T_OPTIMAL_MAX:
+        degradation = 0.0005 * (T_hottest - T_OPTIMAL_MAX) / (
             T_SINTERING - T_OPTIMAL_MAX
         )
     else:
@@ -597,6 +616,7 @@ def simulate_step(
         cumulative_profit=state.cumulative_profit + economics["profit"],
         temperature_prev=T,
         emergency_shutdown=emergency,
+        bed_temps=tuple(bed_temps) if bed_temps else (new_temperature,)*4,
     )
 
 
