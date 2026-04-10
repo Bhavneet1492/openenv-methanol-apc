@@ -128,7 +128,7 @@ MW_H2O = 18.015e-3  # kg/mol, molecular weight of water
 # ---------------------------------------------------------------------------
 # Kinetic parameters — R1: CO hydrogenation
 Ea_R1 = _CAT.get("Ea_J_per_mol", 76_000.0)
-k0_R1 = _CAT.get("k0_mol_per_s_bar", 5.0e5)  # LHHW form, calibrated for ~2 mol/s at 250C
+k0_R1 = _CAT.get("k0_mol_per_s_bar", 5.0e6)  # LHHW form, calibrated for ~3-5 mol/s at 250C
 DELTA_H_R1_298 = _RXN.get("delta_H_J_per_mol", -90_500.0)
 
 # Kinetic parameters — R2: CO2 hydrogenation
@@ -651,7 +651,7 @@ def simulate_step(
         # Multi-bed quench [LeBlanc Fig.3, ICI 4-bed]
         quench_temp = action.get("feed_preheat_temp", 200.0)
         bed_rise_per_bed = max(0, dT) / 4.0
-        bed_quench = (new_temperature - quench_temp) * 0.15
+        bed_quench = (new_temperature - quench_temp) * 0.05  # 5% approach (gentle quench)
         bed_temps = []
         T_bed = T
         for bed_idx in range(4):
