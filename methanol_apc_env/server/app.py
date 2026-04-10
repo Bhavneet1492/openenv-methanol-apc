@@ -31,7 +31,7 @@ app = create_app(
     max_concurrent_envs=1,
 )
 
-# Mount custom digital twin UI at /twin
+# Mount custom digital twin UI at /web (replaces default interface)
 try:
     try:
         from custom_ui import create_custom_ui
@@ -40,7 +40,7 @@ try:
     
     import gradio as gr
     custom_ui = create_custom_ui()
-    app = gr.mount_gradio_app(app, custom_ui, path="/twin")
+    app = gr.mount_gradio_app(app, custom_ui, path="/web")
 except Exception as _ui_err:
     import sys
     print(f"[WARN] Custom UI not mounted: {_ui_err}", file=sys.stderr)
