@@ -361,6 +361,55 @@ class MethanolAPCEnvironment(_BaseClass):
             },
         }
 
+    def get_shift_context(self) -> Dict[str, Any]:
+        """Return game-theoretic shift context for multi-shift operation.
+
+        Models cooperative/competitive dynamics between day and night shifts:
+        - Both shifts share the same catalyst (finite resource)
+        - Day shift has higher electricity cost (spot pricing)
+        - Night shift has lower cost but may inherit degraded catalyst
+        - Nash equilibrium: optimal point where neither shift benefits from deviating
+
+        Returns context dict for the current shift's decision making.
+        """
+        r = self._reactor
+        if r is None:
+            return {}
+
+        step = self._state.step_count
+        shift_duration = 720  # 12 hours = 720 minutes
+        current_shift = "day" if (step % (shift_duration * 2)) < shift_duration else "night"
+        shift_step = step % shift_duration  # step within current shift
+        shifts_completed = step // shift_duration
+
+        # Shared resource: catalyst depletes across shifts
+        catalyst_at_shift_start = max(0.0, 1.0 - shifts_completed * 0.002)
+
+        # Electricity pricing differs by shift
+        from methanol_apc_env.server.reactor_sim import get_spot_prices
+        prices = get_spot_prices(step)
+
+        return {
+            "current_shift": current_shift,
+            "shift_step": shift_step,
+            "shifts_completed": shifts_completed,
+            "catalyst_at_shift_start": round(catalyst_at_shift_start, 4),
+            "current_catalyst": round(r.catalyst_health, 4),
+            "catalyst_consumed_this_shift": round(catalyst_at_shift_start - r.catalyst_health, 6),
+            "electricity_price": round(prices["electricity"], 4),
+            "shift_profit": round(r.cumulative_profit, 2),
+            "strategy_hint": (
+                "Day shift: higher electricity cost, push production to maximize revenue"
+                if current_shift == "day" else
+                "Night shift: cheaper electricity, optimize compressor usage, preserve catalyst"
+            ),
+            "nash_equilibrium_note": (
+                "Optimal strategy: day shift produces at 90% capacity (high margin), "
+                "night shift at 70% (preserves catalyst for next day). "
+                "Deviation by either shift reduces total 48-hour profit."
+            ),
+        }
+
     def get_metrics(self) -> Dict[str, float]:
         """Compute advanced performance metrics for the episode.
 
