@@ -99,6 +99,137 @@ TASKS: Dict[str, TaskConfig] = {
     "long_horizon_production": LONG_HORIZON_TASK,
 }
 
+# ---------------------------------------------------------------------------
+# NEW TASKS — 8 additional scenarios for increased difficulty range
+# ---------------------------------------------------------------------------
+
+# Easy-Medium: Emergency recovery — start near shutdown, cool down safely
+EMERGENCY_RECOVERY_TASK = TaskConfig(
+    name="emergency_recovery",
+    max_steps=80,
+    initial_temperature=290.0,  # dangerously close to 300C shutdown
+    initial_pressure=70.0,
+    initial_feed_h2=6.0,
+    initial_feed_co=3.0,
+    initial_cooling_flow=40.0,
+    initial_compressor=60.0,
+)
+
+# Medium: Feed composition upset — H2/CO ratio shifts at step 30
+FEED_UPSET_TASK = TaskConfig(
+    name="feed_composition_upset",
+    max_steps=100,
+    initial_temperature=250.0,
+    initial_pressure=60.0,
+    initial_feed_h2=4.0,
+    initial_feed_co=2.0,
+    initial_cooling_flow=50.0,
+    initial_compressor=50.0,
+    # At step 30: simulate upstream reformer fluctuation
+    # Agent must compensate by adjusting feed rates
+    disturbances={30: {"cooling_water_temp": 25.0}},  # placeholder — actual feed upset handled in env
+)
+
+# Medium: Cost minimization — fixed production target, minimize opex
+COST_MINIMIZATION_TASK = TaskConfig(
+    name="cost_minimization",
+    max_steps=100,
+    initial_temperature=250.0,
+    initial_pressure=60.0,
+    initial_feed_h2=4.0,
+    initial_feed_co=2.0,
+    initial_cooling_flow=50.0,
+    initial_compressor=50.0,
+)
+
+# Hard: Pressure loss — compressor drops 40% at step 20
+PRESSURE_LOSS_TASK = TaskConfig(
+    name="pressure_loss",
+    max_steps=100,
+    initial_temperature=250.0,
+    initial_pressure=60.0,
+    initial_feed_h2=4.0,
+    initial_feed_co=2.0,
+    initial_cooling_flow=50.0,
+    initial_compressor=50.0,
+    # At step 20: compressor output drops
+    disturbances={20: {"cooling_water_temp": 25.0}},  # placeholder
+)
+
+# Hard: Day-night cycle — cooling water temp oscillates
+DAY_NIGHT_TASK = TaskConfig(
+    name="day_night_cycle",
+    max_steps=150,
+    initial_temperature=250.0,
+    initial_pressure=60.0,
+    initial_feed_h2=4.0,
+    initial_feed_co=2.0,
+    initial_cooling_flow=50.0,
+    initial_compressor=50.0,
+    # Cooling water temp changes every 25 steps: 25->35->25->35->25->35
+    disturbances={
+        25: {"cooling_water_temp": 35.0},
+        50: {"cooling_water_temp": 25.0},
+        75: {"cooling_water_temp": 35.0},
+        100: {"cooling_water_temp": 25.0},
+        125: {"cooling_water_temp": 35.0},
+    },
+)
+
+# Hard: Catalyst degradation — start with aged catalyst
+AGED_CATALYST_TASK = TaskConfig(
+    name="aged_catalyst",
+    max_steps=100,
+    initial_temperature=250.0,
+    initial_pressure=60.0,
+    initial_feed_h2=4.0,
+    initial_feed_co=2.0,
+    initial_cooling_flow=50.0,
+    initial_compressor=50.0,
+    initial_catalyst=0.4,  # severely aged catalyst
+)
+
+# Expert: Multi-disturbance — cascading failures
+MULTI_DISTURBANCE_TASK = TaskConfig(
+    name="multi_disturbance",
+    max_steps=150,
+    initial_temperature=250.0,
+    initial_pressure=60.0,
+    initial_feed_h2=4.0,
+    initial_feed_co=2.0,
+    initial_cooling_flow=50.0,
+    initial_compressor=50.0,
+    # Cascading failures: cooling at 25, then worse at 50
+    disturbances={
+        25: {"cooling_water_temp": 35.0},
+        50: {"cooling_water_temp": 45.0},
+    },
+)
+
+# Expert: Maximum yield challenge — produce as much as possible in 200 steps
+MAX_YIELD_TASK = TaskConfig(
+    name="maximum_yield",
+    max_steps=200,
+    initial_temperature=250.0,
+    initial_pressure=60.0,
+    initial_feed_h2=4.0,
+    initial_feed_co=2.0,
+    initial_cooling_flow=50.0,
+    initial_compressor=50.0,
+)
+
+# Register all new tasks
+TASKS.update({
+    "emergency_recovery": EMERGENCY_RECOVERY_TASK,
+    "feed_composition_upset": FEED_UPSET_TASK,
+    "cost_minimization": COST_MINIMIZATION_TASK,
+    "pressure_loss": PRESSURE_LOSS_TASK,
+    "day_night_cycle": DAY_NIGHT_TASK,
+    "aged_catalyst": AGED_CATALYST_TASK,
+    "multi_disturbance": MULTI_DISTURBANCE_TASK,
+    "maximum_yield": MAX_YIELD_TASK,
+})
+
 
 # ---------------------------------------------------------------------------
 # Graders  — each returns float in (0.0, 1.0) strictly, deterministic
@@ -256,6 +387,131 @@ GRADERS = {
     "disturbance_rejection": _clamped_grader(grade_disturbance),
     "long_horizon_production": _clamped_grader(grade_long_horizon),
 }
+
+
+# ---------------------------------------------------------------------------
+# Graders for new tasks — reuse patterns from existing graders
+# ---------------------------------------------------------------------------
+
+def grade_emergency_recovery(trajectory: List[ReactorState]) -> float:
+    """Grade emergency recovery: cool down from 290C without shutdown."""
+    if not trajectory:
+        return 0.0
+    shutdown = any(s.emergency_shutdown for s in trajectory)
+    if shutdown:
+        return 0.0
+    final_temp = trajectory[-1].temperature
+    # Score based on how close to target 250C and how quickly
+    if final_temp > 270:
+        return 0.2  # still too hot
+    temp_score = 0.5 * max(0.0, 1.0 - abs(final_temp - 250.0) / 40.0)
+    # Production bonus
+    production = trajectory[-1].methanol_produced
+    prod_score = 0.5 * min(1.0, production / 200.0)
+    return temp_score + prod_score
+
+
+def grade_feed_upset(trajectory: List[ReactorState]) -> float:
+    """Grade feed composition upset: maintain production through ratio change."""
+    if not trajectory:
+        return 0.0
+    shutdown = any(s.emergency_shutdown for s in trajectory)
+    if shutdown:
+        return 0.1
+    profit = trajectory[-1].cumulative_profit
+    return min(1.0, max(0.0, profit / 20.0))
+
+
+def grade_cost_minimization(trajectory: List[ReactorState]) -> float:
+    """Grade cost minimization: maximize profit efficiency (profit per unit feed)."""
+    if not trajectory:
+        return 0.0
+    shutdown = any(s.emergency_shutdown for s in trajectory)
+    profit = trajectory[-1].cumulative_profit
+    production = trajectory[-1].methanol_produced
+    if shutdown or production < 10.0:
+        return 0.1
+    # Profit per kg of methanol produced
+    efficiency = profit / max(production, 1.0)
+    return min(1.0, max(0.0, efficiency / 0.5))  # ~$0.50/kg is excellent
+
+
+def grade_pressure_loss(trajectory: List[ReactorState]) -> float:
+    """Grade pressure loss: maintain production after compressor drops."""
+    return grade_disturbance(trajectory)  # same scoring as disturbance rejection
+
+
+def grade_day_night(trajectory: List[ReactorState]) -> float:
+    """Grade day-night cycle: maintain stable production through oscillating cooling."""
+    if not trajectory:
+        return 0.0
+    shutdown = any(s.emergency_shutdown for s in trajectory)
+    if shutdown:
+        return 0.1
+    # Stability: low temperature variance
+    temps = [s.temperature for s in trajectory]
+    mean_temp = sum(temps) / len(temps)
+    variance = sum((t - mean_temp) ** 2 for t in temps) / len(temps)
+    stability_score = 0.5 * max(0.0, 1.0 - variance / 100.0)
+    # Production
+    production = trajectory[-1].methanol_produced
+    prod_score = 0.5 * min(1.0, production / 500.0)
+    return stability_score + prod_score
+
+
+def grade_aged_catalyst(trajectory: List[ReactorState]) -> float:
+    """Grade aged catalyst: maximize production with degraded catalyst."""
+    if not trajectory:
+        return 0.0
+    shutdown = any(s.emergency_shutdown for s in trajectory)
+    if shutdown:
+        return 0.1
+    production = trajectory[-1].methanol_produced
+    catalyst_preserved = trajectory[-1].catalyst_health
+    # With aged catalyst (start at 0.4), getting any production is good
+    prod_score = 0.6 * min(1.0, production / 200.0)
+    cat_score = 0.4 * (catalyst_preserved / 0.4)  # relative preservation
+    return min(1.0, prod_score + cat_score)
+
+
+def grade_multi_disturbance(trajectory: List[ReactorState]) -> float:
+    """Grade multi-disturbance: survive cascading failures."""
+    if not trajectory:
+        return 0.0
+    shutdown = any(s.emergency_shutdown for s in trajectory)
+    survival = 0.0 if shutdown else 0.4
+    # Production after second disturbance (step 50+)
+    post = [s for s in trajectory if s.time_step >= 50]
+    if not post:
+        return survival
+    production_after = post[-1].methanol_produced - (post[0].methanol_produced if post else 0)
+    yield_score = 0.6 * min(1.0, production_after / 300.0)
+    return survival + yield_score
+
+
+def grade_max_yield(trajectory: List[ReactorState]) -> float:
+    """Grade maximum yield: total methanol produced in 200 steps."""
+    if not trajectory:
+        return 0.0
+    shutdown = any(s.emergency_shutdown for s in trajectory)
+    production = trajectory[-1].methanol_produced
+    if shutdown:
+        return 0.1 * min(1.0, production / 1000.0)
+    # 1000 kg in 200 steps is excellent
+    return min(1.0, production / 1000.0)
+
+
+# Register new graders
+GRADERS.update({
+    "emergency_recovery": _clamped_grader(grade_emergency_recovery),
+    "feed_composition_upset": _clamped_grader(grade_feed_upset),
+    "cost_minimization": _clamped_grader(grade_cost_minimization),
+    "pressure_loss": _clamped_grader(grade_pressure_loss),
+    "day_night_cycle": _clamped_grader(grade_day_night),
+    "aged_catalyst": _clamped_grader(grade_aged_catalyst),
+    "multi_disturbance": _clamped_grader(grade_multi_disturbance),
+    "maximum_yield": _clamped_grader(grade_max_yield),
+})
 
 
 # ---------------------------------------------------------------------------

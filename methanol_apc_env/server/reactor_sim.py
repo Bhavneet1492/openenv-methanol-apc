@@ -116,6 +116,13 @@ T_REF_EQ = _RXN.get("T_ref_eq_K", 523.15)
 # Effectiveness factor (diffusion limitation in catalyst pellets) [11]
 ETA = 0.7  # for 5x5mm pellets (Hasberg et al.)
 
+# Packed bed properties for Ergun pressure drop [8, Fogler Ch.5, Voß Eq.5]
+BED_POROSITY = 0.4  # void fraction in packed bed
+PELLET_DIAMETER = 5.0e-3  # m (5mm catalyst pellets)
+BED_LENGTH = _RCT.get("length_m", 6.0)  # m reactor length
+GAS_VISCOSITY = 1.5e-5  # Pa*s (syngas at ~250C, approximate)
+GAS_DENSITY = 15.0  # kg/m3 (syngas at ~60 bar, ~250C, approximate)
+
 # Backward compatibility aliases
 DELTA_H = DELTA_H_R1_298
 Ea = Ea_R1
@@ -358,6 +365,29 @@ def simulate_step(
         net_moles_consumed / max(f_total_in, 1e-6)
     )
     pressure = pressure * max(0.5, mole_consumption_factor)
+
+    # Ergun pressure drop across packed bed [Fogler Ch.5, Voß Eq.5]
+    # ΔP/L = 150·μ·(1-ε)²/(ε³·dp²)·u + 1.75·ρ·(1-ε)/(ε³·dp)·u²
+    # Simplified: use superficial velocity from total molar flow
+    cross_area = math.pi * (PELLET_DIAMETER * 10.0) ** 2 / 4.0  # rough tube area
+    cross_area = max(cross_area, 0.001)  # prevent division by zero
+    superficial_velocity = (f_total_in * R_GAS * T_kelvin) / (pressure * 1e5 * cross_area)
+    superficial_velocity = min(superficial_velocity, 2.0)  # cap at 2 m/s
+    
+    # Viscous term (Blake-Kozeny)
+    dp_viscous = 150.0 * GAS_VISCOSITY * (1.0 - BED_POROSITY) ** 2 / (
+        BED_POROSITY ** 3 * PELLET_DIAMETER ** 2
+    ) * superficial_velocity * BED_LENGTH
+    
+    # Inertial term (Burke-Plummer)
+    dp_inertial = 1.75 * GAS_DENSITY * (1.0 - BED_POROSITY) / (
+        BED_POROSITY ** 3 * PELLET_DIAMETER
+    ) * superficial_velocity ** 2 * BED_LENGTH
+    
+    # Total pressure drop in bar (convert from Pa)
+    pressure_drop_bar = (dp_viscous + dp_inertial) / 1e5
+    pressure_drop_bar = min(pressure_drop_bar, pressure * 0.15)  # cap at 15% of absolute
+    pressure = pressure - pressure_drop_bar
 
     # ------------------------------------------------------------------
     # 2.  ENERGY BALANCE — Kirchhoff's law for T-dependent ΔH (Fogler Ch. 11-13)
