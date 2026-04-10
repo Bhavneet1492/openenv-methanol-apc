@@ -334,6 +334,18 @@ def simulate_step(
     effective_h2 = max(0.0, effective_h2)
     effective_co = max(0.0, effective_co)
 
+    # Purge gas model — inerts accumulate in recycle loop [LeBlanc Ch.3.4.5]
+    # CH4 (~4.3%) and N2 (~0.1%) in feed build up unless purged
+    INERT_FRACTION = 0.044  # fraction of fresh feed that is inert (CH4 + N2)
+    PURGE_FRACTION = 0.02   # 2% of recycle stream purged (typical)
+    # Inert buildup factor: at steady state, inerts / total = inert_frac * RR / (1 + PURGE * RR)
+    inert_buildup = INERT_FRACTION * RECYCLE_RATIO / (1.0 + PURGE_FRACTION * RECYCLE_RATIO)
+    inert_buildup = min(inert_buildup, 0.15)  # cap at 15% inerts
+    # Inerts dilute reactive species, reducing effective partial pressures
+    dilution_factor = 1.0 - inert_buildup
+    effective_h2 *= dilution_factor
+    effective_co *= dilution_factor
+
     # Stoichiometric number: SN = (H2 - CO2) / (CO + CO2) [LeBlanc Ch.3.3]
     co2_fraction = 0.3
     est_co2 = effective_co * co2_fraction
@@ -437,6 +449,13 @@ def simulate_step(
 
     # Methanol production (kg)
     methanol_this_step = f_ch3oh_produced * MW_CH3OH * DT_SECONDS
+
+    # Crude methanol condensation [LeBlanc Ch.3.4.5]
+    # Product stream cooled in condenser, methanol + water condense
+    # Condensation efficiency depends on cooler performance (~95-98% recovery)
+    CONDENSATION_EFF = 0.96  # 96% of methanol vapor condenses to liquid
+    methanol_this_step *= CONDENSATION_EFF
+    # Uncondensed methanol returns in recycle (already handled by recycle loop)
 
     # Pressure correction for gas consumption
     # R1: 3 mol gas → 1 mol liquid, R2: 4 mol gas → 1 liquid + 1 liquid
