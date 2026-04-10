@@ -8,7 +8,7 @@ observations (reactor telemetry) following the OpenEnv specification.
 from typing import Optional
 
 from openenv.core.env_server.types import Action, Observation
-from pydantic import Field
+from pydantic import Field, model_validator
 
 
 class MethanolAPCAction(Action):
@@ -17,6 +17,9 @@ class MethanolAPCAction(Action):
     The agent manipulates 13 continuous control variables across the full
     methanol production chain: feed preparation, synthesis reactor,
     product separation, and utilities.
+
+    All optional fields have safe defaults. If 0 is sent for a field that
+    requires a minimum > 0, the default is used instead.
     """
 
     # --- Reactor Feed Controls ---
@@ -49,8 +52,8 @@ class MethanolAPCAction(Action):
         description="Recycle ratio (mol recycled / mol fresh feed). Typical 3-5. Range: 0-8",
     )
     feed_preheat_temp: float = Field(
-        default=200.0, ge=100.0, le=300.0,
-        description="Feed preheat temperature setpoint (C). Range: 100-300",
+        default=200.0, ge=0.0, le=300.0,
+        description="Feed preheat temperature setpoint (C). Range: 0-300",
     )
 
     # --- Reformer Controls ---
@@ -65,8 +68,8 @@ class MethanolAPCAction(Action):
 
     # --- Distillation Controls ---
     distillation_reflux: float = Field(
-        default=3.0, ge=0.5, le=10.0,
-        description="Distillation column reflux ratio. Higher = purer product but more energy. Range: 0.5-10",
+        default=3.0, ge=0.0, le=10.0,
+        description="Distillation column reflux ratio. Higher = purer product but more energy. Range: 0-10",
     )
     reboiler_duty: float = Field(
         default=50.0, ge=0.0, le=200.0,
@@ -78,6 +81,23 @@ class MethanolAPCAction(Action):
         default=0.0, ge=0.0, le=100.0,
         description="Flare/vent valve position (%). Emergency pressure relief. Range: 0-100",
     )
+
+    @model_validator(mode="after")
+    def _apply_safe_defaults(self):
+        """Replace 0 with safe operating defaults for fields that need nonzero values."""
+        _DEFAULTS = {
+            "purge_valve_position": 2.0,
+            "recycle_ratio": 3.5,
+            "feed_preheat_temp": 200.0,
+            "reformer_fuel_gas": 5.0,
+            "reformer_steam_flow": 15.0,
+            "distillation_reflux": 3.0,
+            "reboiler_duty": 50.0,
+        }
+        for field_name, default_val in _DEFAULTS.items():
+            if getattr(self, field_name) == 0.0:
+                object.__setattr__(self, field_name, default_val)
+        return self
 
 
 class MethanolAPCObservation(Observation):

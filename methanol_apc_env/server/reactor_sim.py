@@ -202,9 +202,13 @@ COMPRESSOR_MAX = _ACT.get("compressor_max_kW", 100.0)
 
 @dataclass
 class ReactorState:
-    """Complete physical state of the methanol synthesis reactor."""
+    """Complete physical state of the methanol synthesis reactor.
+    
+    Supports ICI 4-bed quench reactor configuration. Each bed has its own
+    temperature; quench gas injected between beds to control temperature profile.
+    """
 
-    temperature: float = 150.0  # degC
+    temperature: float = 150.0  # degC (average / outlet)
     pressure: float = 50.0  # bar
     feed_rate_h2: float = 0.0  # mol/s
     feed_rate_co: float = 0.0  # mol/s
@@ -221,6 +225,8 @@ class ReactorState:
     cumulative_profit: float = 0.0
     temperature_prev: float = 150.0  # for trend calculation
     emergency_shutdown: bool = False
+    # Multi-bed temperature profile [LeBlanc Fig.3]
+    bed_temps: tuple = (150.0, 150.0, 150.0, 150.0)  # 4 bed outlet temps
 
 
 def _apply_rate_limits(
