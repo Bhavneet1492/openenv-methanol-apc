@@ -559,7 +559,11 @@ def simulate_step(
     # 4.  ECONOMICS
     # ------------------------------------------------------------------
     economics = calculate_economics(
-        methanol_this_step, new_h2, new_co, new_compressor, new_cooling
+        methanol_this_step, new_h2, new_co, new_compressor, new_cooling,
+        time_step=state.time_step,
+        reformer_fuel=action.get("reformer_fuel_gas", 5.0),
+        reboiler_duty=action.get("reboiler_duty", 50.0),
+        flare_flow=new_h2 * action.get("flare_valve", 0.0) / 100.0,
     )
 
     # ------------------------------------------------------------------
@@ -599,24 +603,70 @@ ELECTRICITY_PRICE = _ECO.get("electricity_price_USD_per_kWh", 0.08)
 COOLING_WATER_PRICE = _ECO.get("cooling_water_price_USD_per_L", 0.0005)
 
 
+def get_spot_prices(time_step: int) -> Dict[str, float]:
+    """Simulate time-varying energy spot prices for profit-aware throttling.
+
+    Prices follow a sinusoidal day/night cycle with random noise,
+    simulating wholesale energy market fluctuations.
+    """
+    import math as _m
+    # Base prices
+    base_elec = ELECTRICITY_PRICE
+    base_gas = SYNGAS_PRICE * 60 * 7.5  # convert to $/min equivalent for comparison
+
+    # Day/night cycle: electricity peaks during daytime (steps 0-720 = 12 hours)
+    hour_of_day = (time_step % 1440) / 60.0  # 0-24 hours (each step = 1 min)
+    day_factor = 0.5 + 0.5 * _m.sin(2.0 * _m.pi * (hour_of_day - 6) / 24.0)
+    # Peak at noon (hour 12), trough at midnight (hour 0)
+    elec_spot = base_elec * (0.7 + 0.6 * day_factor)  # varies 70-130% of base
+
+    # Random market noise
+    noise = random.gauss(0, 0.005)
+    elec_spot += noise
+
+    return {
+        "electricity": max(0.02, elec_spot),
+        "gas": SYNGAS_PRICE,
+        "methanol": METHANOL_PRICE,
+        "cooling": COOLING_WATER_PRICE,
+    }
+
+
 def calculate_economics(
     methanol_kg: float,
     feed_h2: float,
     feed_co: float,
     compressor_kw: float,
     cooling_flow: float,
+    time_step: int = 0,
+    reformer_fuel: float = 5.0,
+    reboiler_duty: float = 50.0,
+    flare_flow: float = 0.0,
 ) -> Dict[str, float]:
-    """Calculate step-level profit & loss.
+    """Calculate step-level profit & loss with spot pricing.
 
     Returns dict with revenue, costs, and net profit for one timestep.
+    Includes reformer fuel, distillation energy, and flare penalties.
     """
-    revenue = methanol_kg * METHANOL_PRICE
+    # Get current spot prices (time-varying)
+    prices = get_spot_prices(time_step)
 
-    feed_cost = (feed_h2 + feed_co) * SYNGAS_PRICE * DT_SECONDS
-    electricity_cost = compressor_kw * (DT_SECONDS / 3600.0) * ELECTRICITY_PRICE
-    cooling_cost = cooling_flow * (DT_SECONDS / 60.0) * COOLING_WATER_PRICE
+    revenue = methanol_kg * prices["methanol"]
 
-    total_cost = feed_cost + electricity_cost + cooling_cost
+    feed_cost = (feed_h2 + feed_co) * prices["gas"] * DT_SECONDS
+    electricity_cost = compressor_kw * (DT_SECONDS / 3600.0) * prices["electricity"]
+    cooling_cost = cooling_flow * (DT_SECONDS / 60.0) * prices["cooling"]
+
+    # Reformer fuel cost (natural gas burned for heat)
+    reformer_cost = reformer_fuel * prices["gas"] * DT_SECONDS * 0.5  # fuel gas cheaper than syngas
+
+    # Distillation energy cost
+    distillation_cost = reboiler_duty * (DT_SECONDS / 3600.0) * prices["electricity"]
+
+    # Flare penalty (wasted product + environmental fine)
+    flare_penalty = flare_flow * 0.01 * DT_SECONDS  # $0.01/mol flared
+
+    total_cost = feed_cost + electricity_cost + cooling_cost + reformer_cost + distillation_cost + flare_penalty
     profit = revenue - total_cost
 
     return {
@@ -624,5 +674,8 @@ def calculate_economics(
         "feed_cost": feed_cost,
         "electricity_cost": electricity_cost,
         "cooling_cost": cooling_cost,
+        "reformer_cost": reformer_cost,
+        "distillation_cost": distillation_cost,
+        "flare_penalty": flare_penalty,
         "profit": profit,
     }
