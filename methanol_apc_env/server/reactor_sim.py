@@ -152,6 +152,10 @@ T_REF_EQ = _RXN.get("T_ref_eq_K", 523.15)
 # Effectiveness factor (diffusion limitation in catalyst pellets) [11]
 ETA = 0.7  # for 5x5mm pellets (Hasberg et al.)
 
+# Reactor type: "quench" (ICI 4-bed) or "isothermal" (Lurgi shell-and-tube)
+REACTOR_TYPE = _RCT.get("type", "fixed_bed_shell_and_tube")
+IS_ISOTHERMAL = "isothermal" in REACTOR_TYPE.lower() or "lurgi" in REACTOR_TYPE.lower()
+
 # Packed bed properties for Ergun pressure drop [8, Fogler Ch.5, Voß Eq.5]
 BED_POROSITY = 0.4  # void fraction in packed bed
 PELLET_DIAMETER = 5.0e-3  # m (5mm catalyst pellets)
@@ -511,48 +515,55 @@ def simulate_step(
     u_eff = U_BASE * (new_cooling / MAX_COOLING_FLOW) ** 0.8
     heat_removed = u_eff * A_HX * (T - cooling_water_temp)
 
-    # RK4 integration for temperature (4th-order Runge-Kutta, 4 sub-steps)
-    # dT/dt = (Q_gen - Q_rem) / (M * Cp), integrated over DT_SECONDS
-    def dTdt(T_cur):
-        """Temperature derivative at given T (rates recalculated at T_cur)."""
-        T_k = T_cur + 273.15
-        # Recompute heat at current T (rates scale with Arrhenius)
-        scale = math.exp(-Ea_R1 / (R_GAS * T_k)) / max(math.exp(-Ea_R1 / (R_GAS * T_kelvin)), 1e-30)
-        q_gen = (rate_R1 * abs(dH_R1_T) + rate_R2 * abs(dH_R2_T) - rate_R3 * abs(dH_R3_T)) * scale
-        q_rem = u_eff * A_HX * (T_cur - cooling_water_temp)
-        return (q_gen - q_rem) / (M_REACTOR * CP_REACTOR)
+    if IS_ISOTHERMAL:
+        # Lurgi isothermal reactor [LeBlanc Fig.7-8]
+        # Boiling water on shell side maintains nearly constant T
+        # Temperature deviates only slightly from BFW saturation temp
+        # Higher cooling flow = tighter temperature control
+        bfw_sat_temp = 240.0 + (new_cooling / MAX_COOLING_FLOW) * 20.0  # 240-260C range
+        isothermal_gain = 0.3 + 0.7 * (new_cooling / MAX_COOLING_FLOW)  # more flow = tighter
+        dT = (bfw_sat_temp - T) * isothermal_gain * (DT_SECONDS / 300.0)
+        dT += heat_generated / (M_REACTOR * CP_REACTOR * 50.0)  # small residual from reaction
+        dT = max(-MAX_DT_PER_STEP * 0.3, min(MAX_DT_PER_STEP * 0.3, dT))
+        new_temperature = T + dT
+        bed_temps = [round(new_temperature + random.gauss(0, 0.2), 1)] * 4
+    else:
+        # ICI quench reactor -- RK4 integration
+        # dT/dt = (Q_gen - Q_rem) / (M * Cp), integrated over DT_SECONDS
+        def dTdt(T_cur):
+            T_k = T_cur + 273.15
+            scale = math.exp(-Ea_R1 / (R_GAS * T_k)) / max(math.exp(-Ea_R1 / (R_GAS * T_kelvin)), 1e-30)
+            q_gen = (rate_R1 * abs(dH_R1_T) + rate_R2 * abs(dH_R2_T) - rate_R3 * abs(dH_R3_T)) * scale
+            q_rem = u_eff * A_HX * (T_cur - cooling_water_temp)
+            return (q_gen - q_rem) / (M_REACTOR * CP_REACTOR)
 
-    # RK4 with 4 sub-steps for stability
-    dt_sub = DT_SECONDS / 4.0
-    T_rk = T
-    for _ in range(4):
-        k1 = dTdt(T_rk)
-        k2 = dTdt(T_rk + 0.5 * dt_sub * k1)
-        k3 = dTdt(T_rk + 0.5 * dt_sub * k2)
-        k4 = dTdt(T_rk + dt_sub * k3)
-        T_rk += dt_sub * (k1 + 2*k2 + 2*k3 + k4) / 6.0
+        dt_sub = DT_SECONDS / 4.0
+        T_rk = T
+        for _ in range(4):
+            k1 = dTdt(T_rk)
+            k2 = dTdt(T_rk + 0.5 * dt_sub * k1)
+            k3 = dTdt(T_rk + 0.5 * dt_sub * k2)
+            k4 = dTdt(T_rk + dt_sub * k3)
+            T_rk += dt_sub * (k1 + 2*k2 + 2*k3 + k4) / 6.0
 
-    dT = T_rk - T
-    dT = max(-MAX_DT_PER_STEP, min(MAX_DT_PER_STEP, dT))
+        dT = T_rk - T
+        dT = max(-MAX_DT_PER_STEP, min(MAX_DT_PER_STEP, dT))
+        new_temperature = T + dT
 
-    new_temperature = T + dT
-
-    # Multi-bed quench reactor model [LeBlanc Fig.3, ICI 4-bed]
-    # Each bed sees adiabatic temperature rise, then cold-shot quench
-    # Feed preheat temp determines quench gas temperature
-    quench_temp = action.get("feed_preheat_temp", 200.0)
-    bed_rise_per_bed = max(0, dT) / 4.0  # total rise split across 4 beds
-    bed_quench = (new_temperature - quench_temp) * 0.15  # 15% approach to quench temp
-    bed_temps = []
-    T_bed = T  # inlet to bed 1
-    for bed_idx in range(4):
-        T_bed_out = T_bed + bed_rise_per_bed + random.gauss(0, 0.3)
-        bed_temps.append(round(T_bed_out, 1))
-        if bed_idx < 3:  # quench between beds (not after last)
-            T_bed = T_bed_out - bed_quench * (1.0 - 0.2 * bed_idx)  # less quench downstream
-        else:
-            T_bed = T_bed_out
-    new_temperature = bed_temps[-1]  # reactor outlet = last bed outlet
+        # Multi-bed quench [LeBlanc Fig.3, ICI 4-bed]
+        quench_temp = action.get("feed_preheat_temp", 200.0)
+        bed_rise_per_bed = max(0, dT) / 4.0
+        bed_quench = (new_temperature - quench_temp) * 0.15
+        bed_temps = []
+        T_bed = T
+        for bed_idx in range(4):
+            T_bed_out = T_bed + bed_rise_per_bed + random.gauss(0, 0.3)
+            bed_temps.append(round(T_bed_out, 1))
+            if bed_idx < 3:
+                T_bed = T_bed_out - bed_quench * (1.0 - 0.2 * bed_idx)
+            else:
+                T_bed = T_bed_out
+        new_temperature = bed_temps[-1]
 
     # Process noise -- feed composition fluctuations, measurement noise,
     # ambient temperature variation [Seborg Ch. 6]

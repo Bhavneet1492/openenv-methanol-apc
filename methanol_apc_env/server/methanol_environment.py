@@ -308,6 +308,59 @@ class MethanolAPCEnvironment(_BaseClass):
         score = grader(self._trajectory)
         return max(0.01, min(0.99, score))
 
+    def get_agent_views(self) -> Dict[str, Dict]:
+        """Return per-agent observation slices for multi-agent coordination.
+
+        Each agent sees only its relevant subsystem state, plus shared variables.
+        This enables training separate policies for each plant section.
+        """
+        r = self._reactor
+        if r is None:
+            return {}
+
+        shared = {
+            "temperature": r.temperature,
+            "pressure": r.pressure,
+            "step": self._state.step_count,
+            "done": self._done,
+        }
+
+        return {
+            "reformer_agent": {
+                **shared,
+                "tube_outlet_temp": self._reformer.tube_outlet_temp,
+                "steam_to_carbon": self._reformer.steam_to_carbon,
+                "syngas_h2": self._reformer.syngas_h2,
+                "syngas_co": self._reformer.syngas_co,
+                "efficiency": self._reformer.efficiency,
+                "controls": ["reformer_fuel_gas", "reformer_steam_flow"],
+            },
+            "synthesis_agent": {
+                **shared,
+                "reaction_rate": r.reaction_rate,
+                "catalyst_health": r.catalyst_health,
+                "h2_co_ratio": r.h2_co_ratio,
+                "bed_temps": r.bed_temps,
+                "controls": ["feed_rate_h2", "feed_rate_co", "cooling_water_flow",
+                             "compressor_power", "purge_valve_position", "recycle_ratio"],
+            },
+            "purification_agent": {
+                **shared,
+                "product_purity": self._distillation.product_purity,
+                "reboiler_duty": self._distillation.reboiler_duty_kw,
+                "overhead_temp": self._distillation.overhead_temp,
+                "controls": ["distillation_reflux", "reboiler_duty"],
+            },
+            "supervisory_agent": {
+                **shared,
+                "cumulative_profit": r.cumulative_profit,
+                "methanol_produced": r.methanol_produced,
+                "catalyst_health": r.catalyst_health,
+                "desulf_capacity": self._desulf.bed_capacity_remaining,
+                "all_controls": list(MethanolAPCAction.model_fields.keys()),
+            },
+        }
+
     def get_metrics(self) -> Dict[str, float]:
         """Compute advanced performance metrics for the episode.
 
@@ -355,14 +408,24 @@ class MethanolAPCEnvironment(_BaseClass):
         assert r is not None
         assert self._task is not None
 
-        # Safety warning
+        # Anticipatory coordination -- predict future state
         warning = None
+        trend = r.temperature - r.temperature_prev
+        predicted_T_5 = r.temperature + trend * 5  # 5-step lookahead
+        predicted_T_10 = r.temperature + trend * 10
+
         if r.temperature > 290:
-            warning = "CRITICAL: Temperature approaching emergency shutdown (300°C)!"
+            warning = "CRITICAL: Temperature approaching emergency shutdown (300C)!"
+        elif predicted_T_5 > 300:
+            warning = f"PREDICT: At current trend ({trend:+.1f}C/step), shutdown in ~{max(1, int((300-r.temperature)/max(trend,0.1)))} steps. Reduce feed or increase cooling."
         elif r.temperature > 270:
             warning = "WARNING: Above optimal range. Catalyst degradation accelerating."
+        elif predicted_T_10 > 280:
+            warning = f"ADVISORY: Temperature trending up ({trend:+.1f}C/step). Consider increasing cooling."
         elif r.catalyst_health < 0.3:
             warning = "WARNING: Catalyst health critically low."
+        elif r.catalyst_health < 0.6:
+            warning = "ADVISORY: Catalyst health below 60%. Consider reducing temperature."
 
         return MethanolAPCObservation(
             temperature=round(r.temperature, 2),
