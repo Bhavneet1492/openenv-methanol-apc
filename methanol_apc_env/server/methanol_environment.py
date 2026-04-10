@@ -24,10 +24,20 @@ try:
     from reactor_sim import ReactorState, simulate_step, EMERGENCY_SHUTDOWN_TEMP
     from tasks import TASKS, GRADERS, TaskConfig, compute_step_reward
     from rubrics import MethanolAPCRubric
+    from plant_stages import (
+        DesulfurizationState, simulate_desulfurization,
+        ReformerState, simulate_reformer,
+        DistillationState, simulate_distillation,
+    )
 except ImportError:
     from .reactor_sim import ReactorState, simulate_step, EMERGENCY_SHUTDOWN_TEMP
     from .tasks import TASKS, GRADERS, TaskConfig, compute_step_reward
     from .rubrics import MethanolAPCRubric
+    from .plant_stages import (
+        DesulfurizationState, simulate_desulfurization,
+        ReformerState, simulate_reformer,
+        DistillationState, simulate_distillation,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -104,6 +114,10 @@ class MethanolAPCEnvironment(_BaseClass):
         self._task: Optional[TaskConfig] = None
         self._trajectory: List[ReactorState] = []
         self._last_action: Optional[MethanolAPCAction] = None
+        # Plant stage states
+        self._desulf = DesulfurizationState()
+        self._reformer = ReformerState()
+        self._distillation = DistillationState()
         self._done = False
         self._rubric: Optional[MethanolAPCRubric] = None
 
@@ -240,6 +254,22 @@ class MethanolAPCEnvironment(_BaseClass):
         self._last_action = action  # store for observation
         self._trajectory.append(self._reactor)
 
+        # Simulate upstream + downstream plant stages
+        total_feed = action.feed_rate_h2 + action.feed_rate_co
+        self._desulf = simulate_desulfurization(self._desulf, total_feed)
+        self._reformer = simulate_reformer(
+            self._reformer,
+            fuel_gas_flow=action.reformer_fuel_gas,
+            steam_flow=action.reformer_steam_flow,
+            natural_gas_flow=action.reformer_fuel_gas * 0.8,
+        )
+        self._distillation = simulate_distillation(
+            self._distillation,
+            crude_methanol_flow_kg=self._reactor.methanol_produced - prev.methanol_produced,
+            reflux_ratio=action.distillation_reflux,
+            reboiler_duty=action.reboiler_duty,
+        )
+
         # Compute dense reward (sigmoid-mapped to strict (0,1))
         reward = compute_step_reward(prev, self._reactor, self._task)
 
@@ -363,13 +393,13 @@ class MethanolAPCEnvironment(_BaseClass):
             purge_rate=round(r.feed_rate_h2 * 0.044 * (self._last_action.purge_valve_position / 100.0 if self._last_action else 0.02), 4),
             inert_fraction=round(0.044 * 3.5 / (1.0 + (self._last_action.purge_valve_position / 100.0 if self._last_action else 0.02) * 3.5), 4),
             recycle_ratio=round(self._last_action.recycle_ratio if self._last_action else 3.5, 2),
-            # Reformer (simplified model)
-            reformer_outlet_temp=round(750 + (self._last_action.reformer_fuel_gas if self._last_action else 5.0) * 10, 1),
-            steam_to_carbon=round((self._last_action.reformer_steam_flow if self._last_action else 15.0) / max(self._last_action.reformer_fuel_gas if self._last_action else 5.0, 0.1), 2),
-            syngas_flow=round(r.feed_rate_h2 + r.feed_rate_co, 2),
-            # Distillation
-            product_purity=round(min(0.999, 0.95 + 0.005 * (self._last_action.distillation_reflux if self._last_action else 3.0)), 4),
-            distillation_duty=round((self._last_action.reboiler_duty if self._last_action else 50.0), 1),
+            # Reformer (from actual simulation)
+            reformer_outlet_temp=round(self._reformer.tube_outlet_temp, 1),
+            steam_to_carbon=round(self._reformer.steam_to_carbon, 2),
+            syngas_flow=round(self._reformer.syngas_h2 + self._reformer.syngas_co, 2),
+            # Distillation (from actual simulation)
+            product_purity=round(self._distillation.product_purity, 4),
+            distillation_duty=round(self._distillation.reboiler_duty_kw, 1),
             # Utilities
             flare_flow=round(r.feed_rate_h2 * (self._last_action.flare_valve if self._last_action else 0.0) / 100.0, 3),
             total_co2_emissions=round(r.methanol_produced * 0.6, 2),
