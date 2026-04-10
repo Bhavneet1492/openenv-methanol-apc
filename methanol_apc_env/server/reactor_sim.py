@@ -320,12 +320,25 @@ def simulate_step(
     T_kelvin = T + 273.15
     h2_co_ratio = new_h2 / max(new_co, 1e-6)
 
+    # Recycle loop — unreacted gas returns to reactor inlet [LeBlanc Ch.3.2.5]
+    # Typical recycle ratio RR = 3-5 for ICI process
+    # Effective feed = fresh feed + recycle stream
+    # Recycle composition depends on single-pass conversion from previous step
+    RECYCLE_RATIO = 3.5  # moles recycled / moles fresh feed
+    prev_conversion = min(0.5, state.reaction_rate / max(new_h2 + new_co, 1e-6))
+    # Unreacted fraction returns: (1 - conversion) * total_flow * RR / (1 + RR)
+    recycle_factor = RECYCLE_RATIO / (1.0 + RECYCLE_RATIO)
+    effective_h2 = new_h2 * (1.0 + recycle_factor * (1.0 - prev_conversion * 2.0))
+    effective_co = new_co * (1.0 + recycle_factor * (1.0 - prev_conversion))
+    # Recycle stream has lower H2/CO (H2 consumed more) and some product
+    effective_h2 = max(0.0, effective_h2)
+    effective_co = max(0.0, effective_co)
+
     # Stoichiometric number: SN = (H2 - CO2) / (CO + CO2) [LeBlanc Ch.3.3]
-    # For our simplified feed model, approximate CO2 as fraction of CO
-    co2_fraction = 0.3  # ~30% of carbon oxides is CO2 (typical reformer output)
-    est_co2 = new_co * co2_fraction
-    est_co_net = new_co * (1.0 - co2_fraction)
-    stoichiometric_number = (new_h2 - est_co2) / max(est_co_net + est_co2, 1e-6)
+    co2_fraction = 0.3
+    est_co2 = effective_co * co2_fraction
+    est_co_net = effective_co * (1.0 - co2_fraction)
+    stoichiometric_number = (effective_h2 - est_co2) / max(est_co_net + est_co2, 1e-6)
 
     # Pressure from compressor (dynamic accumulation)
     # P_new = P_old * (1 + dt/tau * (P_target - P_old)/P_old) with tau ~ 5 steps
@@ -334,9 +347,8 @@ def simulate_step(
     pressure = state.pressure + (P_target - state.pressure) * (1.0 - math.exp(-DT_SECONDS / P_tau))
 
     # Partial pressures (species mole fractions * total P)
-    # Total feed flow: H2 + CO + CO2 (+ inerts)
-    F_total = new_h2 + new_co + est_co2 + 0.5  # 0.5 mol/s inerts (CH4, N2)
-    y_H2 = new_h2 / max(F_total, 1e-6)
+    F_total = effective_h2 + effective_co + est_co2 + 0.5  # 0.5 mol/s inerts
+    y_H2 = effective_h2 / max(F_total, 1e-6)
     y_CO = est_co_net / max(F_total, 1e-6)
     y_CO2 = est_co2 / max(F_total, 1e-6)
     # Product partial pressures (assume small due to separation/recycle)
@@ -392,12 +404,21 @@ def simulate_step(
     # rate * feed / (feed + Km) -- rate goes to zero smoothly as feed drops
     Km_co = 0.5   # half-saturation for CO (mol/s)
     Km_h2 = 1.0   # half-saturation for H2 (mol/s)
-    rate_R1 *= est_co_net / (est_co_net + Km_co) * new_h2 / (new_h2 + Km_h2)
-    rate_R2 *= est_co2 / (est_co2 + Km_co) * new_h2 / (new_h2 + Km_h2)
-    rate_R3 *= est_co2 / (est_co2 + Km_co) * new_h2 / (new_h2 + Km_h2)
+    rate_R1 *= est_co_net / (est_co_net + Km_co) * effective_h2 / (effective_h2 + Km_h2)
+    rate_R2 *= est_co2 / (est_co2 + Km_co) * effective_h2 / (effective_h2 + Km_h2)
+    rate_R3 *= est_co2 / (est_co2 + Km_co) * effective_h2 / (effective_h2 + Km_h2)
 
     # Total methanol production from R1 + R2
-    reaction_rate = rate_R1 + rate_R2  # total CH₃OH production rate
+    reaction_rate = rate_R1 + rate_R2  # total CH3OH production rate
+
+    # Byproduct formation [LeBlanc Ch.3.2.2]
+    # DME: 2CH3OH -> CH3OCH3 + H2O (favored at high T, low selectivity)
+    # Selectivity ~99.5% at optimal, drops at high T
+    selectivity = 1.0 - 0.005 * max(0, T - 250) / 50.0  # 99.5% at 250C, 99.0% at 300C
+    selectivity = max(0.95, min(1.0, selectivity))
+    dme_rate = reaction_rate * (1.0 - selectivity) * 0.7  # 70% of byproducts are DME
+    methyl_formate_rate = reaction_rate * (1.0 - selectivity) * 0.3  # 30% methyl formate
+    reaction_rate *= selectivity  # net methanol after byproduct loss
 
     # Species consumption totals
     f_co_consumed = rate_R1 - rate_R3  # R3 produces CO
@@ -467,7 +488,28 @@ def simulate_step(
     u_eff = U_BASE * (new_cooling / MAX_COOLING_FLOW) ** 0.8
     heat_removed = u_eff * A_HX * (T - cooling_water_temp)
 
-    dT = (heat_generated - heat_removed) / (M_REACTOR * CP_REACTOR) * DT_SECONDS
+    # RK4 integration for temperature (4th-order Runge-Kutta, 4 sub-steps)
+    # dT/dt = (Q_gen - Q_rem) / (M * Cp), integrated over DT_SECONDS
+    def dTdt(T_cur):
+        """Temperature derivative at given T (rates recalculated at T_cur)."""
+        T_k = T_cur + 273.15
+        # Recompute heat at current T (rates scale with Arrhenius)
+        scale = math.exp(-Ea_R1 / (R_GAS * T_k)) / max(math.exp(-Ea_R1 / (R_GAS * T_kelvin)), 1e-30)
+        q_gen = (rate_R1 * abs(dH_R1_T) + rate_R2 * abs(dH_R2_T) - rate_R3 * abs(dH_R3_T)) * scale
+        q_rem = u_eff * A_HX * (T_cur - cooling_water_temp)
+        return (q_gen - q_rem) / (M_REACTOR * CP_REACTOR)
+
+    # RK4 with 4 sub-steps for stability
+    dt_sub = DT_SECONDS / 4.0
+    T_rk = T
+    for _ in range(4):
+        k1 = dTdt(T_rk)
+        k2 = dTdt(T_rk + 0.5 * dt_sub * k1)
+        k3 = dTdt(T_rk + 0.5 * dt_sub * k2)
+        k4 = dTdt(T_rk + dt_sub * k3)
+        T_rk += dt_sub * (k1 + 2*k2 + 2*k3 + k4) / 6.0
+
+    dT = T_rk - T
     dT = max(-MAX_DT_PER_STEP, min(MAX_DT_PER_STEP, dT))
 
     new_temperature = T + dT
