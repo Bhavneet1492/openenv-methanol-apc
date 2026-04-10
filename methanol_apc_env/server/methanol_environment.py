@@ -268,6 +268,43 @@ class MethanolAPCEnvironment(_BaseClass):
         score = grader(self._trajectory)
         return max(0.01, min(0.99, score))
 
+    def get_metrics(self) -> Dict[str, float]:
+        """Compute advanced performance metrics for the episode.
+
+        Returns dict with:
+        - economic_regret: max_possible_profit - agent_profit
+        - constraint_violations: count of safety zone breaches
+        - adaptability_score: performance stability under disturbances
+        """
+        if not self._trajectory:
+            return {"economic_regret": 0.0, "constraint_violations": 0, "adaptability_score": 0.0}
+
+        # Economic regret: theoretical max profit at optimal steady state
+        # At 250C with optimal feed, ~$2.5/step profit is typical
+        max_profit_per_step = 2.5
+        max_possible = max_profit_per_step * len(self._trajectory)
+        actual = self._trajectory[-1].cumulative_profit if self._trajectory else 0
+        regret = max(0, max_possible - actual)
+
+        # Constraint violations: steps where T > 280 or T < 180
+        violations = sum(1 for s in self._trajectory
+                        if s.temperature > 280 or s.temperature < 180)
+
+        # Adaptability: inverse of temperature variance (lower variance = more stable)
+        if len(self._trajectory) > 1:
+            temps = [s.temperature for s in self._trajectory]
+            mean_t = sum(temps) / len(temps)
+            variance = sum((t - mean_t) ** 2 for t in temps) / len(temps)
+            adaptability = 1.0 / (1.0 + variance / 100.0)  # normalized 0-1
+        else:
+            adaptability = 0.0
+
+        return {
+            "economic_regret": round(regret, 2),
+            "constraint_violations": violations,
+            "adaptability_score": round(adaptability, 4),
+        }
+
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
@@ -306,6 +343,12 @@ class MethanolAPCEnvironment(_BaseClass):
             safety_warning=warning,
             temperature_trend=round(r.temperature - r.temperature_prev, 2),
             rubric_reward=round(rubric_reward, 4) if rubric_reward is not None else None,
+            stoichiometric_number=round(
+                (r.feed_rate_h2 - r.feed_rate_co * 0.3)
+                / max(r.feed_rate_co * 0.7 + r.feed_rate_co * 0.3, 1e-6), 3),
+            carbon_efficiency=round(
+                r.reaction_rate / max(r.feed_rate_co, 1e-6), 4) if r.feed_rate_co > 0 else 0.0,
+            selectivity=round(1.0 - 0.005 * max(0, r.temperature - 250) / 50.0, 4),
             done=self._done,
             reward=reward,
         )

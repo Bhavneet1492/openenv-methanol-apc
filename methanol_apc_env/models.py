@@ -86,3 +86,15 @@ class MethanolAPCObservation(Observation):
         default=None,
         description="Rubric-computed reward (RFC 004). Dense during episode, trajectory score at terminal.",
     )
+    stoichiometric_number: float = Field(
+        default=2.0,
+        description="SN = (H2-CO2)/(CO+CO2), target 2.0-2.05 for optimal synthesis",
+    )
+    carbon_efficiency: float = Field(
+        default=0.0,
+        description="Fraction of carbon feed converted to methanol (0-1)",
+    )
+    selectivity: float = Field(
+        default=0.995,
+        description="Methanol selectivity (fraction, rest is DME + methyl formate)",
+    )

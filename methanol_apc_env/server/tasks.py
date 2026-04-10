@@ -39,6 +39,12 @@ class TaskConfig:
     initial_catalyst: float = 1.0
     # Disturbance schedule: {step: {field: value}}
     disturbances: Dict[int, Dict[str, float]] = field(default_factory=lambda: {})
+    # Operation mode: "steady_state" | "periodic" | "batch"
+    operation_mode: str = "steady_state"
+    # For periodic mode: demand cycle period (steps)
+    demand_period: int = 50
+    # For batch mode: target production (kg)
+    batch_target_kg: float = 0.0
 
 
 # ---------------------------------------------------------------------------
@@ -90,6 +96,8 @@ LONG_HORIZON_TASK = TaskConfig(
     initial_feed_co=2.0,
     initial_cooling_flow=50.0,
     initial_compressor=50.0,
+    operation_mode="batch",
+    batch_target_kg=5000.0,  # produce 5000 kg methanol
 )
 
 TASKS: Dict[str, TaskConfig] = {
@@ -174,6 +182,8 @@ DAY_NIGHT_TASK = TaskConfig(
         100: {"cooling_water_temp": 25.0},
         125: {"cooling_water_temp": 35.0},
     },
+    operation_mode="periodic",
+    demand_period=50,
 )
 
 # Hard: Catalyst degradation — start with aged catalyst
