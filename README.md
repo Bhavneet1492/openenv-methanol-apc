@@ -512,6 +512,9 @@ curl http://localhost:8000/health
 
 # OpenEnv validate
 openenv validate methanol_apc_env/
+
+# Kubernetes deployment
+kubectl apply -f k8s/
 ```
 
 ### Project Structure
@@ -534,11 +537,13 @@ openenv validate methanol_apc_env/
 │   │   ├── rubrics.py              # OpenEnv RFC 004 rubric system
 │   │   ├── app.py                  # FastAPI server
 │   │   └── Dockerfile
-│   └── tests/                      # 36 tests (physics + env + config + features)
+│   └── tests/                      # 86 tests (92% coverage)
 ├── examples/
 │   ├── pid_baseline.py             # PID (PI) controller
 │   ├── mpc_baseline.py             # Dynamic Matrix Control
 │   └── compare_baselines.py        # Head-to-head comparison
+├── k8s/
+│   └── deployment.yaml             # K8s Deployment + Service + Ingress
 └── assets/                         # SVG diagrams
 ```
 
