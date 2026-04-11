@@ -41,6 +41,7 @@
 - [TRL / Unsloth Integration](#trl--unsloth-integration-grpo-training)
 - [Physics Engine](#physics-engine)
 - [Regional Configurations (10 Bundles)](#regional-configurations-10-bundles)
+- [Examples](#examples)
 - [Setup & Development](#setup--development)
 - [References](#references)
 - [Citation](#citation)
@@ -458,6 +459,37 @@ config = MethanolGRPOConfig.get_unsloth_config()    # 4-bit quantized (LoRA, fit
 
 ---
 
+## Examples
+
+The `examples/` directory contains ready-to-run scripts for benchmarking and integration:
+
+| Script | What It Does | Run It |
+|--------|-------------|--------|
+| [`pid_baseline.py`](examples/pid_baseline.py) | PI controller that holds temperature at 252°C by adjusting cooling water. Single-loop feedback — the simplest classical approach. | `python examples/pid_baseline.py` |
+| [`mpc_baseline.py`](examples/mpc_baseline.py) | Dynamic Matrix Control (DMC) using a linear step-response model. Optimizes cooling moves over a prediction horizon with move suppression. | `python examples/mpc_baseline.py` |
+| [`compare_baselines.py`](examples/compare_baselines.py) | Runs PID, MPC, and a heuristic controller across all tasks, prints a comparison table with scores. Shows where RL can improve. | `python examples/compare_baselines.py` |
+| [`rl_benchmark.py`](examples/rl_benchmark.py) | Gymnasium-compatible wrapper + stubs for TD3, PPO, SAC. Defines the `MethanolGymWrapper` with `Box(30,)` obs / `Box(13,)` action spaces. | `python examples/rl_benchmark.py` |
+| [`inference.py`](inference.py) | LLM inference with 12 task-specific system prompts, WebSocket client, adaptive fallback controller. Required by OpenEnv validation. | `python inference.py` |
+
+**PID baseline example:**
+```python
+from examples.pid_baseline import PIDController
+
+pid = PIDController(T_setpoint=252.0, Kp=2.0, Ki=0.05)
+# pid.compute(current_temperature) → cooling_water_flow adjustment
+```
+
+**Gym wrapper for RL training:**
+```python
+from examples.rl_benchmark import get_gym_wrapper
+
+env = get_gym_wrapper()  # Gymnasium API: obs_space=Box(30,), act_space=Box(13,)
+obs, info = env.reset()
+obs, reward, done, truncated, info = env.step(action_array)
+```
+
+---
+
 ## Setup & Development
 
 ```bash
@@ -545,55 +577,3 @@ openenv validate methanol_apc_env/
 <p align="center">
   <b>MIT License</b> · Built for the <a href="https://github.com/openenv-dev/OpenEnv">OpenEnv</a> hackathon
 </p>
-# Methanol APC Environment for OpenEnv
-
-Digital twin of an industrial methanol synthesis reactor (ICI Low-Pressure Process) for reinforcement learning.
-
-**HF Space**: https://huggingface.co/spaces/glitchfilter/methanol-apc-env
-
-## What This Is
-
-An OpenEnv environment where an RL agent acts as an autonomous Advanced Process Control (APC) operator for a methanol synthesis reactor. The agent manipulates feed valves, cooling water flow, and compressor power to maximize economic profit while preventing thermal runaway (300°C emergency shutdown).
-
-**Chemistry**: CO + 2H₂ → CH₃OH (ΔH = -90.5 kJ/mol) on Cu/ZnO/Al₂O₃ catalyst at 250°C, 50-100 bar.
-
-## Tasks
-
-| Task | Difficulty | Steps | Objective |
-|------|-----------|-------|-----------|
-| `startup` | Easy | 50 | Ramp reactor from 150°C to 250°C |
-| `optimization` | Medium | 100 | Maximize profit at steady state |
-| `disturbance_rejection` | Hard | 100 | Survive cooling system failure at step 25 |
-| `long_horizon_production` | Expert | 500 | Produce 50,000 kg methanol, manage catalyst |
-
-## Quick Start
-
-```python
-from methanol_apc_env import MethanolAPCEnv, MethanolAPCAction
-
-async with MethanolAPCEnv(base_url="https://glitchfilter-methanol-apc-env.hf.space") as env:
-    result = await env.reset(task_name="startup")
-    action = MethanolAPCAction(feed_rate_h2=3.0, feed_rate_co=1.5, cooling_water_flow=60.0, compressor_power=50.0)
-    result = await env.step(action)
-```
-
-## Project Structure
-
-```
-inference.py              # Baseline inference script (repo root)
-methanol_apc_env/         # OpenEnv environment package
-├── models.py             # Pydantic Action/Observation
-├── client.py             # WebSocket client
-├── openenv.yaml          # Environment manifest
-├── reactor_config.json   # 6 pre-validated config sets
-├── server/
-│   ├── reactor_sim.py    # Physics engine (mass + energy balance)
-│   ├── tasks.py          # 4 tasks + deterministic graders
-│   ├── rubrics.py        # OpenEnv RFC 004 rubric system
-│   ├── methanol_environment.py
-│   ├── app.py            # FastAPI server
-│   └── Dockerfile
-└── tests/
-```
-
-See [methanol_apc_env/README.md](methanol_apc_env/README.md) for full documentation.
