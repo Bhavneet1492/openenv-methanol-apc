@@ -4,19 +4,45 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "openenv-methanol-apc"
-version = "0.1.0"
-description = "Methanol APC Process Control Environment for OpenEnv — Digital twin of an industrial methanol synthesis reactor"
+version = "0.2.0"
+description = "Methanol APC Process Control Environment for OpenEnv — Digital twin of an industrial methanol synthesis reactor with multi-agent support"
 requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Bhavneet Kaur"}]
+keywords = ["openenv", "reinforcement-learning", "methanol", "process-control", "APC", "digital-twin", "chemical-engineering"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
 dependencies = [
     "openenv-core[core]>=0.2.2",
     "numpy>=1.24.0",
-    "plotly>=5.0.0",
+    "fastmcp>=3.0.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/Bhavneet1492/openenv-methanol-apc"
+Repository = "https://github.com/Bhavneet1492/openenv-methanol-apc"
+"HuggingFace Space" = "https://huggingface.co/spaces/glitchfilter/methanol-apc-env"
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0.0",
     "pytest-cov>=4.0.0",
+]
+rl = [
+    "stable-baselines3>=2.0",
+    "gymnasium>=0.29",
+]
+trl = [
+    "trl>=0.10",
+    "transformers>=4.35",
 ]
 
 [project.scripts]

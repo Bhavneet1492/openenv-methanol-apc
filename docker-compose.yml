@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  methanol-apc:
+    build:
+      context: ./methanol_apc_env
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - REACTOR_CONFIG=ici_low_pressure_apac
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: "2"
+        reservations:
+          memory: 1G
+          cpus: "1"
+    restart: unless-stopped

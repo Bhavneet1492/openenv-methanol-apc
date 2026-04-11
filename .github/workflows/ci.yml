@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        pip install -e "methanol_apc_env[dev]"
+
+    - name: Run tests
+      run: |
+        cd methanol-apc-submission
+        python -m pytest methanol_apc_env/tests/ -v --tb=short
+
+    - name: Physics validation
+      run: |
+        cd methanol-apc-submission
+        python -c "
+        from methanol_apc_env.server.methanol_environment import MethanolAPCEnvironment
+        from methanol_apc_env.models import MethanolAPCAction
+        e = MethanolAPCEnvironment()
+        o = e.reset(task_name='optimization', seed=42)
+        for i in range(10):
+            o = e.step(MethanolAPCAction(feed_rate_h2=5, feed_rate_co=2.5, cooling_water_flow=40, compressor_power=65))
+        assert 200 < o.temperature < 300, f'Temperature out of range: {o.temperature}'
+        assert o.reaction_rate > 0, f'Zero reaction rate'
+        assert 0.01 <= o.reward <= 0.99, f'Reward out of range: {o.reward}'
+        score = e.get_final_score()
+        assert 0.01 <= score <= 0.99, f'Score out of range: {score}'
+        print('Physics validation PASSED')
+        "
