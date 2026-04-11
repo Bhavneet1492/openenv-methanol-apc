@@ -23,16 +23,18 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install -e "methanol_apc_env[dev]"
+        pip install "openenv-core[core]>=0.2.2" numpy fastmcp pytest
 
     - name: Run tests
+      env:
+        PYTHONPATH: .
       run: |
-        cd methanol-apc-submission
         python -m pytest methanol_apc_env/tests/ -v --tb=short
 
     - name: Physics validation
+      env:
+        PYTHONPATH: .
       run: |
-        cd methanol-apc-submission
         python -c "
         from methanol_apc_env.server.methanol_environment import MethanolAPCEnvironment
         from methanol_apc_env.models import MethanolAPCAction
