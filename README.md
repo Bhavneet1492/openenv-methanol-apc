@@ -30,6 +30,7 @@
 - [Architecture](#architecture)
 - [The Reactor: ICI 4-Bed Quench Design](#the-reactor-ici-4-bed-quench-design)
 - [Process Flow](#process-flow)
+- [Plant Equipment](#plant-equipment)
 - [Quick Start](#quick-start)
 - [Action Space (13 Continuous Variables)](#action-space-13-continuous-variables)
 - [Observation Space (30+ Fields)](#observation-space-30-fields)
@@ -158,6 +159,16 @@ The complete plant is **not a simple linear chain** — it features a recycle lo
 
 <p align="center">
   <img src="assets/process-flow.svg" width="100%" alt="Complete Plant Process Flow: Natural Gas → Desulfurization → Reformer → Compressor → Synthesis Reactor → Separator → Distillation, with recycle loop and purge">
+</p>
+
+---
+
+## Plant Equipment
+
+The full plant includes 10 major equipment items. The agent's 13 action variables control components across all stages — not just the reactor:
+
+<p align="center">
+  <img src="assets/plant-equipment.svg" width="100%" alt="Complete Plant Equipment Layout: Desulfurizer, Reformer, Heat Exchanger, Compressor, Reactor, Cooling System, Separator, Distillation Column with Condenser and Reboiler, Product Tank">
 </p>
 
 ---
