@@ -1,0 +1,96 @@
+# Kubernetes Deployment for Methanol APC Environment
+# Deploy with: kubectl apply -f k8s/
+#
+# Prerequisites:
+#   - Docker image built and pushed to a registry
+#   - kubectl configured for your cluster
+#
+# Quick start:
+#   docker build -t your-registry/methanol-apc-env:latest methanol_apc_env/
+#   docker push your-registry/methanol-apc-env:latest
+#   kubectl apply -f k8s/
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: methanol-apc-env
+  labels:
+    app: methanol-apc-env
+    environment: production
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: methanol-apc-env
+  template:
+    metadata:
+      labels:
+        app: methanol-apc-env
+    spec:
+      containers:
+        - name: methanol-apc-env
+          image: your-registry/methanol-apc-env:latest
+          ports:
+            - containerPort: 8000
+              name: http
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "2000m"
+              memory: "2Gi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          env:
+            - name: PORT
+              value: "8000"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: methanol-apc-env
+  labels:
+    app: methanol-apc-env
+spec:
+  type: ClusterIP
+  selector:
+    app: methanol-apc-env
+  ports:
+    - port: 80
+      targetPort: 8000
+      protocol: TCP
+      name: http
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: methanol-apc-env
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/websocket-services: methanol-apc-env
+spec:
+  rules:
+    - host: methanol-apc.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: methanol-apc-env
+                port:
+                  number: 80
