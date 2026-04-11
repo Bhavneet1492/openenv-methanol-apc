@@ -1,0 +1,161 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" width="1200" height="300">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e3a5f"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="50%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+    <linearGradient id="reactorBody" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#374151"/>
+      <stop offset="50%" stop-color="#6b7280"/>
+      <stop offset="100%" stop-color="#374151"/>
+    </linearGradient>
+    <linearGradient id="tempGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="50%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#ef4444"/>
+    </linearGradient>
+    <marker id="blueArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#3b82f6"/>
+    </marker>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="300" fill="url(#bg)" rx="12"/>
+
+  <!-- Accent lines top/bottom -->
+  <rect y="0" width="1200" height="3" fill="url(#accent)"/>
+  <rect y="297" width="1200" height="3" fill="url(#accent)"/>
+
+  <!-- Subtle grid overlay -->
+  <g opacity="0.03" stroke="white" stroke-width="0.5">
+    <line x1="0" y1="60" x2="1200" y2="60"/>
+    <line x1="0" y1="120" x2="1200" y2="120"/>
+    <line x1="0" y1="180" x2="1200" y2="180"/>
+    <line x1="0" y1="240" x2="1200" y2="240"/>
+    <line x1="200" y1="0" x2="200" y2="300"/>
+    <line x1="400" y1="0" x2="400" y2="300"/>
+    <line x1="600" y1="0" x2="600" y2="300"/>
+    <line x1="800" y1="0" x2="800" y2="300"/>
+    <line x1="1000" y1="0" x2="1000" y2="300"/>
+  </g>
+
+  <!-- Decorative concentric circles -->
+  <circle cx="1050" cy="150" r="200" fill="none" stroke="#3b82f6" stroke-width="0.5" opacity="0.07"/>
+  <circle cx="1050" cy="150" r="150" fill="none" stroke="#8b5cf6" stroke-width="0.5" opacity="0.1"/>
+  <circle cx="1050" cy="150" r="100" fill="none" stroke="#10b981" stroke-width="0.5" opacity="0.13"/>
+  <circle cx="1050" cy="150" r="50" fill="none" stroke="#06b6d4" stroke-width="0.5" opacity="0.16"/>
+
+  <!-- Molecule decorations (background) -->
+  <g opacity="0.06" stroke="white" stroke-width="1" fill="none">
+    <circle cx="780" cy="40" r="8"/>
+    <circle cx="800" cy="55" r="6"/>
+    <line x1="786" y1="46" x2="794" y2="51"/>
+    <circle cx="140" cy="260" r="6"/>
+    <circle cx="160" cy="250" r="5"/>
+    <circle cx="155" cy="270" r="5"/>
+    <line x1="145" y1="256" x2="155" y2="252"/>
+    <line x1="144" y1="264" x2="151" y2="267"/>
+  </g>
+
+  <!-- Title -->
+  <text x="60" y="72" font-family="'Segoe UI', system-ui, -apple-system, sans-serif" font-size="38" font-weight="700" fill="white" letter-spacing="-0.5">Methanol APC Environment</text>
+
+  <!-- Subtitle -->
+  <text x="60" y="105" font-family="'Segoe UI', system-ui, sans-serif" font-size="17" fill="#94a3b8">Digital Twin of Industrial Methanol Synthesis for Reinforcement Learning</text>
+
+  <!-- Chemical equation -->
+  <text x="60" y="140" font-family="'Segoe UI', system-ui, sans-serif" font-size="14" fill="#60a5fa" filter="url(#glow)">
+    CO + 2H₂  →  CH₃OH     ΔH = −90.5 kJ/mol     Cu/ZnO/Al₂O₃  @  250°C, 80 bar
+  </text>
+
+  <!-- Stats badges row -->
+  <g font-family="'Segoe UI', system-ui, sans-serif" font-size="11.5" font-weight="600">
+    <rect x="60" y="162" width="90" height="26" rx="13" fill="#1e293b" stroke="#3b82f6" stroke-width="1"/>
+    <text x="105" y="180" fill="#60a5fa" text-anchor="middle">13 Actions</text>
+
+    <rect x="158" y="162" width="122" height="26" rx="13" fill="#1e293b" stroke="#8b5cf6" stroke-width="1"/>
+    <text x="219" y="180" fill="#a78bfa" text-anchor="middle">30+ Observations</text>
+
+    <rect x="288" y="162" width="80" height="26" rx="13" fill="#1e293b" stroke="#10b981" stroke-width="1"/>
+    <text x="328" y="180" fill="#34d399" text-anchor="middle">12 Tasks</text>
+
+    <rect x="376" y="162" width="118" height="26" rx="13" fill="#1e293b" stroke="#f59e0b" stroke-width="1"/>
+    <text x="435" y="180" fill="#fbbf24" text-anchor="middle">5 Kinetic Models</text>
+
+    <rect x="502" y="162" width="78" height="26" rx="13" fill="#1e293b" stroke="#ef4444" stroke-width="1"/>
+    <text x="541" y="180" fill="#f87171" text-anchor="middle">36 Tests</text>
+
+    <rect x="588" y="162" width="98" height="26" rx="13" fill="#1e293b" stroke="#06b6d4" stroke-width="1"/>
+    <text x="637" y="180" fill="#22d3ee" text-anchor="middle">4 MCP Tools</text>
+  </g>
+
+  <!-- Bottom badge row -->
+  <g font-family="'Segoe UI', system-ui, sans-serif" font-size="12" font-weight="600">
+    <rect x="60" y="202" width="160" height="26" rx="13" fill="rgba(16,185,129,0.1)" stroke="#10b981" stroke-width="1"/>
+    <text x="140" y="220" fill="#34d399" text-anchor="middle">OpenEnv v0.2.3</text>
+
+    <rect x="228" y="202" width="200" height="26" rx="13" fill="rgba(255,210,30,0.08)" stroke="#ffd21e" stroke-width="1"/>
+    <text x="328" y="220" fill="#ffd21e" text-anchor="middle">🤗 Live on HuggingFace Spaces</text>
+
+    <rect x="436" y="202" width="130" height="26" rx="13" fill="rgba(139,92,246,0.1)" stroke="#8b5cf6" stroke-width="1"/>
+    <text x="501" y="220" fill="#a78bfa" text-anchor="middle">Multi-Agent Ready</text>
+  </g>
+
+  <!-- Reactor illustration (right side) -->
+  <g transform="translate(870, 20)">
+    <!-- Temperature gradient bar -->
+    <rect x="12" y="30" width="7" height="180" rx="3.5" fill="url(#tempGrad)" opacity="0.6"/>
+    <text x="15" y="22" font-family="'Segoe UI', sans-serif" font-size="7" fill="#ef4444" text-anchor="middle">300°C</text>
+    <text x="15" y="222" font-family="'Segoe UI', sans-serif" font-size="7" fill="#3b82f6" text-anchor="middle">220°C</text>
+
+    <!-- Reactor vessel body -->
+    <rect x="30" y="18" width="110" height="210" rx="14" fill="url(#reactorBody)" stroke="#9ca3af" stroke-width="1.5"/>
+
+    <!-- Top dome -->
+    <ellipse cx="85" cy="22" rx="55" ry="14" fill="#6b7280" stroke="#9ca3af" stroke-width="1.5"/>
+
+    <!-- Bottom dome -->
+    <ellipse cx="85" cy="224" rx="55" ry="14" fill="#4b5563" stroke="#9ca3af" stroke-width="1.5"/>
+
+    <!-- Catalyst beds -->
+    <rect x="44" y="46" width="82" height="18" rx="4" fill="#f59e0b" opacity="0.85"/>
+    <rect x="44" y="86" width="82" height="18" rx="4" fill="#f59e0b" opacity="0.7"/>
+    <rect x="44" y="126" width="82" height="18" rx="4" fill="#f59e0b" opacity="0.55"/>
+    <rect x="44" y="166" width="82" height="18" rx="4" fill="#f59e0b" opacity="0.4"/>
+
+    <!-- Bed labels -->
+    <text x="85" y="59" font-family="'Segoe UI', sans-serif" font-size="9" fill="white" text-anchor="middle" font-weight="600">Bed 1</text>
+    <text x="85" y="99" font-family="'Segoe UI', sans-serif" font-size="9" fill="white" text-anchor="middle" font-weight="600">Bed 2</text>
+    <text x="85" y="139" font-family="'Segoe UI', sans-serif" font-size="9" fill="white" text-anchor="middle" font-weight="600">Bed 3</text>
+    <text x="85" y="179" font-family="'Segoe UI', sans-serif" font-size="9" fill="white" text-anchor="middle" font-weight="600">Bed 4</text>
+
+    <!-- Quench injection arrows -->
+    <path d="M 24,74 L 44,74" stroke="#3b82f6" stroke-width="2" fill="none" marker-end="url(#blueArrow)"/>
+    <path d="M 24,114 L 44,114" stroke="#3b82f6" stroke-width="2" fill="none" marker-end="url(#blueArrow)"/>
+    <path d="M 24,154 L 44,154" stroke="#3b82f6" stroke-width="2" fill="none" marker-end="url(#blueArrow)"/>
+
+    <!-- Feed inlet pipe -->
+    <line x1="85" y1="0" x2="85" y2="10" stroke="#10b981" stroke-width="4" stroke-linecap="round"/>
+    <text x="85" y="-4" font-family="'Segoe UI', sans-serif" font-size="8" fill="#10b981" text-anchor="middle" font-weight="600">Syngas In</text>
+
+    <!-- Product outlet pipe -->
+    <line x1="85" y1="236" x2="85" y2="250" stroke="#f59e0b" stroke-width="4" stroke-linecap="round"/>
+    <text x="85" y="264" font-family="'Segoe UI', sans-serif" font-size="8" fill="#fbbf24" text-anchor="middle" font-weight="600">Crude MeOH</text>
+
+    <!-- Quench label (vertical) -->
+    <text x="4" y="114" font-family="'Segoe UI', sans-serif" font-size="7" fill="#60a5fa" text-anchor="middle" writing-mode="tb">Cold-Shot Quench</text>
+
+    <!-- Cooling jacket indication -->
+    <path d="M 142,40 Q 155,120 142,200" stroke="#06b6d4" stroke-width="1.5" fill="none" stroke-dasharray="4,3" opacity="0.5"/>
+    <text x="162" y="120" font-family="'Segoe UI', sans-serif" font-size="7" fill="#06b6d4" text-anchor="middle" writing-mode="tb" opacity="0.6">Cooling</text>
+  </g>
+</svg>

@@ -1,0 +1,234 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 500" width="1100" height="500">
+  <defs>
+    <linearGradient id="pfBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1a1a2e"/>
+    </linearGradient>
+    <marker id="pfArrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#34d399"/>
+    </marker>
+    <marker id="pfArrowAmber" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#fbbf24"/>
+    </marker>
+    <marker id="pfArrowBlue" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#60a5fa"/>
+    </marker>
+    <marker id="pfArrowRed" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#f87171"/>
+    </marker>
+    <marker id="pfArrowPurple" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#c084fc"/>
+    </marker>
+    <filter id="pfShadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.4"/>
+    </filter>
+    <style>
+      @keyframes flowDash { to { stroke-dashoffset: -24; } }
+      .pf-flow { animation: flowDash 1.5s linear infinite; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1100" height="500" fill="url(#pfBg)" rx="16"/>
+  <text x="550" y="30" font-family="'Segoe UI', system-ui, sans-serif" font-size="16" fill="#94a3b8" text-anchor="middle" font-weight="700" letter-spacing="1">METHANOL PRODUCTION — COMPLETE PLANT PROCESS FLOW</text>
+
+  <!-- ═══════ FEED SECTION ═══════ -->
+  <!-- Natural Gas input -->
+  <g transform="translate(30, 80)">
+    <rect width="100" height="60" rx="10" fill="#1e293b" stroke="#34d399" stroke-width="2" filter="url(#pfShadow)"/>
+    <text x="50" y="30" font-family="'Segoe UI', sans-serif" font-size="12" fill="white" text-anchor="middle" font-weight="700">Natural</text>
+    <text x="50" y="46" font-family="'Segoe UI', sans-serif" font-size="12" fill="white" text-anchor="middle" font-weight="700">Gas</text>
+    <text x="50" y="72" font-family="'Segoe UI', sans-serif" font-size="9" fill="#34d399" text-anchor="middle">CH₄ + impurities</text>
+  </g>
+
+  <!-- Arrow to Desulf -->
+  <line x1="135" y1="110" x2="175" y2="110" stroke="#34d399" stroke-width="2.5" marker-end="url(#pfArrow)"/>
+
+  <!-- Steam input (from bottom) -->
+  <g transform="translate(310, 240)">
+    <rect width="70" height="40" rx="8" fill="#1e293b" stroke="#06b6d4" stroke-width="1.5"/>
+    <text x="35" y="18" font-family="'Segoe UI', sans-serif" font-size="10" fill="#22d3ee" text-anchor="middle" font-weight="600">Steam</text>
+    <text x="35" y="32" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">H₂O</text>
+  </g>
+  <line x1="345" y1="235" x2="345" y2="155" stroke="#06b6d4" stroke-width="1.5" stroke-dasharray="6,3" class="pf-flow"/>
+  <polygon points="340,158 345,145 350,158" fill="#06b6d4"/>
+
+  <!-- ═══════ DESULFURIZATION ═══════ -->
+  <g transform="translate(180, 70)">
+    <rect width="120" height="80" rx="12" fill="#064e3b" stroke="#34d399" stroke-width="2" filter="url(#pfShadow)"/>
+    <text x="60" y="28" font-family="'Segoe UI', sans-serif" font-size="11" fill="white" text-anchor="middle" font-weight="700">Desulfurization</text>
+    <text x="60" y="46" font-family="'Segoe UI', sans-serif" font-size="10" fill="#34d399" text-anchor="middle">ZnO Guard Bed</text>
+    <!-- ZnO pellets -->
+    <circle cx="30" cy="62" r="5" fill="#34d399" opacity="0.3"/>
+    <circle cx="45" cy="58" r="4" fill="#34d399" opacity="0.25"/>
+    <circle cx="55" cy="65" r="5" fill="#34d399" opacity="0.2"/>
+    <circle cx="70" cy="60" r="4" fill="#34d399" opacity="0.3"/>
+    <circle cx="85" cy="63" r="5" fill="#34d399" opacity="0.25"/>
+    <text x="60" y="92" font-family="'Segoe UI', sans-serif" font-size="8" fill="#94a3b8" text-anchor="middle">H₂S + ZnO → ZnS + H₂O</text>
+  </g>
+
+  <!-- Arrow to Reformer -->
+  <line x1="305" y1="110" x2="345" y2="110" stroke="#34d399" stroke-width="2.5" marker-end="url(#pfArrow)"/>
+
+  <!-- ═══════ REFORMER ═══════ -->
+  <g transform="translate(350, 60)">
+    <rect width="150" height="100" rx="12" fill="#451a03" stroke="#f59e0b" stroke-width="2" filter="url(#pfShadow)"/>
+    <text x="75" y="26" font-family="'Segoe UI', sans-serif" font-size="12" fill="white" text-anchor="middle" font-weight="700">Steam Methane</text>
+    <text x="75" y="42" font-family="'Segoe UI', sans-serif" font-size="12" fill="white" text-anchor="middle" font-weight="700">Reformer (SMR)</text>
+    <!-- Flame icon -->
+    <path d="M 68,58 Q 75,48 82,58 Q 78,65 75,65 Q 72,65 68,58" fill="#f59e0b" opacity="0.6"/>
+    <text x="75" y="80" font-family="'Segoe UI', sans-serif" font-size="10" fill="#fbbf24" text-anchor="middle">700-900°C</text>
+    <text x="75" y="112" font-family="'Segoe UI', sans-serif" font-size="8" fill="#94a3b8" text-anchor="middle">CH₄ + H₂O → CO + 3H₂</text>
+  </g>
+
+  <!-- Arrow: Syngas output -->
+  <line x1="505" y1="110" x2="555" y2="110" stroke="#f59e0b" stroke-width="2.5" marker-end="url(#pfArrowAmber)"/>
+  <text x="530" y="100" font-family="'Segoe UI', sans-serif" font-size="9" fill="#fbbf24" text-anchor="middle">Syngas</text>
+
+  <!-- ═══════ COMPRESSOR ═══════ -->
+  <g transform="translate(560, 80)">
+    <rect width="100" height="60" rx="10" fill="#1e293b" stroke="#60a5fa" stroke-width="2" filter="url(#pfShadow)"/>
+    <text x="50" y="25" font-family="'Segoe UI', sans-serif" font-size="11" fill="white" text-anchor="middle" font-weight="700">Compressor</text>
+    <!-- Compressor icon -->
+    <polygon points="25,45 75,35 75,55" fill="none" stroke="#60a5fa" stroke-width="1.5"/>
+    <text x="50" y="72" font-family="'Segoe UI', sans-serif" font-size="8" fill="#94a3b8" text-anchor="middle">→ 50-100 bar</text>
+  </g>
+
+  <!-- Arrow to reactor -->
+  <line x1="665" y1="110" x2="710" y2="110" stroke="#60a5fa" stroke-width="2.5" marker-end="url(#pfArrowBlue)"/>
+
+  <!-- ═══════ SYNTHESIS REACTOR (MAIN FEATURE) ═══════ -->
+  <g transform="translate(715, 45)">
+    <rect width="170" height="130" rx="14" fill="#1e293b" stroke="#3b82f6" stroke-width="3" filter="url(#pfShadow)"/>
+    <!-- Glow effect -->
+    <rect x="3" y="3" width="164" height="124" rx="12" fill="none" stroke="#3b82f6" stroke-width="0.5" opacity="0.3"/>
+
+    <text x="85" y="24" font-family="'Segoe UI', sans-serif" font-size="13" fill="white" text-anchor="middle" font-weight="700">Synthesis Reactor</text>
+    <text x="85" y="40" font-family="'Segoe UI', sans-serif" font-size="10" fill="#60a5fa" text-anchor="middle">ICI 4-Bed Quench</text>
+
+    <!-- Mini reactor icon -->
+    <rect x="20" y="50" width="40" height="65" rx="8" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1"/>
+    <rect x="26" y="58" width="28" height="8" rx="2" fill="#f59e0b" opacity="0.8"/>
+    <rect x="26" y="70" width="28" height="8" rx="2" fill="#f59e0b" opacity="0.6"/>
+    <rect x="26" y="82" width="28" height="8" rx="2" fill="#f59e0b" opacity="0.4"/>
+    <rect x="26" y="94" width="28" height="8" rx="2" fill="#f59e0b" opacity="0.25"/>
+
+    <text x="115" y="60" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">250°C · 80 bar</text>
+    <text x="115" y="76" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">Cu/ZnO/Al₂O₃</text>
+    <text x="115" y="96" font-family="'Segoe UI', sans-serif" font-size="10" fill="#34d399" text-anchor="middle" font-weight="600">CO + 2H₂</text>
+    <text x="115" y="112" font-family="'Segoe UI', sans-serif" font-size="10" fill="#34d399" text-anchor="middle" font-weight="600">→ CH₃OH</text>
+    <text x="85" y="142" font-family="'Segoe UI', sans-serif" font-size="8" fill="#60a5fa" text-anchor="middle">ΔH = −90.5 kJ/mol</text>
+  </g>
+
+  <!-- Arrow to Separator -->
+  <line x1="890" y1="110" x2="930" y2="110" stroke="#3b82f6" stroke-width="2.5" stroke-dasharray="8,4" class="pf-flow" marker-end="url(#pfArrowBlue)"/>
+
+  <!-- ═══════ SEPARATOR ═══════ -->
+  <g transform="translate(935, 70)">
+    <rect width="120" height="80" rx="12" fill="#1e293b" stroke="#c084fc" stroke-width="2" filter="url(#pfShadow)"/>
+    <text x="60" y="25" font-family="'Segoe UI', sans-serif" font-size="11" fill="white" text-anchor="middle" font-weight="700">Separator</text>
+    <text x="60" y="42" font-family="'Segoe UI', sans-serif" font-size="9" fill="#c084fc" text-anchor="middle">Gas/Liquid Split</text>
+    <!-- Separator icon -->
+    <line x1="20" y1="55" x2="100" y2="55" stroke="#475569" stroke-width="1"/>
+    <rect x="20" y="56" width="80" height="14" rx="3" fill="#c084fc" opacity="0.15"/>
+    <text x="60" y="66" font-family="'Segoe UI', sans-serif" font-size="8" fill="#c084fc" text-anchor="middle">Crude MeOH 96%</text>
+    <text x="60" y="90" font-family="'Segoe UI', sans-serif" font-size="8" fill="#94a3b8" text-anchor="middle">Flash @ 30 bar</text>
+  </g>
+
+  <!-- ═══════ RECYCLE LOOP (THE NON-LINEAR PART) ═══════ -->
+  <!-- Unreacted gas goes UP from separator, curves LEFT back to compressor -->
+  <path d="M 995,68 L 995,35 Q 995,15 975,15 L 625,15 Q 605,15 605,35 L 605,75"
+        fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="8,4" class="pf-flow"/>
+  <polygon points="600,73 605,85 610,73" fill="#f59e0b"/>
+  <!-- Recycle label -->
+  <rect x="740" y="3" width="160" height="22" rx="8" fill="#451a03" stroke="#f59e0b" stroke-width="1"/>
+  <text x="820" y="18" font-family="'Segoe UI', sans-serif" font-size="10" fill="#fbbf24" text-anchor="middle" font-weight="600">♻ Recycle Loop  RR = 3.5</text>
+
+  <!-- ═══════ PURGE GAS BRANCH ═══════ -->
+  <line x1="890" y1="15" x2="890" y2="-12" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <text x="890" y="-18" font-family="'Segoe UI', sans-serif" font-size="8" fill="#f87171" text-anchor="middle">Purge → Fuel/Flare</text>
+  <text x="890" y="-8" font-family="'Segoe UI', sans-serif" font-size="7" fill="#94a3b8" text-anchor="middle">(remove inerts: N₂, CH₄, Ar)</text>
+
+  <!-- ═══════ DOWN TO DISTILLATION ═══════ -->
+  <line x1="995" y1="155" x2="995" y2="240" stroke="#c084fc" stroke-width="2.5" marker-end="url(#pfArrowPurple)"/>
+  <text x="1010" y="200" font-family="'Segoe UI', sans-serif" font-size="8" fill="#c084fc" writing-mode="tb">Crude MeOH</text>
+
+  <!-- ═══════ DISTILLATION COLUMN ═══════ -->
+  <g transform="translate(900, 250)">
+    <rect width="170" height="120" rx="12" fill="#1e1b4b" stroke="#a855f7" stroke-width="2" filter="url(#pfShadow)"/>
+    <text x="85" y="24" font-family="'Segoe UI', sans-serif" font-size="12" fill="white" text-anchor="middle" font-weight="700">Distillation Column</text>
+
+    <!-- Column visualization -->
+    <rect x="20" y="35" width="30" height="70" rx="6" fill="#0f172a" stroke="#a855f7" stroke-width="1"/>
+    <!-- Trays -->
+    <line x1="24" y1="50" x2="46" y2="50" stroke="#a855f7" stroke-width="0.5" opacity="0.5"/>
+    <line x1="24" y1="60" x2="46" y2="60" stroke="#a855f7" stroke-width="0.5" opacity="0.5"/>
+    <line x1="24" y1="70" x2="46" y2="70" stroke="#a855f7" stroke-width="0.5" opacity="0.5"/>
+    <line x1="24" y1="80" x2="46" y2="80" stroke="#a855f7" stroke-width="0.5" opacity="0.5"/>
+    <line x1="24" y1="90" x2="46" y2="90" stroke="#a855f7" stroke-width="0.5" opacity="0.5"/>
+
+    <text x="115" y="50" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">Reflux Ratio: 3.0</text>
+    <text x="115" y="66" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">Reboiler: 50 kW</text>
+    <text x="115" y="86" font-family="'Segoe UI', sans-serif" font-size="10" fill="#c084fc" text-anchor="middle" font-weight="600">99.85% Purity</text>
+    <text x="115" y="102" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">(AA Grade)</text>
+  </g>
+
+  <!-- Water output from distillation -->
+  <line x1="897" y1="330" x2="860" y2="380" stroke="#06b6d4" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <g transform="translate(800, 385)">
+    <rect width="70" height="30" rx="8" fill="#1e293b" stroke="#06b6d4" stroke-width="1"/>
+    <text x="35" y="20" font-family="'Segoe UI', sans-serif" font-size="9" fill="#22d3ee" text-anchor="middle">Water</text>
+  </g>
+
+  <!-- ═══════ PRODUCT OUTPUT ═══════ -->
+  <g transform="translate(885, 395)">
+    <rect width="180" height="70" rx="12" fill="#064e3b" stroke="#10b981" stroke-width="2.5" filter="url(#pfShadow)"/>
+    <!-- Star accent -->
+    <text x="30" y="32" font-family="'Segoe UI', sans-serif" font-size="20" fill="#34d399" text-anchor="middle">★</text>
+    <text x="110" y="28" font-family="'Segoe UI', sans-serif" font-size="14" fill="white" text-anchor="middle" font-weight="700">Pure Methanol</text>
+    <text x="110" y="46" font-family="'Segoe UI', sans-serif" font-size="11" fill="#34d399" text-anchor="middle">CH₃OH (Grade AA)</text>
+    <text x="110" y="62" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">$740/MT · Asia Pacific</text>
+  </g>
+  <line x1="985" y1="372" x2="985" y2="393" stroke="#10b981" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- ═══════ LEGEND ═══════ -->
+  <g transform="translate(30, 340)">
+    <rect width="270" height="140" rx="10" fill="#1e293b" stroke="#475569" stroke-width="0.5"/>
+    <text x="15" y="22" font-family="'Segoe UI', sans-serif" font-size="11" fill="#94a3b8" font-weight="700">LEGEND</text>
+
+    <line x1="15" y1="38" x2="45" y2="38" stroke="#34d399" stroke-width="2.5"/>
+    <text x="55" y="42" font-family="'Segoe UI', sans-serif" font-size="10" fill="#94a3b8">Process flow</text>
+
+    <line x1="15" y1="56" x2="45" y2="56" stroke="#f59e0b" stroke-width="2" stroke-dasharray="6,3"/>
+    <text x="55" y="60" font-family="'Segoe UI', sans-serif" font-size="10" fill="#94a3b8">Recycle stream</text>
+
+    <line x1="15" y1="74" x2="45" y2="74" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <text x="55" y="78" font-family="'Segoe UI', sans-serif" font-size="10" fill="#94a3b8">Purge / waste</text>
+
+    <line x1="15" y1="92" x2="45" y2="92" stroke="#06b6d4" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <text x="55" y="96" font-family="'Segoe UI', sans-serif" font-size="10" fill="#94a3b8">Utilities (steam, water)</text>
+
+    <rect x="15" y="106" width="16" height="12" rx="3" fill="#f59e0b" opacity="0.5"/>
+    <text x="55" y="116" font-family="'Segoe UI', sans-serif" font-size="10" fill="#94a3b8">Catalyst bed</text>
+
+    <text x="135" y="42" font-family="'Segoe UI', sans-serif" font-size="9" fill="#60a5fa">⬤ Agent controls 13 variables</text>
+    <text x="135" y="60" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8">across all plant stages</text>
+    <text x="135" y="80" font-family="'Segoe UI', sans-serif" font-size="9" fill="#fbbf24">♻ Single-pass conversion ~5%</text>
+    <text x="135" y="96" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8">Recycle makes up difference</text>
+  </g>
+
+  <!-- ═══════ KEY NUMBERS ═══════ -->
+  <g transform="translate(320, 340)">
+    <rect width="270" height="140" rx="10" fill="#1e293b" stroke="#475569" stroke-width="0.5"/>
+    <text x="15" y="22" font-family="'Segoe UI', sans-serif" font-size="11" fill="#94a3b8" font-weight="700">KEY PROCESS NUMBERS</text>
+
+    <g font-family="'Segoe UI', sans-serif" font-size="10" fill="#94a3b8">
+      <text x="15" y="44"><tspan fill="#34d399" font-weight="600">Feed: </tspan>H₂ 0-10 mol/s, CO 0-5 mol/s</text>
+      <text x="15" y="62"><tspan fill="#f59e0b" font-weight="600">SMR: </tspan>700-900°C, S/C ≈ 3.0</text>
+      <text x="15" y="80"><tspan fill="#60a5fa" font-weight="600">Reactor: </tspan>250°C, 50-100 bar</text>
+      <text x="15" y="98"><tspan fill="#c084fc" font-weight="600">Selectivity: </tspan>&gt;99.8%</text>
+      <text x="15" y="116"><tspan fill="#ef4444" font-weight="600">Safety: </tspan>Shutdown @ 300°C</text>
+      <text x="15" y="134"><tspan fill="#10b981" font-weight="600">Product: </tspan>Grade AA (99.85%)</text>
+    </g>
+  </g>
+</svg>

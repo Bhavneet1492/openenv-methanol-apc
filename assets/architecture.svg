@@ -1,0 +1,352 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 720" width="1100" height="720">
+  <defs>
+    <linearGradient id="agentGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e3a5f"/>
+      <stop offset="100%" stop-color="#172554"/>
+    </linearGradient>
+    <linearGradient id="apiGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#312e81"/>
+      <stop offset="100%" stop-color="#1e1b4b"/>
+    </linearGradient>
+    <linearGradient id="plantGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#064e3b"/>
+      <stop offset="100%" stop-color="#022c22"/>
+    </linearGradient>
+    <linearGradient id="flowLine" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="dataFlow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+    <marker id="arrowDown" viewBox="0 0 10 10" refX="5" refY="10" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 5 10 L 10 0 z" fill="#8b5cf6"/>
+    </marker>
+    <marker id="arrowUp" viewBox="0 0 10 10" refX="5" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 10 L 5 0 L 10 10 z" fill="#10b981"/>
+    </marker>
+    <marker id="arrowRight" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#10b981"/>
+    </marker>
+    <marker id="arrowRightAmber" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#f59e0b"/>
+    </marker>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.3"/>
+    </filter>
+    <filter id="glow2">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <!-- Animated dash pattern -->
+    <style>
+      @keyframes dash { to { stroke-dashoffset: -20; } }
+      @keyframes pulse { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
+      .flow-line { animation: dash 1s linear infinite; }
+      .pulse { animation: pulse 2s ease-in-out infinite; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1100" height="720" fill="#0f172a" rx="16"/>
+
+  <!-- ═══════════ LAYER 1: AGENT ═══════════ -->
+  <g transform="translate(40, 20)">
+    <rect width="740" height="130" rx="12" fill="url(#agentGrad)" stroke="#3b82f6" stroke-width="1.5" filter="url(#shadow)"/>
+    <text x="20" y="24" font-family="'Segoe UI', system-ui, sans-serif" font-size="11" fill="#60a5fa" font-weight="700" letter-spacing="2">AGENT LAYER</text>
+
+    <!-- RL Agent box -->
+    <rect x="30" y="40" width="200" height="70" rx="10" fill="#1e293b" stroke="#3b82f6" stroke-width="1.5"/>
+    <!-- Brain icon -->
+    <circle cx="65" cy="75" r="18" fill="none" stroke="#60a5fa" stroke-width="1.5"/>
+    <path d="M 55 75 Q 58 62 65 62 Q 72 62 75 75 Q 72 88 65 88 Q 58 88 55 75" fill="none" stroke="#60a5fa" stroke-width="1" opacity="0.6"/>
+    <path d="M 60 68 Q 65 58 70 68" fill="none" stroke="#60a5fa" stroke-width="1" opacity="0.4"/>
+    <text x="95" y="70" font-family="'Segoe UI', sans-serif" font-size="16" fill="white" font-weight="700">RL Agent</text>
+    <text x="95" y="88" font-family="'Segoe UI', sans-serif" font-size="11" fill="#94a3b8">LLM / Policy Network</text>
+
+    <!-- Action arrow down -->
+    <g>
+      <text x="290" y="55" font-family="'Segoe UI', sans-serif" font-size="10" fill="#f59e0b" text-anchor="middle">13 Actions</text>
+      <line x1="290" y1="60" x2="290" y2="100" stroke="#f59e0b" stroke-width="2" stroke-dasharray="6,3" class="flow-line"/>
+      <polygon points="284,98 290,110 296,98" fill="#f59e0b"/>
+    </g>
+
+    <!-- Observation arrow up -->
+    <g>
+      <text x="380" y="55" font-family="'Segoe UI', sans-serif" font-size="10" fill="#10b981" text-anchor="middle">30+ Obs</text>
+      <line x1="380" y1="100" x2="380" y2="60" stroke="#10b981" stroke-width="2" stroke-dasharray="6,3" class="flow-line"/>
+      <polygon points="374,62 380,50 386,62" fill="#10b981"/>
+    </g>
+
+    <!-- Reward arrow up -->
+    <g>
+      <text x="470" y="55" font-family="'Segoe UI', sans-serif" font-size="10" fill="#a78bfa" text-anchor="middle">Reward</text>
+      <line x1="470" y1="100" x2="470" y2="60" stroke="#a78bfa" stroke-width="2" stroke-dasharray="6,3" class="flow-line"/>
+      <polygon points="464,62 470,50 476,62" fill="#a78bfa"/>
+    </g>
+
+    <!-- MCP Context arrow -->
+    <g>
+      <text x="580" y="55" font-family="'Segoe UI', sans-serif" font-size="10" fill="#06b6d4" text-anchor="middle">MCP Context</text>
+      <line x1="580" y1="100" x2="580" y2="60" stroke="#06b6d4" stroke-width="2" stroke-dasharray="4,4" class="flow-line"/>
+      <polygon points="574,62 580,50 586,62" fill="#06b6d4"/>
+    </g>
+  </g>
+
+  <!-- ═══════════ LAYER 2: API SERVER ═══════════ -->
+  <g transform="translate(40, 170)">
+    <rect width="740" height="160" rx="12" fill="url(#apiGrad)" stroke="#8b5cf6" stroke-width="1.5" filter="url(#shadow)"/>
+    <text x="20" y="24" font-family="'Segoe UI', system-ui, sans-serif" font-size="11" fill="#a78bfa" font-weight="700" letter-spacing="2">API &amp; ORCHESTRATION LAYER</text>
+
+    <!-- OpenEnv Server -->
+    <rect x="30" y="40" width="180" height="100" rx="10" fill="#1e293b" stroke="#8b5cf6" stroke-width="1.5"/>
+    <text x="120" y="70" font-family="'Segoe UI', sans-serif" font-size="15" fill="white" font-weight="700" text-anchor="middle">OpenEnv Server</text>
+    <text x="120" y="88" font-family="'Segoe UI', sans-serif" font-size="11" fill="#94a3b8" text-anchor="middle">FastAPI + WebSocket</text>
+    <text x="120" y="104" font-family="'Segoe UI', sans-serif" font-size="10" fill="#a78bfa" text-anchor="middle">v0.2.3</text>
+    <!-- Atom/molecule icon -->
+    <circle cx="120" cy="122" r="6" fill="none" stroke="#a78bfa" stroke-width="1" opacity="0.4"/>
+
+    <!-- Task Engine -->
+    <rect x="230" y="40" width="140" height="100" rx="10" fill="#1e293b" stroke="#8b5cf6" stroke-width="1"/>
+    <text x="300" y="65" font-family="'Segoe UI', sans-serif" font-size="13" fill="white" font-weight="600" text-anchor="middle">Task Engine</text>
+    <text x="300" y="82" font-family="'Segoe UI', sans-serif" font-size="10" fill="#94a3b8" text-anchor="middle">12 Scenarios</text>
+    <!-- Task icons -->
+    <g transform="translate(255, 92)" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8">
+      <rect width="36" height="16" rx="4" fill="#1e3a5f" stroke="#3b82f6" stroke-width="0.5"/>
+      <text x="18" y="11" text-anchor="middle" fill="#60a5fa">Easy</text>
+      <rect x="40" width="36" height="16" rx="4" fill="#1e3a5f" stroke="#f59e0b" stroke-width="0.5"/>
+      <text x="58" y="11" text-anchor="middle" fill="#fbbf24">Med</text>
+    </g>
+    <g transform="translate(255, 112)" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8">
+      <rect width="36" height="16" rx="4" fill="#1e3a5f" stroke="#ef4444" stroke-width="0.5"/>
+      <text x="18" y="11" text-anchor="middle" fill="#f87171">Hard</text>
+      <rect x="40" width="44" height="16" rx="4" fill="#1e3a5f" stroke="#a855f7" stroke-width="0.5"/>
+      <text x="62" y="11" text-anchor="middle" fill="#c084fc">Expert</text>
+    </g>
+
+    <!-- Rubric System -->
+    <rect x="390" y="40" width="140" height="100" rx="10" fill="#1e293b" stroke="#8b5cf6" stroke-width="1"/>
+    <text x="460" y="65" font-family="'Segoe UI', sans-serif" font-size="13" fill="white" font-weight="600" text-anchor="middle">Rubric System</text>
+    <text x="460" y="82" font-family="'Segoe UI', sans-serif" font-size="10" fill="#94a3b8" text-anchor="middle">RFC 004 Grading</text>
+    <!-- Score bar -->
+    <rect x="410" y="95" width="100" height="8" rx="4" fill="#1e293b" stroke="#475569" stroke-width="0.5"/>
+    <rect x="410" y="95" width="72" height="8" rx="4" fill="#10b981" opacity="0.7"/>
+    <text x="460" y="118" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">0.01 → 0.99 reward</text>
+
+    <!-- MCP Tools -->
+    <rect x="550" y="40" width="170" height="100" rx="10" fill="#1e293b" stroke="#06b6d4" stroke-width="1.5"/>
+    <text x="635" y="60" font-family="'Segoe UI', sans-serif" font-size="13" fill="white" font-weight="600" text-anchor="middle">MCP Tools</text>
+    <g transform="translate(562, 68)" font-family="'Segoe UI', sans-serif" font-size="9">
+      <rect width="146" height="14" rx="3" fill="#0e3a3a"/>
+      <text x="6" y="10" fill="#22d3ee">⚡ Energy Pricing</text>
+      <rect y="18" width="146" height="14" rx="3" fill="#0e3a3a"/>
+      <text x="6" y="28" fill="#22d3ee">🔬 Catalyst Status</text>
+      <rect y="36" width="146" height="14" rx="3" fill="#0e3a3a"/>
+      <text x="6" y="46" fill="#22d3ee">🔧 Maintenance</text>
+      <rect y="54" width="146" height="14" rx="3" fill="#0e3a3a"/>
+      <text x="6" y="64" fill="#22d3ee">🌿 Carbon Footprint</text>
+    </g>
+  </g>
+
+  <!-- ═══════════ LAYER 3: PLANT SIMULATION ═══════════ -->
+  <g transform="translate(40, 355)">
+    <rect width="740" height="230" rx="12" fill="url(#plantGrad)" stroke="#10b981" stroke-width="1.5" filter="url(#shadow)"/>
+    <text x="20" y="24" font-family="'Segoe UI', system-ui, sans-serif" font-size="11" fill="#34d399" font-weight="700" letter-spacing="2">PLANT SIMULATION LAYER</text>
+
+    <!-- Desulfurization -->
+    <rect x="30" y="45" width="120" height="75" rx="10" fill="#1e293b" stroke="#34d399" stroke-width="1"/>
+    <circle cx="90" cy="70" r="14" fill="#064e3b" stroke="#34d399" stroke-width="1"/>
+    <text x="90" y="74" font-family="'Segoe UI', sans-serif" font-size="10" fill="#34d399" text-anchor="middle" font-weight="700">S→0</text>
+    <text x="90" y="98" font-family="'Segoe UI', sans-serif" font-size="11" fill="white" text-anchor="middle" font-weight="600">Desulfurize</text>
+    <text x="90" y="112" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">ZnO Guard</text>
+
+    <!-- Arrow 1 -->
+    <line x1="155" y1="82" x2="185" y2="82" stroke="#34d399" stroke-width="2" marker-end="url(#arrowRight)"/>
+
+    <!-- Reformer -->
+    <rect x="190" y="45" width="120" height="75" rx="10" fill="#1e293b" stroke="#f59e0b" stroke-width="1"/>
+    <rect x="215" y="58" width="70" height="20" rx="4" fill="#451a03" stroke="#f59e0b" stroke-width="0.5"/>
+    <text x="250" y="72" font-family="'Segoe UI', sans-serif" font-size="9" fill="#fbbf24" text-anchor="middle">700-900°C</text>
+    <text x="250" y="98" font-family="'Segoe UI', sans-serif" font-size="11" fill="white" text-anchor="middle" font-weight="600">Reformer</text>
+    <text x="250" y="112" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">SMR → Syngas</text>
+
+    <!-- Arrow 2 -->
+    <line x1="315" y1="82" x2="345" y2="82" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrowRightAmber)"/>
+
+    <!-- Synthesis Reactor (main, larger) -->
+    <rect x="350" y="38" width="160" height="90" rx="10" fill="#1e293b" stroke="#3b82f6" stroke-width="2"/>
+    <!-- Reactor icon -->
+    <rect x="375" y="50" width="30" height="50" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1"/>
+    <rect x="380" y="58" width="20" height="6" rx="2" fill="#f59e0b" opacity="0.7"/>
+    <rect x="380" y="68" width="20" height="6" rx="2" fill="#f59e0b" opacity="0.55"/>
+    <rect x="380" y="78" width="20" height="6" rx="2" fill="#f59e0b" opacity="0.4"/>
+    <text x="470" y="68" font-family="'Segoe UI', sans-serif" font-size="14" fill="white" font-weight="700" text-anchor="middle">Synthesis</text>
+    <text x="470" y="84" font-family="'Segoe UI', sans-serif" font-size="10" fill="#60a5fa" text-anchor="middle">ICI 4-Bed Quench</text>
+    <text x="470" y="98" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">250°C · 80 bar · LHHW</text>
+    <text x="470" y="120" font-family="'Segoe UI', sans-serif" font-size="9" fill="#34d399" text-anchor="middle">CO + 2H₂ → CH₃OH</text>
+
+    <!-- Arrow 3 -->
+    <line x1="515" y1="82" x2="545" y2="82" stroke="#3b82f6" stroke-width="2" stroke-dasharray="6,3" class="flow-line"/>
+    <polygon points="543,77 555,82 543,87" fill="#3b82f6"/>
+
+    <!-- Distillation -->
+    <rect x="560" y="45" width="120" height="75" rx="10" fill="#1e293b" stroke="#a855f7" stroke-width="1"/>
+    <!-- Column icon -->
+    <rect x="578" y="55" width="18" height="50" rx="4" fill="#1e1b4b" stroke="#a855f7" stroke-width="0.8"/>
+    <line x1="582" y1="65" x2="592" y2="65" stroke="#a855f7" stroke-width="0.5" opacity="0.5"/>
+    <line x1="582" y1="75" x2="592" y2="75" stroke="#a855f7" stroke-width="0.5" opacity="0.5"/>
+    <line x1="582" y1="85" x2="592" y2="85" stroke="#a855f7" stroke-width="0.5" opacity="0.5"/>
+    <text x="645" y="75" font-family="'Segoe UI', sans-serif" font-size="11" fill="white" text-anchor="middle" font-weight="600">Distillation</text>
+    <text x="645" y="90" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">99.85% Purity</text>
+    <text x="645" y="113" font-family="'Segoe UI', sans-serif" font-size="9" fill="#c084fc" text-anchor="middle">Pure CH₃OH ↓</text>
+
+    <!-- ══ RECYCLE LOOP ══ -->
+    <path d="M 500,132 L 500,165 Q 500,180 485,180 L 235,180 Q 220,180 220,165 L 220,132"
+          fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="6,3" class="flow-line" opacity="0.8"/>
+    <polygon points="215,134 220,122 225,134" fill="#f59e0b" opacity="0.8"/>
+    <rect x="310" y="170" width="120" height="20" rx="6" fill="#451a03" stroke="#f59e0b" stroke-width="0.5"/>
+    <text x="370" y="184" font-family="'Segoe UI', sans-serif" font-size="10" fill="#fbbf24" text-anchor="middle">Recycle Loop RR=3.5</text>
+
+    <!-- Purge gas branch -->
+    <line x1="370" y1="192" x2="370" y2="215" stroke="#ef4444" stroke-width="1" stroke-dasharray="3,3"/>
+    <text x="370" y="225" font-family="'Segoe UI', sans-serif" font-size="8" fill="#f87171" text-anchor="middle">Purge → Flare</text>
+
+    <!-- Product output -->
+    <line x1="680" y1="105" x2="720" y2="105" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="712" y="100" font-family="'Segoe UI', sans-serif" font-size="9" fill="#34d399" text-anchor="middle">Product</text>
+  </g>
+
+  <!-- ═══════════ SIDEBAR: DEPLOYMENT ═══════════ -->
+  <g transform="translate(810, 20)">
+    <rect width="250" height="565" rx="12" fill="#1e293b" stroke="#475569" stroke-width="1" filter="url(#shadow)"/>
+    <text x="125" y="24" font-family="'Segoe UI', system-ui, sans-serif" font-size="11" fill="#94a3b8" font-weight="700" letter-spacing="2" text-anchor="middle">DEPLOYMENT</text>
+
+    <!-- HuggingFace -->
+    <rect x="15" y="45" width="220" height="80" rx="10" fill="#0f172a" stroke="#ffd21e" stroke-width="1.5"/>
+    <text x="55" y="72" font-family="'Segoe UI', sans-serif" font-size="22" fill="#ffd21e">🤗</text>
+    <text x="80" y="72" font-family="'Segoe UI', sans-serif" font-size="14" fill="white" font-weight="700">HuggingFace</text>
+    <text x="80" y="90" font-family="'Segoe UI', sans-serif" font-size="10" fill="#94a3b8">Spaces · Live Deployment</text>
+    <text x="80" y="106" font-family="'Segoe UI', sans-serif" font-size="9" fill="#fbbf24">glitchfilter/methanol-apc-env</text>
+
+    <!-- GitHub -->
+    <rect x="15" y="140" width="220" height="80" rx="10" fill="#0f172a" stroke="#e5e7eb" stroke-width="1"/>
+    <!-- GitHub icon (simplified) -->
+    <circle cx="45" cy="175" r="16" fill="#e5e7eb"/>
+    <circle cx="45" cy="170" r="6" fill="#0f172a"/>
+    <path d="M 33 185 Q 38 180 45 182 Q 52 180 57 185" fill="#0f172a" stroke="none"/>
+    <text x="80" y="170" font-family="'Segoe UI', sans-serif" font-size="14" fill="white" font-weight="700">GitHub</text>
+    <text x="80" y="188" font-family="'Segoe UI', sans-serif" font-size="10" fill="#94a3b8">Source · CI/CD · Tests</text>
+    <text x="80" y="204" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8">36 tests passing</text>
+
+    <!-- Docker -->
+    <rect x="15" y="235" width="220" height="80" rx="10" fill="#0f172a" stroke="#2496ED" stroke-width="1"/>
+    <!-- Docker whale (simplified) -->
+    <g transform="translate(30, 260)">
+      <rect x="0" y="4" width="6" height="6" rx="1" fill="#2496ED"/>
+      <rect x="8" y="4" width="6" height="6" rx="1" fill="#2496ED"/>
+      <rect x="16" y="4" width="6" height="6" rx="1" fill="#2496ED"/>
+      <rect x="8" y="-4" width="6" height="6" rx="1" fill="#2496ED"/>
+      <rect x="16" y="-4" width="6" height="6" rx="1" fill="#2496ED"/>
+      <path d="M -2,12 Q 5,18 28,12 Q 32,8 28,5" fill="none" stroke="#2496ED" stroke-width="1.5"/>
+    </g>
+    <text x="80" y="268" font-family="'Segoe UI', sans-serif" font-size="14" fill="white" font-weight="700">Docker</text>
+    <text x="80" y="286" font-family="'Segoe UI', sans-serif" font-size="10" fill="#94a3b8">Containerized · Portable</text>
+    <text x="80" y="300" font-family="'Segoe UI', sans-serif" font-size="9" fill="#60a5fa">docker-compose.yml</text>
+
+    <!-- OpenEnv -->
+    <rect x="15" y="330" width="220" height="80" rx="10" fill="#0f172a" stroke="#10b981" stroke-width="1.5"/>
+    <!-- OpenEnv atom icon -->
+    <circle cx="45" cy="365" r="4" fill="#10b981"/>
+    <ellipse cx="45" cy="365" rx="14" ry="6" fill="none" stroke="#10b981" stroke-width="1" transform="rotate(0,45,365)"/>
+    <ellipse cx="45" cy="365" rx="14" ry="6" fill="none" stroke="#10b981" stroke-width="1" transform="rotate(60,45,365)"/>
+    <ellipse cx="45" cy="365" rx="14" ry="6" fill="none" stroke="#10b981" stroke-width="1" transform="rotate(120,45,365)"/>
+    <text x="80" y="362" font-family="'Segoe UI', sans-serif" font-size="14" fill="white" font-weight="700">OpenEnv</text>
+    <text x="80" y="380" font-family="'Segoe UI', sans-serif" font-size="10" fill="#94a3b8">Framework Compatible</text>
+    <text x="80" y="396" font-family="'Segoe UI', sans-serif" font-size="9" fill="#34d399">openenv-core v0.2.3</text>
+
+    <!-- Multi-Agent -->
+    <rect x="15" y="425" width="220" height="120" rx="10" fill="#0f172a" stroke="#f59e0b" stroke-width="1"/>
+    <text x="125" y="448" font-family="'Segoe UI', sans-serif" font-size="12" fill="white" font-weight="700" text-anchor="middle">Multi-Agent Architecture</text>
+    <!-- Agent boxes -->
+    <g font-family="'Segoe UI', sans-serif" font-size="9">
+      <rect x="30" y="460" width="80" height="22" rx="5" fill="#1e3a5f" stroke="#3b82f6" stroke-width="0.5"/>
+      <text x="70" y="475" fill="#60a5fa" text-anchor="middle">Reformer</text>
+      <rect x="120" y="460" width="80" height="22" rx="5" fill="#1e3a5f" stroke="#10b981" stroke-width="0.5"/>
+      <text x="160" y="475" fill="#34d399" text-anchor="middle">Synthesis</text>
+      <rect x="30" y="488" width="80" height="22" rx="5" fill="#1e3a5f" stroke="#a855f7" stroke-width="0.5"/>
+      <text x="70" y="503" fill="#c084fc" text-anchor="middle">Purification</text>
+      <rect x="120" y="488" width="100" height="22" rx="5" fill="#451a03" stroke="#f59e0b" stroke-width="1"/>
+      <text x="170" y="503" fill="#fbbf24" text-anchor="middle">Supervisory ★</text>
+    </g>
+    <text x="125" y="530" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">4 specialized agent classes</text>
+  </g>
+
+  <!-- ═══════════ CONNECTION LINES (animated) ═══════════ -->
+  <!-- Agent → API -->
+  <line x1="400" y1="152" x2="400" y2="170" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="6,3" class="flow-line"/>
+  <!-- API → Plant -->
+  <line x1="400" y1="332" x2="400" y2="355" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="6,3" class="flow-line"/>
+
+  <!-- Sidebar connections -->
+  <path d="M 800,85 L 810,85" stroke="#ffd21e" stroke-width="1" stroke-dasharray="3,3" opacity="0.5"/>
+  <path d="M 800,250 L 810,250" stroke="#8b5cf6" stroke-width="1" stroke-dasharray="3,3" opacity="0.5"/>
+
+  <!-- ═══════════ BOTTOM: PHYSICS BADGES ═══════════ -->
+  <g transform="translate(40, 610)">
+    <rect width="1020" height="90" rx="12" fill="#1e293b" stroke="#475569" stroke-width="0.5"/>
+    <text x="20" y="22" font-family="'Segoe UI', system-ui, sans-serif" font-size="11" fill="#94a3b8" font-weight="700" letter-spacing="2">PHYSICS ENGINE</text>
+
+    <g font-family="'Segoe UI', sans-serif" font-size="10" transform="translate(20, 38)">
+      <rect width="90" height="22" rx="6" fill="#0f172a" stroke="#3b82f6" stroke-width="0.5"/>
+      <text x="45" y="15" fill="#60a5fa" text-anchor="middle">RK4 ODE</text>
+
+      <rect x="100" width="100" height="22" rx="6" fill="#0f172a" stroke="#8b5cf6" stroke-width="0.5"/>
+      <text x="150" y="15" fill="#a78bfa" text-anchor="middle">SRK Fugacity</text>
+
+      <rect x="210" width="100" height="22" rx="6" fill="#0f172a" stroke="#10b981" stroke-width="0.5"/>
+      <text x="260" y="15" fill="#34d399" text-anchor="middle">LHHW Kinetics</text>
+
+      <rect x="320" width="110" height="22" rx="6" fill="#0f172a" stroke="#f59e0b" stroke-width="0.5"/>
+      <text x="375" y="15" fill="#fbbf24" text-anchor="middle">3-Reaction Model</text>
+
+      <rect x="440" width="110" height="22" rx="6" fill="#0f172a" stroke="#ef4444" stroke-width="0.5"/>
+      <text x="495" y="15" fill="#f87171" text-anchor="middle">Ergun ΔP Drop</text>
+
+      <rect x="560" width="120" height="22" rx="6" fill="#0f172a" stroke="#06b6d4" stroke-width="0.5"/>
+      <text x="620" y="15" fill="#22d3ee" text-anchor="middle">Catalyst Deact.</text>
+
+      <rect x="690" width="120" height="22" rx="6" fill="#0f172a" stroke="#a855f7" stroke-width="0.5"/>
+      <text x="750" y="15" fill="#c084fc" text-anchor="middle">Domain Random.</text>
+
+      <rect x="820" width="100" height="22" rx="6" fill="#0f172a" stroke="#10b981" stroke-width="0.5"/>
+      <text x="870" y="15" fill="#34d399" text-anchor="middle">Spot Pricing</text>
+    </g>
+
+    <g font-family="'Segoe UI', sans-serif" font-size="10" transform="translate(20, 64)">
+      <rect width="110" height="22" rx="6" fill="#0f172a" stroke="#3b82f6" stroke-width="0.5"/>
+      <text x="55" y="15" fill="#60a5fa" text-anchor="middle">4-Bed Quench</text>
+
+      <rect x="120" width="110" height="22" rx="6" fill="#0f172a" stroke="#f59e0b" stroke-width="0.5"/>
+      <text x="175" y="15" fill="#fbbf24" text-anchor="middle">Lurgi Isothermal</text>
+
+      <rect x="240" width="130" height="22" rx="6" fill="#0f172a" stroke="#8b5cf6" stroke-width="0.5"/>
+      <text x="305" y="15" fill="#a78bfa" text-anchor="middle">Kirchhoff ΔH(T)</text>
+
+      <rect x="380" width="100" height="22" rx="6" fill="#0f172a" stroke="#10b981" stroke-width="0.5"/>
+      <text x="430" y="15" fill="#34d399" text-anchor="middle">Byproducts</text>
+
+      <rect x="490" width="120" height="22" rx="6" fill="#0f172a" stroke="#ef4444" stroke-width="0.5"/>
+      <text x="550" y="15" fill="#f87171" text-anchor="middle">Monte Carlo Dist.</text>
+
+      <rect x="620" width="100" height="22" rx="6" fill="#0f172a" stroke="#06b6d4" stroke-width="0.5"/>
+      <text x="670" y="15" fill="#22d3ee" text-anchor="middle">Condensation</text>
+
+      <rect x="730" width="110" height="22" rx="6" fill="#0f172a" stroke="#a855f7" stroke-width="0.5"/>
+      <text x="785" y="15" fill="#c084fc" text-anchor="middle">Process Noise</text>
+
+      <rect x="850" width="100" height="22" rx="6" fill="#0f172a" stroke="#f59e0b" stroke-width="0.5"/>
+      <text x="900" y="15" fill="#fbbf24" text-anchor="middle">5 Kin. Models</text>
+    </g>
+  </g>
+</svg>
