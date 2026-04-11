@@ -22,30 +22,30 @@
 
 ## Table of Contents
 
-- [Background: Why This Exists](#-background-why-this-exists)
+- [Background: Why This Exists](#background-why-this-exists)
   - [What is Methanol?](#what-is-methanol)
   - [How is Methanol Made Industrially?](#how-is-methanol-made-industrially)
   - [What is Advanced Process Control (APC)?](#what-is-advanced-process-control-apc)
   - [Why Reinforcement Learning?](#why-reinforcement-learning)
-- [Architecture](#-architecture)
-- [The Reactor](#-the-reactor-ici-4-bed-quench-design)
-- [Process Flow](#-process-flow)
-- [Quick Start](#-quick-start)
-- [Action Space](#-action-space-13-continuous-variables)
-- [Observation Space](#-observation-space-30-fields)
-- [Tasks](#-tasks-12-scenarios)
-- [Baseline Performance](#-baseline-performance)
-- [Multi-Agent Architecture](#-multi-agent-architecture)
-- [MCP Tools](#-mcp-tools)
-- [Physics Engine](#-physics-engine)
-- [Regional Configurations](#-regional-configurations-10-bundles)
-- [Setup & Development](#-setup--development)
-- [References](#-references)
-- [Citation](#-citation)
+- [Architecture](#architecture)
+- [The Reactor: ICI 4-Bed Quench Design](#the-reactor-ici-4-bed-quench-design)
+- [Process Flow](#process-flow)
+- [Quick Start](#quick-start)
+- [Action Space (13 Continuous Variables)](#action-space-13-continuous-variables)
+- [Observation Space (30+ Fields)](#observation-space-30-fields)
+- [Tasks (12 Scenarios)](#tasks-12-scenarios)
+- [Baseline Performance](#baseline-performance)
+- [Multi-Agent Architecture](#multi-agent-architecture)
+- [MCP Tools](#mcp-tools)
+- [Physics Engine](#physics-engine)
+- [Regional Configurations (10 Bundles)](#regional-configurations-10-bundles)
+- [Setup & Development](#setup--development)
+- [References](#references)
+- [Citation](#citation)
 
 ---
 
-## 📖 Background: Why This Exists
+## Background: Why This Exists
 
 ### What is Methanol?
 
@@ -127,7 +127,7 @@ RL is uniquely suited to this problem because:
 
 ---
 
-## 🏗 Architecture
+## Architecture
 
 <p align="center">
   <img src="assets/architecture.svg" width="100%" alt="System Architecture: Agent → OpenEnv API → Plant Simulator with MCP Tools, deployed on HuggingFace and Docker">
@@ -135,7 +135,7 @@ RL is uniquely suited to this problem because:
 
 ---
 
-## ⚗ The Reactor: ICI 4-Bed Quench Design
+## The Reactor: ICI 4-Bed Quench Design
 
 The simulated reactor faithfully models the **ICI (Imperial Chemical Industries) Low-Pressure Process**, the dominant methanol synthesis technology since the 1960s. The reactor contains 4 adiabatic catalyst beds with cold-shot quench gas injection between each bed to manage the exothermic temperature rise.
 
@@ -151,7 +151,7 @@ The simulated reactor faithfully models the **ICI (Imperial Chemical Industries)
 
 ---
 
-## 🔄 Process Flow
+## Process Flow
 
 The complete plant is **not a simple linear chain** — it features a recycle loop, purge system, and branching material flows:
 
@@ -161,7 +161,7 @@ The complete plant is **not a simple linear chain** — it features a recycle lo
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ```python
 # Connect to the live HuggingFace Space
@@ -196,7 +196,7 @@ docker-compose up
 
 ---
 
-## 🎛 Action Space (13 Continuous Variables)
+## Action Space (13 Continuous Variables)
 
 The agent controls the full plant — not just the reactor:
 
@@ -217,7 +217,7 @@ The agent controls the full plant — not just the reactor:
 
 ---
 
-## 👁 Observation Space (30+ Fields)
+## Observation Space (30+ Fields)
 
 <details>
 <summary><b>Click to expand full observation schema</b></summary>
@@ -260,7 +260,7 @@ The agent controls the full plant — not just the reactor:
 
 ---
 
-## 🎯 Tasks (12 Scenarios)
+## Tasks (12 Scenarios)
 
 | Task | Difficulty | Steps | What the Agent Must Do |
 |------|:---------:|------:|----------------------|
@@ -279,7 +279,7 @@ The agent controls the full plant — not just the reactor:
 
 ---
 
-## 📊 Baseline Performance
+## Baseline Performance
 
 Three classical controllers are included for benchmarking:
 
@@ -298,7 +298,7 @@ python examples/compare_baselines.py
 
 ---
 
-## 🧠 Multi-Agent Architecture
+## Multi-Agent Architecture
 
 The environment supports decomposing control into specialized sub-agents that mirror real plant organization:
 
@@ -342,7 +342,7 @@ obs = env.step(action)
 
 ---
 
-## 🔌 MCP Tools
+## MCP Tools
 
 The environment exposes 4 [Model Context Protocol](https://modelcontextprotocol.io/) tools for context-aware LLM agents:
 
@@ -355,7 +355,7 @@ The environment exposes 4 [Model Context Protocol](https://modelcontextprotocol.
 
 ---
 
-## ⚙ Physics Engine
+## Physics Engine
 
 <details>
 <summary><b>Click to expand full physics model details</b></summary>
@@ -401,7 +401,7 @@ The environment exposes 4 [Model Context Protocol](https://modelcontextprotocol.
 
 ---
 
-## 🌍 Regional Configurations (10 Bundles)
+## Regional Configurations (10 Bundles)
 
 | Region | MeOH Price | Gas Price | Electricity | Key Feature |
 |--------|:----------:|:---------:|:-----------:|-------------|
@@ -418,7 +418,7 @@ The environment exposes 4 [Model Context Protocol](https://modelcontextprotocol.
 
 ---
 
-## 🛠 Setup & Development
+## Setup & Development
 
 ```bash
 # Clone
@@ -473,7 +473,7 @@ openenv validate methanol_apc_env/
 
 ---
 
-## 📚 References
+## References
 
 1. Bozzano & Manenti (2016). *Prog. Energy Combust. Sci.* 56, 71–105. — Comprehensive methanol synthesis review
 2. Fiedler et al. (2005). *Ullmann's Enc. Ind. Chem.* — ΔH = −90.5 kJ/mol reference
@@ -488,7 +488,7 @@ openenv validate methanol_apc_env/
 
 ---
 
-## 📄 Citation
+## Citation
 
 ```bibtex
 @software{methanol_apc_env,
