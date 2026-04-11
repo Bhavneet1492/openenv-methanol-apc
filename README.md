@@ -73,9 +73,9 @@ Natural Gas (CH₄)  →  Steam Reformer (700-900°C)  →  Syngas (CO + H₂)
                                                     Compressor (→ 80 bar)
                                                          ↓
                            ┌─────────────────────────────────────┐
-                           │    SYNTHESIS REACTOR (this env!)     │
+                           │    SYNTHESIS REACTOR (this env!)    │
                            │    Cu/ZnO/Al₂O₃ catalyst            │
-                           │    250°C, 50-100 bar                 │
+                           │    250°C, 50-100 bar                │
                            │    CO + 2H₂ → CH₃OH                 │
                            │    ΔH = -90.5 kJ/mol (exothermic)   │
                            └──────────────┬──────────────────────┘
