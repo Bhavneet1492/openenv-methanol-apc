@@ -469,7 +469,6 @@ The `examples/` directory contains ready-to-run scripts for benchmarking and int
 | [`mpc_baseline.py`](examples/mpc_baseline.py) | Dynamic Matrix Control (DMC) using a linear step-response model. Optimizes cooling moves over a prediction horizon with move suppression. | `python examples/mpc_baseline.py` |
 | [`compare_baselines.py`](examples/compare_baselines.py) | Runs PID, MPC, and a heuristic controller across all tasks, prints a comparison table with scores. Shows where RL can improve. | `python examples/compare_baselines.py` |
 | [`rl_benchmark.py`](examples/rl_benchmark.py) | Gymnasium-compatible wrapper + stubs for TD3, PPO, SAC. Defines the `MethanolGymWrapper` with `Box(30,)` obs / `Box(13,)` action spaces. | `python examples/rl_benchmark.py` |
-| [`inference.py`](inference.py) | LLM inference with 12 task-specific system prompts, WebSocket client, adaptive fallback controller. Required by OpenEnv validation. | `python inference.py` |
 
 **PID baseline example:**
 ```python
