@@ -17,7 +17,28 @@ tags:
 
 A production-grade OpenEnv RL environment simulating a complete methanol production plant. The agent controls 13 continuous variables across 5 plant stages to maximize profit while preventing thermal runaway and managing catalyst degradation.
 
-**v0.2.0** | 36 Tests | 12 Tasks | 5 Kinetic Models | 4 Multi-Agent Classes | 10 Regional Configs | 4 MCP Tools
+**v0.2.0** | 86 Tests | 12 Tasks | 5 Kinetic Models | 4 Multi-Agent Classes | 10 Regional Configs | 4 MCP Tools
+
+---
+
+## Table of Contents
+
+- [Architecture](#architecture)
+- [Process Flow](#process-flow)
+- [The Reactor](#the-reactor)
+- [Quick Start](#quick-start)
+- [Action Space](#action-space-13-continuous-variables)
+- [Observation Space](#observation-space-30-fields)
+- [Tasks](#tasks-12-total)
+- [Baseline Performance](#baseline-performance)
+- [Physics Model](#physics-model)
+- [Multi-Agent Architecture](#multi-agent-architecture)
+- [MCP Tools](#mcp-tools)
+- [Regional Configurations](#regional-configurations-10-bundles)
+- [Setup](#setup)
+- [Specifications](#specifications)
+- [References](#references)
+- [Citation](#citation)
 
 ---
 
