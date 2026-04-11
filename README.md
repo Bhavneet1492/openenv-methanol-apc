@@ -37,6 +37,7 @@
 - [Baseline Performance](#baseline-performance)
 - [Multi-Agent Architecture](#multi-agent-architecture)
 - [MCP Tools](#mcp-tools)
+- [TRL / Unsloth Integration](#trl--unsloth-integration-grpo-training)
 - [Physics Engine](#physics-engine)
 - [Regional Configurations (10 Bundles)](#regional-configurations-10-bundles)
 - [Setup & Development](#setup--development)
@@ -352,6 +353,34 @@ The environment exposes 4 [Model Context Protocol](https://modelcontextprotocol.
 | `get_catalyst_status(T, hours)` | Health prediction & remaining life | Preventive maintenance scheduling |
 | `get_maintenance_schedule()` | Equipment status & upcoming windows | Proactive load reduction |
 | `calculate_carbon_footprint(kg, mol)` | CO₂ emissions intensity | Environmental compliance |
+
+---
+
+## TRL / Unsloth Integration (GRPO Training)
+
+The environment ships with a ready-to-use bridge for training LLMs via [TRL](https://huggingface.co/docs/trl/openenv) (Transformer Reinforcement Learning) using **GRPO** (Group Relative Policy Optimization) — the same algorithm OpenEnv environments are designed for.
+
+```python
+from methanol_apc_env.trl_bridge import MethanolRewardFunction, MethanolGRPOConfig
+
+# Use as reward function with TRL's GRPOTrainer
+reward_fn = MethanolRewardFunction(task="optimization")
+
+# Get recommended training config
+config = MethanolGRPOConfig.get_config()           # Full precision (Qwen2.5-7B)
+config = MethanolGRPOConfig.get_unsloth_config()    # 4-bit quantized (LoRA, fits on 16GB GPU)
+```
+
+**How it works:** The LLM generates JSON action strings → `MethanolRewardFunction` parses them → steps the environment → returns the reward. This plugs directly into TRL's `GRPOTrainer` as the `reward_model` parameter.
+
+| Config | Model | Precision | GPU Memory | Training |
+|--------|-------|-----------|------------|----------|
+| Standard | Qwen2.5-7B-Instruct | FP16 | ~32 GB | Full fine-tune |
+| Unsloth | Qwen2.5-7B-Instruct-bnb-4bit | 4-bit LoRA | ~16 GB | LoRA (r=16, α=32) |
+
+> **Related resources from the OpenEnv ecosystem:**
+> - [TRL + OpenEnv docs](https://huggingface.co/docs/trl/openenv) — official integration guide
+> - [Unsloth + OpenEnv Colab](https://colab.research.google.com/github/unslothai/notebooks/blob/main/nb/OpenEnv_gpt_oss_(20B)_Reinforcement_Learning_2048_Game.ipynb) — 4-bit GRPO training example
 
 ---
 
