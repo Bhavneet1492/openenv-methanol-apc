@@ -1,14 +1,16 @@
-"""DWSIM / Open-Source ChemE Tool Integration Bridge.
+"""DWSIM / Open-Source ChemE Tool & Azure Digital Twins Integration Bridge.
 
 Provides adapters for connecting the Methanol APC Environment to
-open-source chemical engineering simulators:
+open-source chemical engineering simulators and cloud digital twins:
 
 - DWSIM (https://dwsim.org) — open-source process simulator
 - COCO/ChemSep — CAPE-OPEN thermodynamics
 - Cantera — chemical kinetics and thermodynamics
+- Azure Digital Twins — cloud-based digital twin platform (optional)
 
-These bridges allow importing thermodynamic properties, validating
-reaction rates against external solvers, and exporting flowsheets.
+All bridges are OPTIONAL. The environment runs fully standalone using
+internal physics models. External tools are used for cross-validation
+or to swap in a company's own plant model.
 
 Usage:
     from methanol_apc_env.cheme_bridge import DWSIMBridge, CanteraBridge
@@ -20,6 +22,14 @@ Usage:
     # Cantera: validate kinetics
     bridge = CanteraBridge()
     rate = bridge.get_reaction_rate(T=523.15, P=80e5, X={"CO": 0.1, "H2": 0.6})
+
+    # Azure Digital Twins (optional — requires az login)
+    from methanol_apc_env.cheme_bridge import AzureDigitalTwinBridge
+    adt = AzureDigitalTwinBridge()  # reads AZURE_DIGITAL_TWINS_URL from env
+    if adt.is_available:
+        twin_state = adt.get_twin_state("methanol-reactor-001")
+
+See docs/azure-digital-twins.md for full Azure DT setup guide.
 """
 
 from __future__ import annotations
@@ -287,3 +297,207 @@ class ChemSepBridge:
                 }
         result["source"] = "antoine_fallback"
         return result
+
+
+class AzureDigitalTwinBridge:
+    """Bridge to Azure Digital Twins for enterprise plant integration.
+
+    Allows companies with existing Azure Digital Twin instances to:
+    1. Use their own plant model as the simulation backend
+    2. Push RL agent actions to the digital twin for validation
+    3. Read real-time twin state as observations
+    4. Train agents on their specific plant configuration
+
+    This bridge is FULLY OPTIONAL. The environment works standalone
+    using internal physics models. Azure DT is for enterprises that
+    want to connect their existing digital twin to OpenEnv for RL training.
+
+    Authentication uses DefaultAzureCredential — no secrets in code.
+    See docs/azure-digital-twins.md for complete setup guide.
+
+    Requirements (only if using Azure DT):
+        pip install azure-digitaltwins-core azure-identity
+        az login  (or set AZURE_CLIENT_ID + AZURE_TENANT_ID + AZURE_CLIENT_SECRET)
+        Set AZURE_DIGITAL_TWINS_URL in .env
+    """
+
+    # DTDL property name → ReactorState field mapping
+    PROPERTY_MAP = {
+        "temperature": "temperature",
+        "pressure": "pressure",
+        "catalystHealth": "catalyst_health",
+        "methanolProduced": "methanol_produced",
+        "reactionRate": "reaction_rate",
+        "feedRateH2": "feed_rate_h2",
+        "feedRateCO": "feed_rate_co",
+        "coolingWaterFlow": "cooling_water_flow",
+        "coolingWaterTemp": "cooling_water_temp",
+        "compressorPower": "compressor_power",
+        "cumulativeProfit": "cumulative_profit",
+        "h2CoRatio": "h2_co_ratio",
+        "emergencyShutdown": "emergency_shutdown",
+    }
+
+    def __init__(self, endpoint_url: Optional[str] = None):
+        """Initialize Azure Digital Twins bridge.
+
+        Args:
+            endpoint_url: ADT instance URL. If None, reads from
+                          AZURE_DIGITAL_TWINS_URL environment variable.
+                          If neither is set, bridge is inactive (fallback mode).
+        """
+        self._endpoint = endpoint_url or os.environ.get("AZURE_DIGITAL_TWINS_URL", "")
+        self._client = None
+        self._available = False
+
+        if self._endpoint:
+            self._available = self._try_connect()
+
+    def _try_connect(self) -> bool:
+        """Attempt to connect to Azure Digital Twins using DefaultAzureCredential."""
+        try:
+            from azure.identity import DefaultAzureCredential
+            from azure.digitaltwins.core import DigitalTwinsClient
+
+            credential = DefaultAzureCredential()
+            self._client = DigitalTwinsClient(self._endpoint, credential)
+            # Verify connection with a lightweight call
+            self._client.list_models(results_per_page=1)
+            return True
+        except ImportError:
+            return False
+        except Exception:
+            return False
+
+    @property
+    def is_available(self) -> bool:
+        """True if connected to an Azure Digital Twins instance."""
+        return self._available
+
+    def get_twin_state(self, twin_id: str) -> Dict[str, Any]:
+        """Read current state from a digital twin.
+
+        Args:
+            twin_id: The twin ID in Azure DT (e.g., "methanol-reactor-001")
+
+        Returns:
+            Dict with ReactorState-compatible field names and values.
+            Returns empty dict if not connected.
+        """
+        if not self._available or not self._client:
+            return {}
+
+        try:
+            twin = self._client.get_digital_twin(twin_id)
+            state = {}
+            for adt_prop, reactor_field in self.PROPERTY_MAP.items():
+                if adt_prop in twin:
+                    state[reactor_field] = twin[adt_prop]
+            return state
+        except Exception:
+            return {}
+
+    def push_action(self, twin_id: str, action_dict: Dict[str, float]) -> bool:
+        """Push an RL agent's action to the digital twin.
+
+        Updates twin properties to reflect the agent's control decisions.
+        The twin's simulation engine then computes the next state.
+
+        Args:
+            twin_id: The twin ID in Azure DT
+            action_dict: Action fields (e.g., {"feed_rate_h2": 5.0, ...})
+
+        Returns:
+            True if update succeeded, False otherwise.
+        """
+        if not self._available or not self._client:
+            return False
+
+        try:
+            patch = []
+            for reactor_field, value in action_dict.items():
+                # Reverse-lookup: ReactorState field → DTDL property
+                adt_prop = None
+                for k, v in self.PROPERTY_MAP.items():
+                    if v == reactor_field:
+                        adt_prop = k
+                        break
+                if adt_prop:
+                    patch.append({
+                        "op": "replace",
+                        "path": f"/{adt_prop}",
+                        "value": value,
+                    })
+
+            if patch:
+                self._client.update_digital_twin(twin_id, patch)
+                return True
+            return False
+        except Exception:
+            return False
+
+    def sync_to_reactor_state(self, twin_id: str, state: Any) -> Any:
+        """Sync a digital twin's state into a ReactorState object.
+
+        Reads the twin and overwrites matching fields in the provided
+        ReactorState. Fields not present in the twin are left unchanged.
+
+        Args:
+            twin_id: The twin ID in Azure DT
+            state: A ReactorState object to update
+
+        Returns:
+            The updated ReactorState (same object, mutated in place).
+        """
+        twin_state = self.get_twin_state(twin_id)
+        for field, value in twin_state.items():
+            if hasattr(state, field):
+                setattr(state, field, value)
+        return state
+
+    def export_dtdl_model(self) -> Dict[str, Any]:
+        """Export DTDL model definition for creating the twin in Azure.
+
+        Returns a DTDL v2 model that can be uploaded to Azure DT via:
+            az dt model create --dt-name <instance> --models <this-json>
+
+        This defines the "MethanolReactor" twin type with all properties
+        matching the environment's ReactorState fields.
+        """
+        contents = []
+        float_props = [
+            ("temperature", "Reactor bulk temperature (°C)"),
+            ("pressure", "Reactor pressure (bar)"),
+            ("catalystHealth", "Catalyst activity (0-1)"),
+            ("methanolProduced", "Cumulative methanol (kg)"),
+            ("reactionRate", "Current reaction rate (mol/s)"),
+            ("feedRateH2", "Hydrogen feed rate (mol/s)"),
+            ("feedRateCO", "Carbon monoxide feed rate (mol/s)"),
+            ("coolingWaterFlow", "Cooling water flow (L/min)"),
+            ("coolingWaterTemp", "Cooling water inlet temp (°C)"),
+            ("compressorPower", "Compressor power (kW)"),
+            ("cumulativeProfit", "Total profit ($)"),
+            ("h2CoRatio", "H2/CO molar ratio"),
+        ]
+        for name, desc in float_props:
+            contents.append({
+                "@type": "Property",
+                "name": name,
+                "schema": "double",
+                "description": desc,
+            })
+        contents.append({
+            "@type": "Property",
+            "name": "emergencyShutdown",
+            "schema": "boolean",
+            "description": "Emergency shutdown flag (T >= 300°C)",
+        })
+
+        return {
+            "@id": "dtmi:openenv:MethanolReactor;1",
+            "@type": "Interface",
+            "displayName": "Methanol APC Reactor",
+            "description": "ICI Low-Pressure methanol synthesis reactor digital twin for OpenEnv RL training",
+            "@context": "dtmi:dtdl:context;2",
+            "contents": contents,
+        }

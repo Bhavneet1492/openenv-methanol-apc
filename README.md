@@ -550,8 +550,9 @@ The environment includes bridges to open-source chemical engineering simulators 
 | [DWSIM](https://dwsim.org) | `DWSIMBridge` | SRK fugacity validation, stream export, thermodynamic properties | Bridge ready, DWSIM optional |
 | [Cantera](https://cantera.org) | `CanteraBridge` | Reaction rate cross-validation against published mechanisms | Bridge ready, Cantera optional |
 | [ChemSep/COCO](http://www.chemsep.org) | `ChemSepBridge` | VLE data for distillation validation (Antoine fallback) | Bridge ready |
+| [Azure Digital Twins](https://azure.microsoft.com/en-us/products/digital-twins) | `AzureDigitalTwinBridge` | Swap internal sim for company's own plant model, DTDL schema included | Bridge ready, Azure optional |
 
-All bridges include **internal fallback models** — the environment runs without any external tools installed. When DWSIM or Cantera is available, it validates internal calculations against the external solver.
+All bridges are **fully optional** with **internal fallback models** — the environment runs standalone without any external tools. For Azure DT setup, see [docs/azure-digital-twins.md](docs/azure-digital-twins.md).
 
 ```python
 from methanol_apc_env.cheme_bridge import DWSIMBridge, CanteraBridge
@@ -602,7 +603,8 @@ Can companies adopt this environment directly?
 | Multi-agent support | ✅ | 4 agent classes mirroring plant organization |
 | Safety constraints | ✅ | 4-level alarming + emergency shutdown |
 | Regional economics | ✅ | 10 market configurations (APAC, NA, EU, ME, etc.) |
-| External tool validation | ✅ | DWSIM + Cantera bridges with fallbacks |
+| External tool validation | ✅ | DWSIM, Cantera, ChemSep bridges + Azure Digital Twins |
+| Azure Digital Twins | ✅ | `AzureDigitalTwinBridge` with DTDL schema, [full guide](docs/azure-digital-twins.md) |
 | Real plant bridge | ⚠️ | OPC-UA adapter for DCS integration planned |
 | Distributed training | ⚠️ | Single-instance; horizontal scale via K8s replicas |
 
