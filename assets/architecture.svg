@@ -75,21 +75,21 @@
     <!-- Observation arrow up -->
     <g>
       <text x="380" y="55" font-family="'Segoe UI', sans-serif" font-size="10" fill="#10b981" text-anchor="middle">30+ Obs</text>
-      <line x1="380" y1="100" x2="380" y2="60" stroke="#10b981" stroke-width="2" stroke-dasharray="6,3" class="flow-line"/>
+      <line x1="380" y1="120" x2="380" y2="80" stroke="#10b981" stroke-width="2" stroke-dasharray="6,3" class="flow-line"/>
       <polygon points="374,62 380,50 386,62" fill="#10b981"/>
     </g>
 
     <!-- Reward arrow up -->
     <g>
       <text x="470" y="55" font-family="'Segoe UI', sans-serif" font-size="10" fill="#a78bfa" text-anchor="middle">Reward</text>
-      <line x1="470" y1="100" x2="470" y2="60" stroke="#a78bfa" stroke-width="2" stroke-dasharray="6,3" class="flow-line"/>
+      <line x1="470" y1="120" x2="470" y2="80" stroke="#a78bfa" stroke-width="2" stroke-dasharray="6,3" class="flow-line"/>
       <polygon points="464,62 470,50 476,62" fill="#a78bfa"/>
     </g>
 
     <!-- MCP Context arrow -->
     <g>
       <text x="580" y="55" font-family="'Segoe UI', sans-serif" font-size="10" fill="#06b6d4" text-anchor="middle">MCP Context</text>
-      <line x1="580" y1="100" x2="580" y2="60" stroke="#06b6d4" stroke-width="2" stroke-dasharray="4,4" class="flow-line"/>
+      <line x1="580" y1="120" x2="580" y2="80" stroke="#06b6d4" stroke-width="2" stroke-dasharray="4,4" class="flow-line"/>
       <polygon points="574,62 580,50 586,62" fill="#06b6d4"/>
     </g>
   </g>
