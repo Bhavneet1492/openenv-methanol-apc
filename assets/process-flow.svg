@@ -19,6 +19,12 @@
     <marker id="pfArrowPurple" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-auto">
       <path d="M 0 0 L 10 5 L 0 10 z" fill="#c084fc"/>
     </marker>
+    <marker id="pfArrowCyan" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#22d3ee"/>
+    </marker>
+    <marker id="pfArrowGreen" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#10b981"/>
+    </marker>
     <filter id="pfShadow">
       <feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.4"/>
     </filter>
@@ -145,7 +151,7 @@
   <text x="815" y="55" font-family="'Segoe UI', sans-serif" font-size="10" fill="#fbbf24" text-anchor="middle" font-weight="600">♻ Recycle Loop  RR = 3.5</text>
 
   <!-- ═══════ PURGE GAS BRANCH ═══════ -->
-  <line x1="920" y1="52" x2="920" y2="10" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <line x1="920" y1="52" x2="920" y2="10" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#pfArrowRed)"/>
   <text x="920" y="2" font-family="'Segoe UI', sans-serif" font-size="9" fill="#f87171" text-anchor="middle">Purge → Fuel/Flare</text>
   <text x="920" y="12" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">(inerts: N₂, CH₄, Ar)</text>
 
@@ -174,7 +180,7 @@
   </g>
 
   <!-- Water output from distillation -->
-  <line x1="897" y1="330" x2="860" y2="380" stroke="#06b6d4" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <line x1="897" y1="330" x2="860" y2="380" stroke="#06b6d4" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#pfArrowCyan)"/>
   <g transform="translate(800, 385)">
     <rect width="70" height="30" rx="8" fill="#1e293b" stroke="#06b6d4" stroke-width="1"/>
     <text x="35" y="20" font-family="'Segoe UI', sans-serif" font-size="9" fill="#22d3ee" text-anchor="middle">Water</text>
@@ -189,7 +195,7 @@
     <text x="110" y="46" font-family="'Segoe UI', sans-serif" font-size="11" fill="#34d399" text-anchor="middle">CH₃OH (Grade AA)</text>
     <text x="110" y="62" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">$740/MT · Asia Pacific</text>
   </g>
-  <line x1="985" y1="372" x2="985" y2="393" stroke="#10b981" stroke-width="3" stroke-linecap="round"/>
+  <line x1="985" y1="372" x2="985" y2="393" stroke="#10b981" stroke-width="3" stroke-linecap="round" marker-end="url(#pfArrowGreen)"/>
 
   <!-- ═══════ LEGEND ═══════ -->
   <g transform="translate(30, 340)">
