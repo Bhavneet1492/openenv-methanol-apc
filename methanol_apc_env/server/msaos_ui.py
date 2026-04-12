@@ -17,9 +17,12 @@ import time
 
 try:
     import gradio as gr
-    import plotly.graph_objects as go
 except ImportError:
     gr = None
+
+try:
+    import plotly.graph_objects as go
+except ImportError:
     go = None
 
 
@@ -124,7 +127,9 @@ CUSTOM_CSS = """
 
 def create_plant_3d(temperature=250, pressure=80, catalyst=1.0, rate=3.5):
     """Create 3D digital twin visualization of the methanol plant."""
-    if go is None:
+    try:
+        import plotly.graph_objects as go
+    except ImportError:
         return None
 
     # Plant nodes: x=process position, y=elevation, z=width
@@ -226,7 +231,9 @@ def create_plant_3d(temperature=250, pressure=80, catalyst=1.0, rate=3.5):
 
 def create_reward_chart(rewards=None):
     """Create reward trajectory line chart."""
-    if go is None:
+    try:
+        import plotly.graph_objects as go
+    except ImportError:
         return None
     if rewards is None:
         rewards = []
@@ -404,8 +411,7 @@ def build_msaos_ui(
     is_chat_env=None, title=None, quick_start_md=None,
 ):
     """Build the MS-AOS dashboard. Compatible with OpenEnv gradio_builder."""
-    if gr is None:
-        return None
+    import gradio as gr
 
     with gr.Blocks(
         css=CUSTOM_CSS,
