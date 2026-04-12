@@ -23,12 +23,21 @@ try:
 except ImportError:
     from .methanol_environment import MethanolAPCEnvironment
 
+try:
+    from integration_ui import build_integration_ui
+except ImportError:
+    try:
+        from .integration_ui import build_integration_ui
+    except ImportError:
+        build_integration_ui = None
+
 app = create_app(
     MethanolAPCEnvironment,
     MethanolAPCAction,
     MethanolAPCObservation,
     env_name="methanol_apc",
     max_concurrent_envs=1,
+    gradio_builder=build_integration_ui,
 )
 
 
