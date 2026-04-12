@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 350" width="800" height="350">
+  <defs>
+    <linearGradient id="iBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#1a1a2e"/>
+    </linearGradient>
+    <style>
+      @keyframes iFlow { to { stroke-dashoffset: -16; } }
+      .i-flow { stroke-dasharray: 8 4; animation: iFlow 1.2s linear infinite; }
+    </style>
+  </defs>
+  <rect width="800" height="350" fill="url(#iBg)" rx="12"/>
+  <text x="400" y="28" font-family="'Segoe UI',system-ui,sans-serif" font-size="14" fill="#94a3b8" text-anchor="middle" font-weight="700" letter-spacing="1">DEFAULT MODE — INTERNAL PHYSICS ENGINE</text>
+
+  <!-- Agent -->
+  <rect x="40" y="70" width="140" height="80" rx="10" fill="#1e293b" stroke="#3b82f6" stroke-width="2"/>
+  <text x="110" y="105" font-family="'Segoe UI',sans-serif" font-size="14" fill="white" text-anchor="middle" font-weight="700">RL Agent</text>
+  <text x="110" y="125" font-family="'Segoe UI',sans-serif" font-size="10" fill="#60a5fa" text-anchor="middle">LLM / Policy Net</text>
+
+  <!-- Arrow 1 -->
+  <line x1="185" y1="110" x2="245" y2="110" stroke="#34d399" stroke-width="2.5" class="i-flow"/>
+  <polygon points="242,104 256,110 242,116" fill="#34d399"/>
+  <text x="215" y="100" font-family="'Segoe UI',sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">13 Actions</text>
+
+  <!-- OpenEnv Server -->
+  <rect x="260" y="60" width="160" height="100" rx="10" fill="#1e293b" stroke="#8b5cf6" stroke-width="2"/>
+  <text x="340" y="100" font-family="'Segoe UI',sans-serif" font-size="14" fill="white" text-anchor="middle" font-weight="700">OpenEnv API</text>
+  <text x="340" y="118" font-family="'Segoe UI',sans-serif" font-size="10" fill="#a78bfa" text-anchor="middle">FastAPI + WebSocket</text>
+  <text x="340" y="135" font-family="'Segoe UI',sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">Session management</text>
+
+  <!-- Arrow 2 -->
+  <line x1="425" y1="110" x2="485" y2="110" stroke="#34d399" stroke-width="2.5" class="i-flow"/>
+  <polygon points="482,104 496,110 482,116" fill="#34d399"/>
+
+  <!-- Reactor Sim -->
+  <rect x="500" y="50" width="260" height="120" rx="10" fill="#1e293b" stroke="#10b981" stroke-width="2"/>
+  <text x="630" y="82" font-family="'Segoe UI',sans-serif" font-size="13" fill="white" text-anchor="middle" font-weight="700">reactor_sim.py</text>
+  <g font-family="'Segoe UI',sans-serif" font-size="10" fill="#94a3b8">
+    <text x="630" y="100" text-anchor="middle">RK4 ODE · SRK EOS · LHHW</text>
+    <text x="630" y="115" text-anchor="middle">3 reactions · 4-bed quench</text>
+    <text x="630" y="130" text-anchor="middle">Catalyst deactivation · Noise</text>
+  </g>
+  <rect x="510" y="140" width="100" height="20" rx="4" fill="#064e3b" stroke="#10b981" stroke-width="0.5"/>
+  <text x="560" y="154" font-family="'Segoe UI',sans-serif" font-size="9" fill="#34d399" text-anchor="middle">Pure Python</text>
+  <rect x="620" y="140" width="130" height="20" rx="4" fill="#064e3b" stroke="#10b981" stroke-width="0.5"/>
+  <text x="685" y="154" font-family="'Segoe UI',sans-serif" font-size="9" fill="#34d399" text-anchor="middle">No dependencies</text>
+
+  <!-- Return arrow -->
+  <path d="M 630,175 L 630,200 Q 630,215 615,215 L 125,215 Q 110,215 110,200 L 110,155" fill="none" stroke="#60a5fa" stroke-width="2" class="i-flow"/>
+  <polygon points="104,158 110,145 116,158" fill="#60a5fa"/>
+  <rect x="300" y="205" width="150" height="20" rx="6" fill="#1e293b" stroke="#60a5fa" stroke-width="0.5"/>
+  <text x="375" y="219" font-family="'Segoe UI',sans-serif" font-size="10" fill="#60a5fa" text-anchor="middle">30+ Observations</text>
+
+  <!-- Bottom note -->
+  <rect x="40" y="260" width="720" height="70" rx="8" fill="#1e293b" stroke="#475569" stroke-width="0.5"/>
+  <text x="60" y="282" font-family="'Segoe UI',sans-serif" font-size="11" fill="#34d399" font-weight="600">Zero-config mode</text>
+  <text x="60" y="300" font-family="'Segoe UI',sans-serif" font-size="10" fill="#94a3b8">No external tools needed. Internal physics engine handles all 5 kinetic models, SRK fugacity, RK4 integration,</text>
+  <text x="60" y="316" font-family="'Segoe UI',sans-serif" font-size="10" fill="#94a3b8">catalyst deactivation, domain randomization, and economics. Works out of the box with pip install.</text>
+</svg>
