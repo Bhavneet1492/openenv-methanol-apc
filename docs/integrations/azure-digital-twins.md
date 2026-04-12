@@ -9,9 +9,9 @@ The integration is **fully optional**. By default, the environment uses its inte
 physics engine (`reactor_sim.py`). When you connect an Azure Digital Twin, it replaces
 or supplements the internal simulator with your company's plant-specific model.
 
-<img src="integration-fallback.svg" width="100%" alt="Fallback mode">
+<img src="../integration-fallback.svg" width="100%" alt="Fallback mode">
 
-<img src="integration-azure-dt.svg" width="100%" alt="Azure DT mode">
+<img src="../integration-azure-dt.svg" width="100%" alt="Azure DT mode">
 
 ## Prerequisites
 
@@ -185,9 +185,9 @@ Model ID: `dtmi:openenv:MethanolReactor;1`
 
 ## Architecture
 
-<img src="integration-azure-dt.svg" width="100%" alt="Azure DT architecture">
+<img src="../integration-azure-dt.svg" width="100%" alt="Azure DT architecture">
 
-<img src="integration-fallback.svg" width="100%" alt="Fallback architecture">
+<img src="../integration-fallback.svg" width="100%" alt="Fallback architecture">
 
 ## Cost Estimate
 
