@@ -59,7 +59,7 @@
   <g transform="translate(340, 60)">
     <rect width="140" height="70" rx="10" fill="#451a03" stroke="#f59e0b" stroke-width="2" filter="url(#pfShadow)"/>
     <text x="70" y="22" font-family="'Segoe UI', sans-serif" font-size="11" fill="white" text-anchor="middle" font-weight="700">Steam Reformer</text>
-    <text x="70" y="38" font-family="'Segoe UI', sans-serif" font-size="10" fill="#fbbf24" text-anchor="middle">700â€“900Â°C</text>
+    <text x="70" y="38" font-family="'Segoe UI', sans-serif" font-size="10" fill="#fbbf24" text-anchor="middle">700â€“900 C</text>
     <text x="70" y="54" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">CHâ‚„+Hâ‚‚O â†’ CO+3Hâ‚‚</text>
   </g>
 
@@ -94,7 +94,7 @@
     <text x="82" y="22" font-family="'Segoe UI', sans-serif" font-size="12" fill="white" text-anchor="middle" font-weight="700">Synthesis Reactor</text>
     <text x="82" y="38" font-family="'Segoe UI', sans-serif" font-size="10" fill="#60a5fa" text-anchor="middle">ICI 4-Bed Quench</text>
     <text x="82" y="55" font-family="'Segoe UI', sans-serif" font-size="10" fill="#34d399" text-anchor="middle" font-weight="600">CO + 2Hâ‚‚ â†’ CHâ‚ƒOH</text>
-    <text x="82" y="72" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">250Â°C Â· 80 bar Â· LHHW</text>
+    <text x="82" y="72" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">250C / 80 bar / LHHW</text>
   </g>
   <!-- Arrow â†’ right -->
   <line x1="860" y1="95" x2="895" y2="95" stroke="#3b82f6" stroke-width="2.5"/>
@@ -119,7 +119,7 @@
   <g transform="translate(880, 210)">
     <rect width="170" height="90" rx="12" fill="#1e1b4b" stroke="#a855f7" stroke-width="2" filter="url(#pfShadow)"/>
     <text x="85" y="22" font-family="'Segoe UI', sans-serif" font-size="12" fill="white" text-anchor="middle" font-weight="700">Distillation Column</text>
-    <text x="85" y="40" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">Reflux 3.0 Â· Reboiler 50 kW</text>
+    <text x="85" y="40" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">Reflux 3.0 / Reboiler 50 kW</text>
     <text x="85" y="58" font-family="'Segoe UI', sans-serif" font-size="11" fill="#c084fc" text-anchor="middle" font-weight="600">99.85% Purity</text>
     <text x="85" y="74" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">(Grade AA)</text>
   </g>
@@ -143,8 +143,8 @@
     <rect width="180" height="65" rx="12" fill="#064e3b" stroke="#10b981" stroke-width="2.5" filter="url(#pfShadow)"/>
     <text x="25" y="30" font-family="'Segoe UI', sans-serif" font-size="18" fill="#34d399" text-anchor="middle">â˜…</text>
     <text x="110" y="24" font-family="'Segoe UI', sans-serif" font-size="13" fill="white" text-anchor="middle" font-weight="700">Pure Methanol</text>
-    <text x="110" y="42" font-family="'Segoe UI', sans-serif" font-size="10" fill="#34d399" text-anchor="middle">CHâ‚ƒOH (Grade AA)</text>
-    <text x="110" y="58" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">$740/MT Â· Asia Pacific</text>
+    <text x="110" y="42" font-family="'Segoe UI', sans-serif" font-size="10" fill="#34d399" text-anchor="middle">CH3OH (Grade AA)</text>
+    <text x="110" y="58" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">$740/MT - Asia Pacific</text>
   </g>
 
   <!-- â•â•â•â•â•â•â• LEGEND â•â•â•â•â•â•â• -->
@@ -176,10 +176,10 @@
     <text x="15" y="22" font-family="'Segoe UI', sans-serif" font-size="11" fill="#94a3b8" font-weight="700">KEY PROCESS NUMBERS</text>
     <g font-family="'Segoe UI', sans-serif" font-size="10" fill="#94a3b8">
       <text x="15" y="44"><tspan fill="#34d399" font-weight="600">Feed: </tspan>Hâ‚‚ 0â€“10, CO 0â€“5 mol/s</text>
-      <text x="15" y="62"><tspan fill="#f59e0b" font-weight="600">SMR: </tspan>700â€“900Â°C, S/C â‰ˆ 3.0</text>
-      <text x="15" y="80"><tspan fill="#60a5fa" font-weight="600">Reactor: </tspan>250Â°C, 50â€“100 bar</text>
+      <text x="15" y="62"><tspan fill="#f59e0b" font-weight="600">SMR: </tspan>700â€“900 C, S/C â‰ˆ 3.0</text>
+      <text x="15" y="80"><tspan fill="#60a5fa" font-weight="600">Reactor: </tspan>250 C, 50â€“100 bar</text>
       <text x="15" y="98"><tspan fill="#c084fc" font-weight="600">Selectivity: </tspan>&gt;99.8%</text>
-      <text x="15" y="116"><tspan fill="#ef4444" font-weight="600">Safety: </tspan>Shutdown @ 300Â°C</text>
+      <text x="15" y="116"><tspan fill="#ef4444" font-weight="600">Safety: </tspan>Shutdown @ 300C</text>
       <text x="15" y="134"><tspan fill="#10b981" font-weight="600">Product: </tspan>Grade AA (99.85%)</text>
     </g>
   </g>
