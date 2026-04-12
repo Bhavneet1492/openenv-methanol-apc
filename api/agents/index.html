@@ -888,6 +888,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#why-multi-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why Multi-Agent?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#agent-classes" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -896,13 +907,74 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Agent Classes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#reformeragent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ReformerAgent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#synthesisagent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SynthesisAgent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#purificationagent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PurificationAgent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#supervisoryagent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SupervisoryAgent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
+  <a href="#agent-observation-views" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Usage
+        Agent Observation Views
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#training-multi-agent-systems" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Training Multi-Agent Systems
       
     </span>
   </a>
@@ -1125,6 +1197,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#why-multi-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why Multi-Agent?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#agent-classes" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1133,13 +1216,74 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Agent Classes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#reformeragent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ReformerAgent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#synthesisagent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SynthesisAgent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#purificationagent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PurificationAgent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#supervisoryagent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SupervisoryAgent
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
+  <a href="#agent-observation-views" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Usage
+        Agent Observation Views
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#training-multi-agent-systems" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Training Multi-Agent Systems
       
     </span>
   </a>
@@ -1167,54 +1311,260 @@
 
 
 <h1 id="multi-agent-architecture">Multi-Agent Architecture</h1>
-<p>::: methanol_apc_env.agents</p>
-<h2 id="agent-classes">Agent Classes</h2>
-<table>
-<thead>
-<tr>
-<th>Agent</th>
-<th>Controls</th>
-<th>Subsystem</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>ReformerAgent</code></td>
-<td>fuel_gas, steam_flow</td>
-<td>Steam methane reformer</td>
-</tr>
-<tr>
-<td><code>SynthesisAgent</code></td>
-<td>h2, co, cooling, compressor, purge, recycle</td>
-<td>Synthesis reactor</td>
-</tr>
-<tr>
-<td><code>PurificationAgent</code></td>
-<td>reflux, reboiler</td>
-<td>Distillation column</td>
-</tr>
-<tr>
-<td><code>SupervisoryAgent</code></td>
-<td>Merge + coordinate</td>
-<td>Plant-wide optimization</td>
-</tr>
-</tbody>
-</table>
-<h2 id="usage">Usage</h2>
+<p>The environment supports decomposing plant control into specialized sub-agents that mirror how real methanol plants are organized. Each agent manages a subsystem with its own local observations and action space.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">methanol_apc_env.agents</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">ReformerAgent</span><span class="p">,</span> <span class="n">SynthesisAgent</span><span class="p">,</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">PurificationAgent</span><span class="p">,</span> <span class="n">SupervisoryAgent</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">)</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">env</span> <span class="o">=</span> <span class="n">MethanolAPCEnvironment</span><span class="p">()</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">obs</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="n">task_name</span><span class="o">=</span><span class="s2">&quot;optimization&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="n">r</span> <span class="o">=</span> <span class="n">ReformerAgent</span><span class="p">()</span><span class="o">.</span><span class="n">rule_based_action</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="n">s</span> <span class="o">=</span> <span class="n">SynthesisAgent</span><span class="p">()</span><span class="o">.</span><span class="n">rule_based_action</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="n">p</span> <span class="o">=</span> <span class="n">PurificationAgent</span><span class="p">()</span><span class="o">.</span><span class="n">rule_based_action</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="n">action</span> <span class="o">=</span> <span class="n">SupervisoryAgent</span><span class="o">.</span><span class="n">merge_actions</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="n">obs</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+</code></pre></div>
+<hr />
+<h2 id="why-multi-agent">Why Multi-Agent?</h2>
+<p>A real methanol plant has different operators for different sections:</p>
+<table>
+<thead>
+<tr>
+<th>Real Plant Role</th>
+<th>Agent Class</th>
+<th>Scope</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Reformer operator</td>
+<td><code>ReformerAgent</code></td>
+<td>Natural gas → syngas conversion</td>
+</tr>
+<tr>
+<td>Board operator (reactor)</td>
+<td><code>SynthesisAgent</code></td>
+<td>Synthesis loop: reactor + recycle + purge</td>
+</tr>
+<tr>
+<td>Distillation operator</td>
+<td><code>PurificationAgent</code></td>
+<td>Crude MeOH → Grade AA product</td>
+</tr>
+<tr>
+<td>Shift supervisor</td>
+<td><code>SupervisoryAgent</code></td>
+<td>Plant-wide coordination, conflict resolution</td>
+</tr>
+</tbody>
+</table>
+<p>Using multiple agents is optional. A single agent controlling all 13 variables works fine. Multi-agent is for:</p>
+<ul>
+<li>Training specialized policies that are easier to learn</li>
+<li>Studying coordination between plant sections</li>
+<li>Modeling real organizational structure for sim-to-real transfer</li>
+</ul>
+<hr />
+<h2 id="agent-classes">Agent Classes</h2>
+<h3 id="reformeragent">ReformerAgent</h3>
+<p>Controls the Steam Methane Reformer (SMR) — the upstream section that converts natural gas and steam into syngas.</p>
+<p><strong>Controls:</strong> <code>reformer_fuel_gas</code>, <code>reformer_steam_flow</code></p>
+<p><strong>Observes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What It Means</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reformer_outlet_temp</code></td>
+<td>Tube outlet temperature (target: 800–900°C)</td>
+</tr>
+<tr>
+<td><code>steam_to_carbon</code></td>
+<td>S/C ratio (target: ~3.0, below 2.5 → coking risk)</td>
+</tr>
+<tr>
+<td><code>syngas_flow</code></td>
+<td>Total syngas produced (should match reactor demand)</td>
+</tr>
+<tr>
+<td><code>temperature</code></td>
+<td>Reactor temperature (shared — helps anticipate demand)</td>
+</tr>
+<tr>
+<td><code>catalyst_health</code></td>
+<td>If catalyst is degraded, reduce syngas aggressively</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Rule-based strategy:</strong> Maintains S/C ≈ 3.0 and adjusts fuel gas to match downstream reactor temperature. If reactor is too hot, reduces syngas production. If catalyst health &lt; 0.5, reduces output to extend life.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">reformer</span> <span class="o">=</span> <span class="n">ReformerAgent</span><span class="p">()</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">obs</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="n">task_name</span><span class="o">=</span><span class="s2">&quot;optimization&quot;</span><span class="p">)</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">r_action</span> <span class="o">=</span> <span class="n">reformer</span><span class="o">.</span><span class="n">rule_based_action</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># r_action = {&quot;reformer_fuel_gas&quot;: 5.2, &quot;reformer_steam_flow&quot;: 15.6}</span>
+</code></pre></div>
+<h3 id="synthesisagent">SynthesisAgent</h3>
+<p>Controls the synthesis reactor, recycle loop, and purge system — the core of the plant.</p>
+<p><strong>Controls:</strong> <code>feed_rate_h2</code>, <code>feed_rate_co</code>, <code>cooling_water_flow</code>, <code>compressor_power</code>, <code>purge_valve_position</code>, <code>recycle_ratio</code>, <code>feed_preheat_temp</code></p>
+<p><strong>Observes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What It Means</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>temperature</code></td>
+<td>THE critical variable. Must stay 220–270°C, never exceed 300°C.</td>
+</tr>
+<tr>
+<td><code>pressure</code></td>
+<td>Controls reaction rate. Higher P → faster reaction but more compressor cost.</td>
+</tr>
+<tr>
+<td><code>h2_co_ratio</code></td>
+<td>Feed quality. Ideal = 2.0.</td>
+</tr>
+<tr>
+<td><code>reaction_rate</code></td>
+<td>Current methanol formation. Should be maximized within safety limits.</td>
+</tr>
+<tr>
+<td><code>catalyst_health</code></td>
+<td>Degradation feedback. High T → fast degradation.</td>
+</tr>
+<tr>
+<td><code>inert_fraction</code></td>
+<td>Recycle loop quality. High inerts → reduce purge or increase purge.</td>
+</tr>
+<tr>
+<td><code>cooling_water_temp</code></td>
+<td>Disturbance variable. If this rises (cooling failure), agent must compensate.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Rule-based strategy:</strong> PI controller on temperature → cooling water flow, with feed rate adjusted to maintain H₂/CO ≈ 2.0. Purge valve opens proportionally to inert fraction.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">synthesis</span> <span class="o">=</span> <span class="n">SynthesisAgent</span><span class="p">()</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">s_action</span> <span class="o">=</span> <span class="n">synthesis</span><span class="o">.</span><span class="n">rule_based_action</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="c1"># s_action = {&quot;feed_rate_h2&quot;: 5.0, &quot;feed_rate_co&quot;: 2.5, &quot;cooling_water_flow&quot;: 42.0, ...}</span>
+</code></pre></div>
+<h3 id="purificationagent">PurificationAgent</h3>
+<p>Controls the distillation column that separates crude methanol (80% MeOH + 20% water) into Grade AA product (99.85%).</p>
+<p><strong>Controls:</strong> <code>distillation_reflux</code>, <code>reboiler_duty</code></p>
+<p><strong>Observes:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What It Means</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>product_purity</code></td>
+<td>Current methanol mass fraction (target: 0.9985)</td>
+</tr>
+<tr>
+<td><code>distillation_duty</code></td>
+<td>Energy consumption. Minimize while maintaining purity.</td>
+</tr>
+<tr>
+<td><code>methanol_produced</code></td>
+<td>Throughput signal. More crude = need more reboiler.</td>
+</tr>
+<tr>
+<td><code>temperature</code></td>
+<td>If reactor is producing more, distillation load increases.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Rule-based strategy:</strong> Maintains reflux ratio at 3.0 and adjusts reboiler duty proportionally to crude methanol flow rate.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">purification</span> <span class="o">=</span> <span class="n">PurificationAgent</span><span class="p">()</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">p_action</span> <span class="o">=</span> <span class="n">purification</span><span class="o">.</span><span class="n">rule_based_action</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># p_action = {&quot;distillation_reflux&quot;: 3.0, &quot;reboiler_duty&quot;: 52.0}</span>
+</code></pre></div>
+<h3 id="supervisoryagent">SupervisoryAgent</h3>
+<p>The coordinator. Does not have its own controls — instead, it takes the actions from the 3 sub-agents and merges them into a single <code>MethanolAPCAction</code>, resolving any conflicts.</p>
+<p><strong>Key method:</strong> <code>merge_actions(reformer_action, synthesis_action, purification_action) → MethanolAPCAction</code></p>
+<p><strong>Conflict resolution rules:</strong></p>
+<ol>
+<li>If synthesis agent wants high feed but reformer is reducing syngas → reformer wins (can't feed what isn't produced)</li>
+<li>If temperature is critical (&gt;285°C) → override all agents with emergency cooling</li>
+<li>Safety always takes priority over economics</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Full multi-agent episode</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">env</span> <span class="o">=</span> <span class="n">MethanolAPCEnvironment</span><span class="p">()</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">obs</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="n">task_name</span><span class="o">=</span><span class="s2">&quot;optimization&quot;</span><span class="p">)</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">reformer</span> <span class="o">=</span> <span class="n">ReformerAgent</span><span class="p">()</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="n">synthesis</span> <span class="o">=</span> <span class="n">SynthesisAgent</span><span class="p">()</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="n">purification</span> <span class="o">=</span> <span class="n">PurificationAgent</span><span class="p">()</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>    <span class="n">r</span> <span class="o">=</span> <span class="n">reformer</span><span class="o">.</span><span class="n">rule_based_action</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>    <span class="n">s</span> <span class="o">=</span> <span class="n">synthesis</span><span class="o">.</span><span class="n">rule_based_action</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>    <span class="n">p</span> <span class="o">=</span> <span class="n">purification</span><span class="o">.</span><span class="n">rule_based_action</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>    <span class="c1"># Supervisory merges and resolves conflicts</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>    <span class="n">action</span> <span class="o">=</span> <span class="n">SupervisoryAgent</span><span class="o">.</span><span class="n">merge_actions</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>    <span class="n">obs</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>    <span class="k">if</span> <span class="n">obs</span><span class="o">.</span><span class="n">done</span><span class="p">:</span>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>        <span class="k">break</span>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a><span class="n">score</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">get_final_score</span><span class="p">()</span>
+</code></pre></div>
+<hr />
+<h2 id="agent-observation-views">Agent Observation Views</h2>
+<p>Each agent gets a filtered view of the full observation, containing only the fields relevant to its subsystem. This prevents information leakage and models realistic plant communication:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">reformer</span> <span class="o">=</span> <span class="n">ReformerAgent</span><span class="p">()</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">view</span> <span class="o">=</span> <span class="n">reformer</span><span class="o">.</span><span class="n">observe</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="c1"># view.local_state = {&quot;reformer_outlet_temp&quot;: 850.0, &quot;steam_to_carbon&quot;: 3.0, ...}</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># view.shared_state = {&quot;temperature&quot;: 252.0, &quot;catalyst_health&quot;: 0.95}</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="c1"># view.controls = [&quot;reformer_fuel_gas&quot;, &quot;reformer_steam_flow&quot;]</span>
+</code></pre></div>
+<p>The <code>AgentObservation</code> dataclass contains:</p>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>local_state</code></td>
+<td>Variables specific to this agent's subsystem</td>
+</tr>
+<tr>
+<td><code>shared_state</code></td>
+<td>Plant-wide variables visible to all agents</td>
+</tr>
+<tr>
+<td><code>controls</code></td>
+<td>List of action field names this agent can set</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="training-multi-agent-systems">Training Multi-Agent Systems</h2>
+<p>For RL training, each agent can be a separate policy network:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Pseudocode for multi-agent RL</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">reformer_policy</span> <span class="o">=</span> <span class="n">PPO</span><span class="p">(</span><span class="s2">&quot;reformer&quot;</span><span class="p">,</span> <span class="n">obs_dim</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">act_dim</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">synthesis_policy</span> <span class="o">=</span> <span class="n">PPO</span><span class="p">(</span><span class="s2">&quot;synthesis&quot;</span><span class="p">,</span> <span class="n">obs_dim</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">act_dim</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">purification_policy</span> <span class="o">=</span> <span class="n">PPO</span><span class="p">(</span><span class="s2">&quot;purification&quot;</span><span class="p">,</span> <span class="n">obs_dim</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">act_dim</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="k">for</span> <span class="n">episode</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000</span><span class="p">):</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="n">obs</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="n">task_name</span><span class="o">=</span><span class="s2">&quot;optimization&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>    <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>        <span class="n">r_view</span> <span class="o">=</span> <span class="n">ReformerAgent</span><span class="p">()</span><span class="o">.</span><span class="n">observe</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>        <span class="n">s_view</span> <span class="o">=</span> <span class="n">SynthesisAgent</span><span class="p">()</span><span class="o">.</span><span class="n">observe</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>        <span class="n">p_view</span> <span class="o">=</span> <span class="n">PurificationAgent</span><span class="p">()</span><span class="o">.</span><span class="n">observe</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>        <span class="n">r_act</span> <span class="o">=</span> <span class="n">reformer_policy</span><span class="o">.</span><span class="n">act</span><span class="p">(</span><span class="n">r_view</span><span class="o">.</span><span class="n">local_state</span><span class="p">)</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>        <span class="n">s_act</span> <span class="o">=</span> <span class="n">synthesis_policy</span><span class="o">.</span><span class="n">act</span><span class="p">(</span><span class="n">s_view</span><span class="o">.</span><span class="n">local_state</span><span class="p">)</span>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>        <span class="n">p_act</span> <span class="o">=</span> <span class="n">purification_policy</span><span class="o">.</span><span class="n">act</span><span class="p">(</span><span class="n">p_view</span><span class="o">.</span><span class="n">local_state</span><span class="p">)</span>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>        <span class="n">action</span> <span class="o">=</span> <span class="n">SupervisoryAgent</span><span class="o">.</span><span class="n">merge_actions</span><span class="p">(</span><span class="n">r_act</span><span class="p">,</span> <span class="n">s_act</span><span class="p">,</span> <span class="n">p_act</span><span class="p">)</span>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>        <span class="n">obs</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
 </code></pre></div>
 
 

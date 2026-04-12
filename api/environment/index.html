@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#environment" class="md-skip">
+        <a href="#environment-api" class="md-skip">
           Skip to content
         </a>
       
@@ -860,22 +860,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#methanolapcenvironment" class="md-nav__link">
+  <a href="#lifecycle" class="md-nav__link">
     <span class="md-ellipsis">
       
-        MethanolAPCEnvironment
+        Lifecycle
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="MethanolAPCEnvironment">
+    <nav class="md-nav" aria-label="Lifecycle">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#key-methods" class="md-nav__link">
+  <a href="#resettask_name-str-seed-int-none-methanolapcobservation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Key Methods
+        reset(task_name: str, seed: int = None) → MethanolAPCObservation
       
     </span>
   </a>
@@ -883,10 +883,43 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#mcp-tools" class="md-nav__link">
+  <a href="#stepaction-methanolapcaction-methanolapcobservation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        MCP Tools
+        step(action: MethanolAPCAction) → MethanolAPCObservation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_final_score-float" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_final_score() → float
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_metrics-dict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_metrics() → dict
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_shift_context-dict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_shift_context() → dict
       
     </span>
   </a>
@@ -895,6 +928,100 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tasks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mcp-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MCP Tools
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="MCP Tools">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get_energy_pricing-str" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_energy_pricing() → str
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_catalyst_statustemperature-float-hours_online-float-str" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_catalyst_status(temperature: float, hours_online: float) → str
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_maintenance_schedule-str" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_maintenance_schedule() → str
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#calculate_carbon_footprintmethanol_kg-float-fuel_mol-float-str" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        calculate_carbon_footprint(methanol_kg: float, fuel_mol: float) → str
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reward-function" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reward Function
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#domain-randomization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Domain Randomization
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1142,22 +1269,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#methanolapcenvironment" class="md-nav__link">
+  <a href="#lifecycle" class="md-nav__link">
     <span class="md-ellipsis">
       
-        MethanolAPCEnvironment
+        Lifecycle
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="MethanolAPCEnvironment">
+    <nav class="md-nav" aria-label="Lifecycle">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#key-methods" class="md-nav__link">
+  <a href="#resettask_name-str-seed-int-none-methanolapcobservation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Key Methods
+        reset(task_name: str, seed: int = None) → MethanolAPCObservation
       
     </span>
   </a>
@@ -1165,10 +1292,43 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#mcp-tools" class="md-nav__link">
+  <a href="#stepaction-methanolapcaction-methanolapcobservation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        MCP Tools
+        step(action: MethanolAPCAction) → MethanolAPCObservation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_final_score-float" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_final_score() → float
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_metrics-dict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_metrics() → dict
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_shift_context-dict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_shift_context() → dict
       
     </span>
   </a>
@@ -1177,6 +1337,100 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tasks
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mcp-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MCP Tools
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="MCP Tools">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#get_energy_pricing-str" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_energy_pricing() → str
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_catalyst_statustemperature-float-hours_online-float-str" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_catalyst_status(temperature: float, hours_online: float) → str
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_maintenance_schedule-str" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_maintenance_schedule() → str
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#calculate_carbon_footprintmethanol_kg-float-fuel_mol-float-str" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        calculate_carbon_footprint(methanol_kg: float, fuel_mol: float) → str
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reward-function" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reward Function
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#domain-randomization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Domain Randomization
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1200,49 +1454,416 @@
   
 
 
-<h1 id="environment">Environment</h1>
-<p>::: methanol_apc_env.server.methanol_environment</p>
-<h2 id="methanolapcenvironment">MethanolAPCEnvironment</h2>
-<p>The main environment class implementing the OpenEnv <code>Environment</code> interface.</p>
-<h3 id="key-methods">Key Methods</h3>
+<h1 id="environment-api">Environment API</h1>
+<p>The <code>MethanolAPCEnvironment</code> class is the core of the simulation. It implements OpenEnv's <code>Environment</code> interface, managing the reactor simulation, task selection, grading, MCP tools, domain randomization, and multi-agent views.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">methanol_apc_env.server.methanol_environment</span><span class="w"> </span><span class="kn">import</span> <span class="n">MethanolAPCEnvironment</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">methanol_apc_env.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">MethanolAPCAction</span>
+</code></pre></div>
+<hr />
+<h2 id="lifecycle">Lifecycle</h2>
+<p>Every episode follows this sequence:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>reset(task_name, seed)  →  step(action)  →  step(action)  →  ...  →  done=True  →  get_final_score()
+</code></pre></div>
+<h3 id="resettask_name-str-seed-int-none-methanolapcobservation"><code>reset(task_name: str, seed: int = None) → MethanolAPCObservation</code></h3>
+<p>Starts a new episode. Resets the reactor to the initial conditions defined by the chosen task.</p>
+<p><strong>Parameters:</strong></p>
 <table>
 <thead>
 <tr>
-<th>Method</th>
+<th>Parameter</th>
+<th>Type</th>
+<th style="text-align: center;">Required</th>
 <th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>reset(task_name, seed)</code></td>
-<td>Start new episode for given task</td>
+<td><code>task_name</code></td>
+<td><code>str</code></td>
+<td style="text-align: center;">Yes</td>
+<td>One of 12 task names (see <a href="#tasks">Tasks</a> below)</td>
 </tr>
 <tr>
-<td><code>step(action)</code></td>
-<td>Execute one control step, return observation</td>
-</tr>
-<tr>
-<td><code>get_final_score()</code></td>
-<td>Get clamped score in (0.01, 0.99)</td>
-</tr>
-<tr>
-<td><code>get_metrics()</code></td>
-<td>Get economic_regret, constraint_violations, adaptability_score</td>
-</tr>
-<tr>
-<td><code>get_shift_context()</code></td>
-<td>Nash equilibrium strategy for day/night shifts</td>
+<td><code>seed</code></td>
+<td><code>int</code></td>
+<td style="text-align: center;">No</td>
+<td>Random seed for domain randomization. Same seed = same initial conditions.</td>
 </tr>
 </tbody>
 </table>
-<h3 id="mcp-tools">MCP Tools</h3>
-<p>Access via <code>env.mcp_server</code>:</p>
-<ul>
-<li><code>get_energy_pricing()</code> — gas + electricity spot prices</li>
-<li><code>get_catalyst_status(temperature, hours_online)</code> — health prediction</li>
-<li><code>get_maintenance_schedule()</code> — equipment status</li>
-<li><code>calculate_carbon_footprint(methanol_kg, fuel_mol)</code> — emissions</li>
+<p><strong>What happens on reset:</strong></p>
+<ol>
+<li>Task configuration loaded (initial temperature, pressure, catalyst health, disturbances)</li>
+<li><code>ReactorState</code> initialized with task-specific values</li>
+<li><strong>Domain randomization</strong> applied (if seed given):<ul>
+<li>Catalyst health: ±3% Gaussian noise</li>
+<li>Temperature: ±2°C</li>
+<li>Cooling water temp: ±1.5°C</li>
+<li>Pressure: ±1.5 bar</li>
+<li>H₂ feed: ±0.15 mol/s</li>
+<li>CO feed: ±0.08 mol/s</li>
 </ul>
+</li>
+<li>Plant stages initialized (desulfurization, reformer, distillation)</li>
+<li>Trajectory cleared</li>
+<li>Initial observation returned</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">env</span> <span class="o">=</span> <span class="n">MethanolAPCEnvironment</span><span class="p">()</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">obs</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="n">task_name</span><span class="o">=</span><span class="s2">&quot;optimization&quot;</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="c1"># obs.temperature ≈ 250°C, obs.catalyst_health ≈ 1.0</span>
+</code></pre></div>
+<h3 id="stepaction-methanolapcaction-methanolapcobservation"><code>step(action: MethanolAPCAction) → MethanolAPCObservation</code></h3>
+<p>Executes one control step. This is where the physics simulation runs.</p>
+<p><strong>What happens per step:</strong></p>
+<ol>
+<li><strong>Rate limiting</strong>: Action values are clamped and rate-limited (can't change feed rate by more than ~20% per step)</li>
+<li><strong>Plant stages</strong>: Desulfurization → Reformer → feed composition updated</li>
+<li><strong>Recycle loop</strong>: Fresh feed mixed with recycled gas, inerts accumulated, purge applied</li>
+<li><strong>Partial pressures</strong>: Species partial pressures calculated at reactor conditions</li>
+<li><strong>Fugacity corrections</strong>: SRK cubic EOS applies fugacity coefficients to H₂, CO, CO₂, CH₃OH, H₂O</li>
+<li><strong>Kinetic model</strong>: Selected model (LHHW/Graaf/VBF/Seyfert/Nestler) calculates reaction rates for 3 simultaneous reactions</li>
+<li><strong>RK4 integration</strong>: 4th-order Runge-Kutta with 4 sub-steps integrates the energy balance ODE</li>
+<li><strong>Multi-bed quench</strong>: Temperature profile across 4 catalyst beds with cold-shot injection</li>
+<li><strong>Catalyst deactivation</strong>: 3-zone model updates catalyst health (irreversible above 280°C)</li>
+<li><strong>Condensation</strong>: 96% crude methanol recovery</li>
+<li><strong>Byproducts</strong>: DME + methyl formate formation based on selectivity model</li>
+<li><strong>Economics</strong>: Revenue (methanol × spot price) minus costs (feed + energy + cooling)</li>
+<li><strong>Process noise</strong>: ±1°C temperature, ±5% rate, ±0.3 bar pressure</li>
+<li><strong>Disturbances</strong>: Task-specific events (e.g., cooling failure at step 25)</li>
+<li><strong>Safety check</strong>: Emergency shutdown if T ≥ 300°C</li>
+<li><strong>Reward</strong>: 6-component dense reward computed and clamped to (0.01, 0.99)</li>
+<li><strong>Observation</strong>: All sensor readings packaged into <code>MethanolAPCObservation</code></li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">action</span> <span class="o">=</span> <span class="n">MethanolAPCAction</span><span class="p">(</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">feed_rate_h2</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">feed_rate_co</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">cooling_water_flow</span><span class="o">=</span><span class="mf">40.0</span><span class="p">,</span> <span class="n">compressor_power</span><span class="o">=</span><span class="mf">65.0</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="p">)</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="n">obs</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="get_final_score-float"><code>get_final_score() → float</code></h3>
+<p>Returns the trajectory-based score for the completed episode. Must be called after <code>done=True</code>.</p>
+<p><strong>Score computation:</strong></p>
+<ol>
+<li>The task-specific grader evaluates the full trajectory (list of all <code>ReactorState</code> objects from the episode)</li>
+<li>Raw score (0.0–1.0) is passed through a centered sigmoid: $\text{score} = 0.01 + 0.98 \cdot \sigma(10 \cdot (x - 0.5))$</li>
+<li>Result is strictly in <strong>(0.01, 0.99)</strong> — never exactly 0 or 1</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># After episode ends</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">score</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">get_final_score</span><span class="p">()</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="c1"># 0.01 = terrible, 0.50 = mediocre, 0.99 = near-perfect</span>
+</code></pre></div>
+<h3 id="get_metrics-dict"><code>get_metrics() → dict</code></h3>
+<p>Returns 3 KPI metrics for the episode:</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Type</th>
+<th>Description</th>
+<th>Formula</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>economic_regret</code></td>
+<td><code>float</code></td>
+<td>Profit left on the table vs theoretical max</td>
+<td>$\text{max_possible} - \text{actual_profit}$</td>
+</tr>
+<tr>
+<td><code>constraint_violations</code></td>
+<td><code>int</code></td>
+<td>Number of steps where T &gt; 280°C or T &lt; 180°C</td>
+<td>Count of unsafe timesteps</td>
+</tr>
+<tr>
+<td><code>adaptability_score</code></td>
+<td><code>float</code></td>
+<td>Temperature stability (0–1, higher = more stable)</td>
+<td>$\frac{1}{1 + \text{variance}/100}$</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">metrics</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">get_metrics</span><span class="p">()</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Regret: $</span><span class="si">{</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;economic_regret&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Violations: </span><span class="si">{</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;constraint_violations&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Adaptability: </span><span class="si">{</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;adaptability_score&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="get_shift_context-dict"><code>get_shift_context() → dict</code></h3>
+<p>Returns game-theoretic context for day/night pricing scenarios:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">ctx</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">get_shift_context</span><span class="p">()</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="c1"># {</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="c1">#     &quot;shift&quot;: &quot;day&quot;,</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1">#     &quot;gas_price&quot;: 0.002,</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="c1">#     &quot;electricity_price&quot;: 0.08,</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="c1">#     &quot;nash_equilibrium_note&quot;: &quot;Optimal: day 90% capacity, night 70%&quot;,</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1">#     &quot;recommended_strategy&quot;: &quot;Push production during cheap electricity&quot;</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="c1"># }</span>
+</code></pre></div>
+<hr />
+<h2 id="tasks">Tasks</h2>
+<p>12 scenarios with increasing difficulty:</p>
+<table>
+<thead>
+<tr>
+<th>Task Name</th>
+<th style="text-align: center;">Steps</th>
+<th style="text-align: center;">Difficulty</th>
+<th style="text-align: center;">Initial T</th>
+<th style="text-align: center;">Initial Catalyst</th>
+<th>Key Challenge</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>startup</code></td>
+<td style="text-align: center;">50</td>
+<td style="text-align: center;">Easy</td>
+<td style="text-align: center;">150°C</td>
+<td style="text-align: center;">1.0</td>
+<td>Ramp from cold to 250°C</td>
+</tr>
+<tr>
+<td><code>optimization</code></td>
+<td style="text-align: center;">100</td>
+<td style="text-align: center;">Medium</td>
+<td style="text-align: center;">250°C</td>
+<td style="text-align: center;">1.0</td>
+<td>Maximize profit at steady state</td>
+</tr>
+<tr>
+<td><code>cost_minimization</code></td>
+<td style="text-align: center;">100</td>
+<td style="text-align: center;">Medium</td>
+<td style="text-align: center;">250°C</td>
+<td style="text-align: center;">1.0</td>
+<td>Minimize OPEX while maintaining output</td>
+</tr>
+<tr>
+<td><code>maximum_yield</code></td>
+<td style="text-align: center;">200</td>
+<td style="text-align: center;">Medium</td>
+<td style="text-align: center;">250°C</td>
+<td style="text-align: center;">1.0</td>
+<td>Push methanol output to maximum</td>
+</tr>
+<tr>
+<td><code>disturbance_rejection</code></td>
+<td style="text-align: center;">100</td>
+<td style="text-align: center;">Medium</td>
+<td style="text-align: center;">250°C</td>
+<td style="text-align: center;">1.0</td>
+<td>Cooling water temp jumps to 45°C at step 25</td>
+</tr>
+<tr>
+<td><code>emergency_recovery</code></td>
+<td style="text-align: center;">80</td>
+<td style="text-align: center;">Hard</td>
+<td style="text-align: center;">290°C</td>
+<td style="text-align: center;">1.0</td>
+<td>Start near shutdown, cool without crashing</td>
+</tr>
+<tr>
+<td><code>feed_composition_upset</code></td>
+<td style="text-align: center;">100</td>
+<td style="text-align: center;">Hard</td>
+<td style="text-align: center;">250°C</td>
+<td style="text-align: center;">1.0</td>
+<td>H₂/CO ratio shifts unexpectedly</td>
+</tr>
+<tr>
+<td><code>pressure_loss</code></td>
+<td style="text-align: center;">100</td>
+<td style="text-align: center;">Hard</td>
+<td style="text-align: center;">250°C</td>
+<td style="text-align: center;">1.0</td>
+<td>Compressor degrades mid-episode</td>
+</tr>
+<tr>
+<td><code>aged_catalyst</code></td>
+<td style="text-align: center;">100</td>
+<td style="text-align: center;">Hard</td>
+<td style="text-align: center;">250°C</td>
+<td style="text-align: center;">0.4</td>
+<td>Operate profitably with 40% catalyst</td>
+</tr>
+<tr>
+<td><code>day_night_cycle</code></td>
+<td style="text-align: center;">150</td>
+<td style="text-align: center;">Hard</td>
+<td style="text-align: center;">250°C</td>
+<td style="text-align: center;">1.0</td>
+<td>Cooling water oscillates 25→35→25→35°C</td>
+</tr>
+<tr>
+<td><code>long_horizon_production</code></td>
+<td style="text-align: center;">500</td>
+<td style="text-align: center;">Hard</td>
+<td style="text-align: center;">250°C</td>
+<td style="text-align: center;">1.0</td>
+<td>Extended run with catalyst aging</td>
+</tr>
+<tr>
+<td><code>multi_disturbance</code></td>
+<td style="text-align: center;">150</td>
+<td style="text-align: center;">Expert</td>
+<td style="text-align: center;">250°C</td>
+<td style="text-align: center;">1.0</td>
+<td>Cascading failures: cooling at 25, worse at 50</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="mcp-tools">MCP Tools</h2>
+<p>The environment exposes 4 <a href="https://modelcontextprotocol.io/">Model Context Protocol</a> tools via <code>env.mcp_server</code>. These allow LLM agents to query external context before making control decisions.</p>
+<h3 id="get_energy_pricing-str"><code>get_energy_pricing() → str</code></h3>
+<p>Returns current natural gas and electricity spot prices. Prices vary with regional configuration and time-of-day.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>&quot;Natural Gas: $3.42/MMBtu | Electricity: $0.11/kWh&quot;
+</code></pre></div>
+<p><strong>Agent use:</strong> Throttle production during price spikes. If gas is expensive, reduce feed rates; if electricity is cheap, push compressor harder.</p>
+<h3 id="get_catalyst_statustemperature-float-hours_online-float-str"><code>get_catalyst_status(temperature: float, hours_online: float) → str</code></h3>
+<p>Predicts catalyst health degradation based on current temperature and runtime.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>&quot;Catalyst health: 0.92 | Predicted life: 4200 hours at 252°C | Risk: LOW&quot;
+</code></pre></div>
+<p><strong>Agent use:</strong> If health is dropping fast, reduce temperature to extend catalyst life. If health is already low, accept lower conversion and avoid high temperatures.</p>
+<h3 id="get_maintenance_schedule-str"><code>get_maintenance_schedule() → str</code></h3>
+<p>Returns equipment maintenance status and upcoming windows.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>&quot;Compressor: OK (next service in 720h) | Heat exchanger: FOULED (efficiency -8%) | Catalyst: 2100h to replacement&quot;
+</code></pre></div>
+<p><strong>Agent use:</strong> If maintenance is imminent, pre-emptively reduce load. If heat exchanger is fouled, compensate with more cooling water.</p>
+<h3 id="calculate_carbon_footprintmethanol_kg-float-fuel_mol-float-str"><code>calculate_carbon_footprint(methanol_kg: float, fuel_mol: float) → str</code></h3>
+<p>Calculates CO₂ emissions intensity for current production.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>&quot;Total CO2: 142.3 kg | Intensity: 1.42 kg CO2/kg MeOH | EU ETS cost: $8.54&quot;
+</code></pre></div>
+<p><strong>Agent use:</strong> If emissions approach regulatory limits, reduce reformer fuel or increase methanol yield per unit of CO₂ generated.</p>
+<hr />
+<h2 id="reward-function">Reward Function</h2>
+<p>The dense per-step reward has <strong>6 components</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Range</th>
+<th>Weight</th>
+<th>What It Measures</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Profit</td>
+<td>-0.2 to +0.4</td>
+<td>High</td>
+<td>Step revenue minus costs</td>
+</tr>
+<tr>
+<td>Safety</td>
+<td>-0.3 to +0.2</td>
+<td>High</td>
+<td>Distance from 300°C shutdown limit</td>
+</tr>
+<tr>
+<td>Stability</td>
+<td>0 to +0.1</td>
+<td>Low</td>
+<td>Low temperature variance between steps</td>
+</tr>
+<tr>
+<td>Catalyst</td>
+<td>0 to +0.1</td>
+<td>Low</td>
+<td>Catalyst health preservation</td>
+</tr>
+<tr>
+<td>Progress</td>
+<td>varies</td>
+<td>Medium</td>
+<td>Task-specific: approaching target, maintaining production, etc.</td>
+</tr>
+<tr>
+<td>Shutdown</td>
+<td>-1.0</td>
+<td>Critical</td>
+<td>Emergency shutdown penalty (dominates all other terms)</td>
+</tr>
+</tbody>
+</table>
+<p>The raw reward is mapped through a sigmoid and affine transform to strictly <strong>(0.01, 0.99)</strong>.</p>
+<hr />
+<h2 id="domain-randomization">Domain Randomization</h2>
+<p>On each <code>reset()</code>, Gaussian noise is added to initial conditions. This trains agents that are robust to plant-to-plant variation:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Noise</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Catalyst health</td>
+<td>±3%</td>
+<td>Different catalyst ages</td>
+</tr>
+<tr>
+<td>Temperature</td>
+<td>±2°C</td>
+<td>Sensor calibration error</td>
+</tr>
+<tr>
+<td>Cooling water temp</td>
+<td>±1.5°C</td>
+<td>Ambient temperature variation</td>
+</tr>
+<tr>
+<td>Pressure</td>
+<td>±1.5 bar</td>
+<td>Compressor wear</td>
+</tr>
+<tr>
+<td>H₂ feed</td>
+<td>±0.15 mol/s</td>
+<td>Flow meter accuracy</td>
+</tr>
+<tr>
+<td>CO feed</td>
+<td>±0.08 mol/s</td>
+<td>Flow meter accuracy</td>
+</tr>
+</tbody>
+</table>
+<p>Per-step noise is also applied:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Noise</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Temperature</td>
+<td>±1°C</td>
+<td>Sensor noise</td>
+</tr>
+<tr>
+<td>Reaction rate</td>
+<td>±5%</td>
+<td>Catalyst surface heterogeneity</td>
+</tr>
+<tr>
+<td>Pressure</td>
+<td>±0.3 bar</td>
+<td>Compressor pulsation</td>
+</tr>
+<tr>
+<td>Cooling water temp</td>
+<td>Brownian drift</td>
+<td>Weather/cooling tower variation</td>
+</tr>
+</tbody>
+</table>
 
 
 
