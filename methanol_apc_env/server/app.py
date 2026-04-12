@@ -2,14 +2,11 @@
 FastAPI application for the Methanol APC Environment.
 
 Exposes the MethanolAPCEnvironment over HTTP and WebSocket endpoints,
-compatible with the OpenEnv EnvClient. Mounts MS-AOS dashboard as
-the sole web UI at /web (no default Playground tab).
+compatible with the OpenEnv EnvClient.
 """
 
-import os
-
 try:
-    from openenv.core.env_server.http_server import create_app, create_fastapi_app
+    from openenv.core.env_server.http_server import create_app
 except Exception as e:
     raise ImportError(
         "openenv is required for the web interface. "
@@ -26,28 +23,24 @@ try:
 except ImportError:
     from .methanol_environment import MethanolAPCEnvironment
 
-# Check if web interface is enabled (HF Spaces sets this)
-_enable_web = os.getenv("ENABLE_WEB_INTERFACE", "false").lower() in ("true", "1", "yes")
+app = create_app(
+    MethanolAPCEnvironment,
+    MethanolAPCAction,
+    MethanolAPCObservation,
+    env_name="methanol_apc",
+    max_concurrent_envs=1,
+)
 
-if _enable_web:
-    # Build the API-only FastAPI app (no default Gradio)
-    app = create_fastapi_app(
-        MethanolAPCEnvironment,
-        MethanolAPCAction,
-        MethanolAPCObservation,
-        max_concurrent_envs=1,
-    )
 
-    # Mount MS-AOS as the SOLE UI at /web
-    try:
-        import gradio as gr
-        try:
-            from msaos_ui import build_msaos_ui
-        except ImportError:
-            from .msaos_ui import build_msaos_ui
+def main(host: str = "0.0.0.0", port: int = 8000) -> None:
+    """Entry point for ``uv run server`` or ``python -m methanol_apc_env.server.app``."""
+    import uvicorn
 
-        from openenv.core.env_server.web_interface import WebManager
-        from openenv.core.env_server.gradio_ui import _extract_action_fields
+    uvicorn.run(app, host=host, port=port)
+
+
+if __name__ == "__main__":
+    main()
         from openenv.core.env_server.gradio_theme import OPENENV_GRADIO_THEME
 
         # Create web manager for the /web/* endpoints
