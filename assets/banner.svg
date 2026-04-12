@@ -114,8 +114,8 @@
   <g transform="translate(870, 20)">
     <!-- Temperature gradient bar -->
     <rect x="12" y="30" width="7" height="180" rx="3.5" fill="url(#tempGrad)" opacity="0.6"/>
-    <text x="15" y="22" font-family="'Segoe UI', sans-serif" font-size="7" fill="#ef4444" text-anchor="middle">300°C</text>
-    <text x="15" y="222" font-family="'Segoe UI', sans-serif" font-size="7" fill="#3b82f6" text-anchor="middle">220°C</text>
+    <text x="15" y="22" font-family="'Segoe UI', sans-serif" font-size="9" fill="#ef4444" text-anchor="middle">300°C</text>
+    <text x="15" y="222" font-family="'Segoe UI', sans-serif" font-size="9" fill="#3b82f6" text-anchor="middle">220°C</text>
 
     <!-- Reactor vessel body -->
     <rect x="30" y="18" width="110" height="210" rx="14" fill="url(#reactorBody)" stroke="#9ca3af" stroke-width="1.5"/>
@@ -145,17 +145,17 @@
 
     <!-- Feed inlet pipe -->
     <line x1="85" y1="0" x2="85" y2="10" stroke="#10b981" stroke-width="4" stroke-linecap="round"/>
-    <text x="85" y="-4" font-family="'Segoe UI', sans-serif" font-size="8" fill="#10b981" text-anchor="middle" font-weight="600">Syngas In</text>
+    <text x="85" y="-4" font-family="'Segoe UI', sans-serif" font-size="9" fill="#10b981" text-anchor="middle" font-weight="600">Syngas In</text>
 
     <!-- Product outlet pipe -->
     <line x1="85" y1="236" x2="85" y2="250" stroke="#f59e0b" stroke-width="4" stroke-linecap="round"/>
-    <text x="85" y="264" font-family="'Segoe UI', sans-serif" font-size="8" fill="#fbbf24" text-anchor="middle" font-weight="600">Crude MeOH</text>
+    <text x="85" y="264" font-family="'Segoe UI', sans-serif" font-size="9" fill="#fbbf24" text-anchor="middle" font-weight="600">Crude MeOH</text>
 
     <!-- Quench label (vertical) -->
-    <text x="4" y="114" font-family="'Segoe UI', sans-serif" font-size="7" fill="#60a5fa" text-anchor="middle" writing-mode="tb">Cold-Shot Quench</text>
+    <text x="4" y="114" font-family="'Segoe UI', sans-serif" font-size="9" fill="#60a5fa" text-anchor="middle" writing-mode="tb">Cold-Shot Quench</text>
 
     <!-- Cooling jacket indication -->
     <path d="M 142,40 Q 155,120 142,200" stroke="#06b6d4" stroke-width="1.5" fill="none" stroke-dasharray="4,3" opacity="0.5"/>
-    <text x="162" y="120" font-family="'Segoe UI', sans-serif" font-size="7" fill="#06b6d4" text-anchor="middle" writing-mode="tb" opacity="0.6">Cooling</text>
+    <text x="162" y="120" font-family="'Segoe UI', sans-serif" font-size="9" fill="#06b6d4" text-anchor="middle" writing-mode="tb" opacity="0.6">Cooling</text>
   </g>
 </svg>

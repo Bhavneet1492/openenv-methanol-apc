@@ -210,7 +210,7 @@
 
     <!-- Purge gas branch -->
     <line x1="370" y1="192" x2="370" y2="215" stroke="#ef4444" stroke-width="1" stroke-dasharray="3,3"/>
-    <text x="370" y="225" font-family="'Segoe UI', sans-serif" font-size="8" fill="#f87171" text-anchor="middle">Purge → Flare</text>
+    <text x="370" y="225" font-family="'Segoe UI', sans-serif" font-size="9" fill="#f87171" text-anchor="middle">Purge → Flare</text>
 
     <!-- Product output -->
     <line x1="680" y1="105" x2="720" y2="105" stroke="#10b981" stroke-width="2.5" stroke-linecap="round"/>

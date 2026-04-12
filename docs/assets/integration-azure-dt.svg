@@ -30,7 +30,7 @@
   <text x="380" y="110" font-family="'Segoe UI',sans-serif" font-size="10" fill="#a78bfa" text-anchor="middle">FastAPI + WebSocket</text>
   <rect x="305" y="120" width="150" height="22" rx="5" fill="#1e1b4b" stroke="#8b5cf6" stroke-width="0.5"/>
   <text x="380" y="135" font-family="'Segoe UI',sans-serif" font-size="9" fill="#c084fc" text-anchor="middle">AzureDigitalTwinIntegration</text>
-  <text x="380" y="155" font-family="'Segoe UI',sans-serif" font-size="8" fill="#94a3b8" text-anchor="middle">DefaultAzureCredential</text>
+  <text x="380" y="155" font-family="'Segoe UI',sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">DefaultAzureCredential</text>
 
   <!-- Arrow Server → Azure -->
   <line x1="475" y1="108" x2="555" y2="108" stroke="#0284c7" stroke-width="2.5" class="ad-flow"/>
@@ -50,7 +50,7 @@
     <text x="680" y="155" text-anchor="middle">Real plant parameters</text>
   </g>
   <rect x="585" y="160" width="80" height="16" rx="4" fill="#064e3b" stroke="#0284c7" stroke-width="0.5"/>
-  <text x="625" y="172" font-family="'Segoe UI',sans-serif" font-size="8" fill="#38bdf8" text-anchor="middle">Enterprise</text>
+  <text x="625" y="172" font-family="'Segoe UI',sans-serif" font-size="9" fill="#38bdf8" text-anchor="middle">Enterprise</text>
 
   <!-- Return arrow -->
   <path d="M 680,190 L 680,215 Q 680,230 665,230 L 120,230 Q 105,230 105,215 L 105,175" fill="none" stroke="#34d399" stroke-width="2" class="ad-flow"/>
