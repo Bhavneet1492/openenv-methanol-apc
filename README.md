@@ -139,21 +139,37 @@ RL is uniquely suited to this problem because:
 
 ## Problem Statement
 
-**The $500K–$2M control gap in chemical manufacturing.**
+**Automating the manual distributed control of a chemical manufacturing plant.**
 
-Today, 90% of methanol plants worldwide run on decades-old control strategies: PID loops tuned once during commissioning, occasionally upgraded with Model Predictive Control (MPC) at enormous cost. The result:
+In a typical methanol plant, a team of 4–6 operators per shift manually manages hundreds of control loops across 5 plant stages — 24/7, 365 days/year. Here's what they do every 15–30 minutes:
 
-1. **Operators run conservatively** — plants typically operate at 70–80% of theoretical capacity because the penalty for a thermal runaway (300°C → emergency shutdown → days of downtime) far exceeds the reward for pushing closer to optimal
-2. **MPC is expensive and fragile** — a single DMC/MPC implementation costs $500K–$2M, requires 2–4 weeks of plant step-testing to identify the process model, and needs re-identification every 1–2 years as catalyst ages
-3. **No context awareness** — existing controllers don't know that natural gas prices spiked this morning, or that a maintenance crew arrives in 2 hours, or that environmental regulations require lower emissions today
-4. **No adaptation** — when catalyst degrades from 100% to 60% activity over 2 years, the linear model inside MPC drifts, performance degrades, and engineers must re-tune manually
+| Manual Task | What the Operator Does | Risk of Error | What Our Agent Automates |
+|-------------|----------------------|:-------------:|--------------------------|
+| **Temperature monitoring** | Watches 4 bed temperatures on DCS screen, adjusts cooling water valve if any bed drifts above 265°C | High — fatigue, shift handover miscommunication | Continuous 13-variable optimization every step |
+| **Feed ratio adjustment** | Calculates H₂/CO ratio from gas chromatograph readings (15-min delay), manually adjusts feed valves | Medium — delayed feedback, calculation errors | Real-time ratio tracking with instant correction |
+| **Catalyst health assessment** | Reviews lab samples weekly, estimates remaining catalyst life from experience | High — subjective, no predictive model | MCP tool predicts health from T × hours, suggests action |
+| **Recycle loop management** | Monitors inert buildup via analyzer, opens purge valve periodically | Medium — too little purge → inert buildup, too much → wasted feed | Continuous purge optimization balancing conversion vs waste |
+| **Emergency response** | Hits emergency shutdown button if temperature exceeds 285°C on any display | Critical — 3–5 second human reaction time | Predictive 5-step lookahead detects runaway before it happens |
+| **Production scheduling** | Checks gas prices on website, calls trading desk, manually adjusts throughput | Low urgency but high economic impact | MCP energy pricing tool → automatic throttling |
+| **Distillation quality** | Samples product every 2 hours, adjusts reflux if purity drops | Medium — 2-hour delay between sample and action | Continuous purity tracking with instant reflux adjustment |
+| **Shift handover** | Verbal briefing + written log to next shift, often incomplete | High — critical context lost between shifts | Agent state is persistent, no information loss |
+| **Maintenance coordination** | Reads maintenance schedule on whiteboard, pre-emptively reduces load | Medium — forgets, schedule changes not communicated | MCP maintenance tool provides real-time equipment status |
 
-**This environment solves this by providing:**
-- A physics-based digital twin where RL agents can safely learn to operate a methanol plant before touching real hardware
-- Context-aware decision-making via MCP tools (energy pricing, catalyst health, maintenance, emissions)
-- Multi-agent decomposition that mirrors real plant organization
-- Domain randomization that trains agents robust to the exact uncertainties that break traditional MPC
-- 12 task scenarios ranging from routine optimization to cascading emergency recovery
+**The cost of manual control:**
+
+- **$2–5M/year in lost yield** per plant from conservative operation (70–80% capacity vs 90–95% achievable)
+- **3–5 unplanned shutdowns/year** from operator error or delayed response (each costs $500K–$2M in lost production + restart)
+- **$500K–$2M per MPC deployment** that addresses only the reactor loop, not the full plant
+- Average operator makes **~15 control decisions per hour** across the plant — cognitive load leads to suboptimal choices during peak stress
+
+**This environment enables training an AI agent that replaces or augments these manual tasks:**
+- Controls 13 variables simultaneously across all 5 plant stages (not just 1 loop)
+- Responds in milliseconds, not minutes
+- Never fatigues, never loses context at shift handover
+- Uses MCP tools to incorporate external context (prices, maintenance, emissions) that operators check manually
+- Learns from domain-randomized simulations → robust to the exact uncertainties that cause human error
+- 4 multi-agent classes mirror the real plant organization (reformer operator, board operator, distillation operator, shift supervisor)
+- 12 task scenarios train for everything from routine optimization to cascading emergency recovery
 
 **Who benefits:**
 - **Chemical companies**: Train AI controllers on this simulator, deploy to real DCS via OPC-UA bridge
