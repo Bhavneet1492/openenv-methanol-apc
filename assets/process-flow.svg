@@ -101,10 +101,10 @@
   </g>
 
   <!-- Arrow to reactor -->
-  <line x1="665" y1="110" x2="710" y2="110" stroke="#60a5fa" stroke-width="2.5" marker-end="url(#pfArrowBlue)"/>
+  <line x1="665" y1="110" x2="710" y2="145" stroke="#60a5fa" stroke-width="2.5" marker-end="url(#pfArrowBlue)"/>
 
   <!-- ═══════ SYNTHESIS REACTOR (MAIN FEATURE) ═══════ -->
-  <g transform="translate(715, 45)">
+  <g transform="translate(715, 80)">
     <rect width="170" height="130" rx="14" fill="#1e293b" stroke="#3b82f6" stroke-width="3" filter="url(#pfShadow)"/>
     <!-- Glow effect -->
     <rect x="3" y="3" width="164" height="124" rx="12" fill="none" stroke="#3b82f6" stroke-width="0.5" opacity="0.3"/>
@@ -127,7 +127,7 @@
   </g>
 
   <!-- Arrow to Separator -->
-  <line x1="890" y1="110" x2="930" y2="110" stroke="#3b82f6" stroke-width="2.5" stroke-dasharray="8,4" class="pf-flow" marker-end="url(#pfArrowBlue)"/>
+  <line x1="890" y1="145" x2="930" y2="110" stroke="#3b82f6" stroke-width="2.5" stroke-dasharray="8,4" class="pf-flow" marker-end="url(#pfArrowBlue)"/>
 
   <!-- ═══════ SEPARATOR ═══════ -->
   <g transform="translate(935, 70)">
@@ -143,15 +143,15 @@
 
   <!-- ═══════ RECYCLE LOOP (THE NON-LINEAR PART) ═══════ -->
   <!-- Unreacted gas goes UP from separator, curves LEFT back to compressor -->
-  <path d="M 995,68 L 995,60 Q 995,52 975,52 L 625,52 Q 605,52 605,60 L 605,75"
+  <path d="M 995,96 L 995,72 Q 995,62 975,62 L 625,62 Q 605,62 605,72 L 605,96"
         fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="8,4" class="pf-flow"/>
-  <polygon points="600,73 605,85 610,73" fill="#f59e0b"/>
+  <polygon points="600,94 605,106 610,94" fill="#f59e0b"/>
   <!-- Recycle label -->
-  <rect x="730" y="40" width="170" height="22" rx="9" fill="#451a03" stroke="#f59e0b" stroke-width="1"/>
-  <text x="815" y="55" font-family="'Segoe UI', sans-serif" font-size="10" fill="#fbbf24" text-anchor="middle" font-weight="600">♻ Recycle Loop  RR = 3.5</text>
+  <rect x="730" y="50" width="170" height="22" rx="9" fill="#451a03" stroke="#f59e0b" stroke-width="1"/>
+  <text x="815" y="65" font-family="'Segoe UI', sans-serif" font-size="10" fill="#fbbf24" text-anchor="middle" font-weight="600">♻ Recycle Loop  RR = 3.5</text>
 
   <!-- ═══════ PURGE GAS BRANCH ═══════ -->
-  <line x1="920" y1="52" x2="920" y2="10" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#pfArrowRed)"/>
+  <line x1="920" y1="62" x2="920" y2="20" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#pfArrowRed)"/>
   <text x="920" y="2" font-family="'Segoe UI', sans-serif" font-size="9" fill="#f87171" text-anchor="middle">Purge → Fuel/Flare</text>
   <text x="920" y="12" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">(inerts: N₂, CH₄, Ar)</text>
 
