@@ -53,6 +53,8 @@ nav:
     - Cantera: integrations/cantera.md
     - ChemSep: integrations/chemsep.md
     - Azure Digital Twins: integrations/azure-digital-twins.md
+    - OPC-UA Bridge: integrations/opcua.md
+    - Redis State Store: integrations/redis-state-store.md
   - API Reference:
     - Action & Observation: api/models.md
     - Environment: api/environment.md

@@ -15,7 +15,7 @@ from methanol_apc_env.integrations import (
 
 ## How Integrations Work
 
-<img src="../assets/integration-default.svg" width="100%" alt="Default mode: Agent → OpenEnv API → internal reactor_sim.py → Observations">
+<img src="integration-default.svg" width="100%" alt="Default mode: Agent → OpenEnv API → internal reactor_sim.py → Observations">
 
 Every integration follows the **same pattern** — try the external tool, fall back to internal model if unavailable:
 
@@ -46,6 +46,8 @@ The `source` field always tells you which engine produced the result.
 | [`CanteraIntegration`](cantera.md) | [Cantera](https://cantera.org) | GRI-Mech 3.0 reaction rates, equilibrium composition, mechanism validation | LHHW kinetics matching `reactor_sim.py` | `pip install cantera` |
 | [`ChemSepIntegration`](chemsep.md) | [ChemSep](http://www.chemsep.org) | CAPE-OPEN VLE, activity coefficients, rigorous bubble point | Antoine equation + Margules model | [ChemSep download](http://www.chemsep.org) + `pip install pywin32` |
 | [`AzureDigitalTwinIntegration`](azure-digital-twins.md) | [Azure Digital Twins](https://azure.microsoft.com/en-us/products/digital-twins) | Enterprise plant model as simulation backend, DTDL schema, twin CRUD | Internal `reactor_sim.py` | `pip install azure-digitaltwins-core azure-identity` + `az login` |
+| [`OPCUABridge`](opcua.md) | OPC-UA (DCS/SCADA) | Bi-directional connection to real plant DCS — server + client mode, ISA-95 tags | No plant connection | `pip install asyncua` |
+| [`StateStore`](redis-state-store.md) | [Redis](https://redis.io/) | Shared state for multi-agent coordination, energy price caching, atomic counters | Thread-safe in-memory `dict` | `pip install redis` |
 
 ---
 
@@ -58,6 +60,8 @@ The `source` field always tells you which engine produced the result.
 | **Checking reaction rates** | Cantera — cross-reference with GRI-Mech database |
 | **Validating distillation model** | ChemSep — rigorous VLE with NRTL/UNIFAC |
 | **Enterprise deployment** | Azure DT — replace internal sim with your company's own plant model |
+| **Connecting to real plant** | OPC-UA — shadow mode first, then pilot, then production |
+| **Multi-agent coordination** | Redis StateStore — shared state, price caching, violation counters |
 | **Academic paper** | DWSIM + Cantera — show your model matches external solvers |
 
 ---
