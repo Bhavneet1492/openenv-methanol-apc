@@ -36,6 +36,11 @@ TASKS = [
     {"name": "startup", "max_steps": 50},
     {"name": "optimization", "max_steps": 100},
     {"name": "disturbance_rejection", "max_steps": 100},
+    {"name": "emergency_recovery", "max_steps": 80},
+    {"name": "cost_minimization", "max_steps": 100},
+    {"name": "day_night_cycle", "max_steps": 150},
+    {"name": "aged_catalyst", "max_steps": 100},
+    {"name": "multi_disturbance", "max_steps": 150},
 ]
 BENCHMARK = "methanol_apc"
 
