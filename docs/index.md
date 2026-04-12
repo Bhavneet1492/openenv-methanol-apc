@@ -2,8 +2,8 @@
 
 A production-grade digital twin of an ICI Low-Pressure methanol synthesis reactor for reinforcement learning.
 
-[Live Demo on HuggingFace :fontawesome-solid-flask:](https://huggingface.co/spaces/glitchfilter/methanol-apc-env){ .md-button .md-button--primary }
-[GitHub Repository :fontawesome-brands-github:](https://github.com/Bhavneet1492/openenv-methanol-apc){ .md-button }
+[Live Demo on HuggingFace](https://huggingface.co/spaces/glitchfilter/methanol-apc-env){ .md-button .md-button--primary }
+[GitHub Repository](https://github.com/Bhavneet1492/openenv-methanol-apc){ .md-button }
 
 ## What is this?
 
