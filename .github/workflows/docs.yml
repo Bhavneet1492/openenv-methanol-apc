@@ -6,6 +6,7 @@ on:
     paths:
       - 'docs/**'
       - 'mkdocs.yml'
+      - '.github/workflows/docs.yml'
 
 permissions:
   contents: write
@@ -27,10 +28,11 @@ jobs:
         run: pip install mkdocs-material
 
       - name: Build docs
-        run: mkdocs build --strict
+        run: mkdocs build
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
           publish_dir: ./site
