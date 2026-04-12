@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 500" width="1100" height="500">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -30 1100 530" width="1100" height="530">
   <defs>
     <linearGradient id="pfBg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#0f172a"/>
@@ -29,7 +29,7 @@
   </defs>
 
   <!-- Background -->
-  <rect width="1100" height="500" fill="url(#pfBg)" rx="16"/>
+  <rect width="1100" height="530" y="-30" fill="url(#pfBg)" rx="16"/>
   <text x="550" y="30" font-family="'Segoe UI', system-ui, sans-serif" font-size="16" fill="#94a3b8" text-anchor="middle" font-weight="700" letter-spacing="1">METHANOL PRODUCTION — COMPLETE PLANT PROCESS FLOW</text>
 
   <!-- ═══════ FEED SECTION ═══════ -->
@@ -137,17 +137,17 @@
 
   <!-- ═══════ RECYCLE LOOP (THE NON-LINEAR PART) ═══════ -->
   <!-- Unreacted gas goes UP from separator, curves LEFT back to compressor -->
-  <path d="M 995,68 L 995,35 Q 995,15 975,15 L 625,15 Q 605,15 605,35 L 605,75"
+  <path d="M 995,68 L 995,48 Q 995,38 975,38 L 625,38 Q 605,38 605,48 L 605,75"
         fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="8,4" class="pf-flow"/>
   <polygon points="600,73 605,85 610,73" fill="#f59e0b"/>
   <!-- Recycle label -->
-  <rect x="740" y="3" width="160" height="22" rx="8" fill="#451a03" stroke="#f59e0b" stroke-width="1"/>
-  <text x="820" y="18" font-family="'Segoe UI', sans-serif" font-size="10" fill="#fbbf24" text-anchor="middle" font-weight="600">♻ Recycle Loop  RR = 3.5</text>
+  <rect x="730" y="26" width="170" height="22" rx="9" fill="#451a03" stroke="#f59e0b" stroke-width="1"/>
+  <text x="815" y="41" font-family="'Segoe UI', sans-serif" font-size="10" fill="#fbbf24" text-anchor="middle" font-weight="600">♻ Recycle Loop  RR = 3.5</text>
 
   <!-- ═══════ PURGE GAS BRANCH ═══════ -->
-  <line x1="890" y1="15" x2="890" y2="-12" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3"/>
-  <text x="890" y="-18" font-family="'Segoe UI', sans-serif" font-size="9" fill="#f87171" text-anchor="middle">Purge → Fuel/Flare</text>
-  <text x="890" y="-8" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">(remove inerts: N₂, CH₄, Ar)</text>
+  <line x1="920" y1="38" x2="920" y2="-5" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <text x="920" y="-14" font-family="'Segoe UI', sans-serif" font-size="9" fill="#f87171" text-anchor="middle">Purge → Fuel/Flare</text>
+  <text x="920" y="-4" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">(inerts: N₂, CH₄, Ar)</text>
 
   <!-- ═══════ DOWN TO DISTILLATION ═══════ -->
   <line x1="995" y1="155" x2="995" y2="240" stroke="#c084fc" stroke-width="2.5" marker-end="url(#pfArrowPurple)"/>
