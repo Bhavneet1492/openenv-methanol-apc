@@ -23,7 +23,7 @@
   <!-- Purge (up from recycle) -->
   <line x1="920" y1="60" x2="920" y2="22" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3"/>
   <polygon points="914,26 920,14 926,26" fill="#ef4444"/>
-  <text x="950" y="22" font-family="sans-serif" font-size="9" fill="#f87171">Purge</text>
+  <text x="940" y="14" font-family="sans-serif" font-size="9" fill="#f87171">Purge</text>
 
   <!-- === ROW 1: Main process (y=110 center) === -->
 
