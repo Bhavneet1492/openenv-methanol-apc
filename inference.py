@@ -33,14 +33,9 @@ if HF_TOKEN is None:
 client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
 
 TASKS = [
-    {"name": "startup", "max_steps": 25},
-    {"name": "optimization", "max_steps": 40},
-    {"name": "disturbance_rejection", "max_steps": 40},
-    {"name": "emergency_recovery", "max_steps": 30},
-    {"name": "cost_minimization", "max_steps": 30},
-    {"name": "day_night_cycle", "max_steps": 40},
-    {"name": "aged_catalyst", "max_steps": 30},
-    {"name": "multi_disturbance", "max_steps": 40},
+    {"name": "startup", "max_steps": 20},
+    {"name": "optimization", "max_steps": 30},
+    {"name": "disturbance_rejection", "max_steps": 30},
 ]
 BENCHMARK = "methanol_apc"
 
@@ -177,7 +172,7 @@ def adaptive_fallback(obs):
 def get_llm_action(obs_text, history, task_name="optimization"):
     h = "\n".join(history[-3:]) if history else "None"
     try:
-        r = client.chat.completions.create(model=MODEL_NAME, messages=[{"role": "system", "content": get_system_prompt(task_name)}, {"role": "user", "content": f"Sensors:\n{obs_text}\n\nHistory:\n{h}\n\nAction JSON:"}], temperature=0.3, max_tokens=200, stream=False)
+        r = client.chat.completions.create(model=MODEL_NAME, messages=[{"role": "system", "content": get_system_prompt(task_name)}, {"role": "user", "content": f"Sensors:\n{obs_text}\n\nHistory:\n{h}\n\nAction JSON:"}], temperature=0.3, max_tokens=150, stream=False, timeout=10)
         return (r.choices[0].message.content or "{}").strip()
     except Exception as e:
         print(f"[DEBUG] LLM error: {e}", file=sys.stderr, flush=True)
