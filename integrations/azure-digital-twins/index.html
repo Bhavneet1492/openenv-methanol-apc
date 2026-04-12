@@ -1493,22 +1493,8 @@ for training RL agents on your specific plant model.</p>
 <p>The integration is <strong>fully optional</strong>. By default, the environment uses its internal
 physics engine (<code>reactor_sim.py</code>). When you connect an Azure Digital Twin, it replaces
 or supplements the internal simulator with your company's plant-specific model.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>┌──────────────────────────────────────────────────────────────┐
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>│                    DEFAULT MODE                               │
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│                                                               │
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│  Agent  →  OpenEnv API  →  internal reactor_sim.py  →  Obs   │
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│                                                               │
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>└──────────────────────────────────────────────────────────────┘
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>┌──────────────────────────────────────────────────────────────┐
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│                 AZURE DT MODE (optional)                      │
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│                                                               │
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│  Agent  →  OpenEnv API  →  Azure Digital Twin  →  Obs         │
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│                              ↕                                │
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│                         Your Plant Model                      │
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│                    (DTDL, custom physics)                      │
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>└──────────────────────────────────────────────────────────────┘
-</code></pre></div>
+<p><img src="../assets/integration-fallback.svg" width="100%" alt="Fallback mode: Agent → OpenEnv → internal reactor_sim.py"></p>
+<p><img src="../assets/integration-azure-dt.svg" width="100%" alt="Azure DT mode: Agent → OpenEnv → Azure Digital Twin → Your Plant Model"></p>
 <h2 id="prerequisites">Prerequisites</h2>
 <p>You need these <strong>only</strong> if you choose to use Azure Digital Twins:</p>
 <table>
@@ -1540,95 +1526,95 @@ or supplements the internal simulator with your company's plant-specific model.<
 <p>The default internal simulation mode requires <strong>none of these</strong>.</p>
 <h2 id="step-by-step-setup">Step-by-Step Setup</h2>
 <h3 id="1-install-azure-packages">1. Install Azure packages</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pip<span class="w"> </span>install<span class="w"> </span>azure-digitaltwins-core<span class="w"> </span>azure-identity
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>azure-digitaltwins-core<span class="w"> </span>azure-identity
 </code></pre></div>
 <h3 id="2-create-an-azure-digital-twins-instance">2. Create an Azure Digital Twins instance</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Create resource group</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>az<span class="w"> </span>group<span class="w"> </span>create<span class="w"> </span>--name<span class="w"> </span>methanol-apc-rg<span class="w"> </span>--location<span class="w"> </span>eastus
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Create Azure Digital Twins instance</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>az<span class="w"> </span>dt<span class="w"> </span>create<span class="w"> </span>--dt-name<span class="w"> </span>methanol-apc-adt<span class="w"> </span>--resource-group<span class="w"> </span>methanol-apc-rg
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># Get the instance URL</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>az<span class="w"> </span>dt<span class="w"> </span>show<span class="w"> </span>--dt-name<span class="w"> </span>methanol-apc-adt<span class="w"> </span>--query<span class="w"> </span><span class="s2">&quot;hostName&quot;</span><span class="w"> </span>-o<span class="w"> </span>tsv
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="c1"># Output: methanol-apc-adt.api.eus.digitaltwins.azure.net</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Create resource group</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>az<span class="w"> </span>group<span class="w"> </span>create<span class="w"> </span>--name<span class="w"> </span>methanol-apc-rg<span class="w"> </span>--location<span class="w"> </span>eastus
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Create Azure Digital Twins instance</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>az<span class="w"> </span>dt<span class="w"> </span>create<span class="w"> </span>--dt-name<span class="w"> </span>methanol-apc-adt<span class="w"> </span>--resource-group<span class="w"> </span>methanol-apc-rg
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Get the instance URL</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>az<span class="w"> </span>dt<span class="w"> </span>show<span class="w"> </span>--dt-name<span class="w"> </span>methanol-apc-adt<span class="w"> </span>--query<span class="w"> </span><span class="s2">&quot;hostName&quot;</span><span class="w"> </span>-o<span class="w"> </span>tsv
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="c1"># Output: methanol-apc-adt.api.eus.digitaltwins.azure.net</span>
 </code></pre></div>
 <h3 id="3-assign-yourself-as-owner">3. Assign yourself as owner</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Get your Azure AD user object ID</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nv">USER_ID</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>ad<span class="w"> </span>signed-in-user<span class="w"> </span>show<span class="w"> </span>--query<span class="w"> </span>id<span class="w"> </span>-o<span class="w"> </span>tsv<span class="k">)</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Assign &quot;Azure Digital Twins Data Owner&quot; role</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>az<span class="w"> </span>dt<span class="w"> </span>role-assignment<span class="w"> </span>create<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span>--dt-name<span class="w"> </span>methanol-apc-adt<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span>--assignee<span class="w"> </span><span class="nv">$USER_ID</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">    </span>--role<span class="w"> </span><span class="s2">&quot;Azure Digital Twins Data Owner&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Get your Azure AD user object ID</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nv">USER_ID</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>ad<span class="w"> </span>signed-in-user<span class="w"> </span>show<span class="w"> </span>--query<span class="w"> </span>id<span class="w"> </span>-o<span class="w"> </span>tsv<span class="k">)</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Assign &quot;Azure Digital Twins Data Owner&quot; role</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>az<span class="w"> </span>dt<span class="w"> </span>role-assignment<span class="w"> </span>create<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span>--dt-name<span class="w"> </span>methanol-apc-adt<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">    </span>--assignee<span class="w"> </span><span class="nv">$USER_ID</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">    </span>--role<span class="w"> </span><span class="s2">&quot;Azure Digital Twins Data Owner&quot;</span>
 </code></pre></div>
 <h3 id="4-upload-the-dtdl-model">4. Upload the DTDL model</h3>
 <p>The environment provides a ready-made DTDL model definition:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">methanol_apc_env.cheme_bridge</span><span class="w"> </span><span class="kn">import</span> <span class="n">AzureDigitalTwinBridge</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="c1"># Export the DTDL model JSON</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">bridge</span> <span class="o">=</span> <span class="n">AzureDigitalTwinBridge</span><span class="p">()</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">dtdl_model</span> <span class="o">=</span> <span class="n">bridge</span><span class="o">.</span><span class="n">export_dtdl_model</span><span class="p">()</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;methanol_reactor.json&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">([</span><span class="n">dtdl_model</span><span class="p">],</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">methanol_apc_env.cheme_bridge</span><span class="w"> </span><span class="kn">import</span> <span class="n">AzureDigitalTwinBridge</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># Export the DTDL model JSON</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">bridge</span> <span class="o">=</span> <span class="n">AzureDigitalTwinBridge</span><span class="p">()</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="n">dtdl_model</span> <span class="o">=</span> <span class="n">bridge</span><span class="o">.</span><span class="n">export_dtdl_model</span><span class="p">()</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;methanol_reactor.json&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">([</span><span class="n">dtdl_model</span><span class="p">],</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 </code></pre></div>
 <p>Upload it:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>az<span class="w"> </span>dt<span class="w"> </span>model<span class="w"> </span>create<span class="w"> </span>--dt-name<span class="w"> </span>methanol-apc-adt<span class="w"> </span>--models<span class="w"> </span>methanol_reactor.json
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>az<span class="w"> </span>dt<span class="w"> </span>model<span class="w"> </span>create<span class="w"> </span>--dt-name<span class="w"> </span>methanol-apc-adt<span class="w"> </span>--models<span class="w"> </span>methanol_reactor.json
 </code></pre></div></p>
 <h3 id="5-create-a-twin-instance">5. Create a twin instance</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>az<span class="w"> </span>dt<span class="w"> </span>twin<span class="w"> </span>create<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">    </span>--dt-name<span class="w"> </span>methanol-apc-adt<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span>--dtmi<span class="w"> </span><span class="s2">&quot;dtmi:openenv:MethanolReactor;1&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span>--twin-id<span class="w"> </span><span class="s2">&quot;methanol-reactor-001&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">    </span>--properties<span class="w"> </span><span class="s1">&#39;{</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="s1">        &quot;temperature&quot;: 250.0,</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="s1">        &quot;pressure&quot;: 80.0,</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="s1">        &quot;catalystHealth&quot;: 1.0,</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="s1">        &quot;feedRateH2&quot;: 5.0,</span>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="s1">        &quot;feedRateCO&quot;: 2.5,</span>
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="s1">        &quot;coolingWaterFlow&quot;: 40.0,</span>
-<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="s1">        &quot;coolingWaterTemp&quot;: 25.0,</span>
-<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="s1">        &quot;compressorPower&quot;: 65.0,</span>
-<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="s1">        &quot;emergencyShutdown&quot;: false</span>
-<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="s1">    }&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>az<span class="w"> </span>dt<span class="w"> </span>twin<span class="w"> </span>create<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span>--dt-name<span class="w"> </span>methanol-apc-adt<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span>--dtmi<span class="w"> </span><span class="s2">&quot;dtmi:openenv:MethanolReactor;1&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span>--twin-id<span class="w"> </span><span class="s2">&quot;methanol-reactor-001&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span>--properties<span class="w"> </span><span class="s1">&#39;{</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="s1">        &quot;temperature&quot;: 250.0,</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="s1">        &quot;pressure&quot;: 80.0,</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="s1">        &quot;catalystHealth&quot;: 1.0,</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="s1">        &quot;feedRateH2&quot;: 5.0,</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="s1">        &quot;feedRateCO&quot;: 2.5,</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="s1">        &quot;coolingWaterFlow&quot;: 40.0,</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="s1">        &quot;coolingWaterTemp&quot;: 25.0,</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="s1">        &quot;compressorPower&quot;: 65.0,</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="s1">        &quot;emergencyShutdown&quot;: false</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="s1">    }&#39;</span>
 </code></pre></div>
 <h3 id="6-configure-the-environment">6. Configure the environment</h3>
 <p>Add to your <code>.env</code> file (never commit this):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>AZURE_DIGITAL_TWINS_URL=https://methanol-apc-adt.api.eus.digitaltwins.azure.net
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>AZURE_DIGITAL_TWINS_URL=https://methanol-apc-adt.api.eus.digitaltwins.azure.net
 </code></pre></div>
 <h3 id="7-authenticate">7. Authenticate</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>az<span class="w"> </span>login
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>az<span class="w"> </span>login
 </code></pre></div>
 <p>That's it. <code>DefaultAzureCredential</code> will automatically use your <code>az login</code> session.</p>
 <h3 id="8-use-in-code">8. Use in code</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">methanol_apc_env.cheme_bridge</span><span class="w"> </span><span class="kn">import</span> <span class="n">AzureDigitalTwinBridge</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="c1"># Connect (reads AZURE_DIGITAL_TWINS_URL from environment)</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">adt</span> <span class="o">=</span> <span class="n">AzureDigitalTwinBridge</span><span class="p">()</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="k">if</span> <span class="n">adt</span><span class="o">.</span><span class="n">is_available</span><span class="p">:</span>
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Connected to Azure Digital Twins!&quot;</span><span class="p">)</span>
-<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>
-<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>    <span class="c1"># Read twin state</span>
-<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>    <span class="n">state</span> <span class="o">=</span> <span class="n">adt</span><span class="o">.</span><span class="n">get_twin_state</span><span class="p">(</span><span class="s2">&quot;methanol-reactor-001&quot;</span><span class="p">)</span>
-<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Temperature: </span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;temperature&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">°C&quot;</span><span class="p">)</span>
-<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>
-<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>    <span class="c1"># Push an agent action to the twin</span>
-<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>    <span class="n">adt</span><span class="o">.</span><span class="n">push_action</span><span class="p">(</span><span class="s2">&quot;methanol-reactor-001&quot;</span><span class="p">,</span> <span class="p">{</span>
-<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>        <span class="s2">&quot;feed_rate_h2&quot;</span><span class="p">:</span> <span class="mf">5.5</span><span class="p">,</span>
-<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a>        <span class="s2">&quot;cooling_water_flow&quot;</span><span class="p">:</span> <span class="mf">45.0</span><span class="p">,</span>
-<a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a>    <span class="p">})</span>
-<a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a>
-<a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a>    <span class="c1"># Sync twin state into a ReactorState object</span>
-<a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a>    <span class="kn">from</span><span class="w"> </span><span class="nn">methanol_apc_env.server.reactor_sim</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReactorState</span>
-<a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a>    <span class="n">reactor</span> <span class="o">=</span> <span class="n">ReactorState</span><span class="p">()</span>
-<a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a>    <span class="n">adt</span><span class="o">.</span><span class="n">sync_to_reactor_state</span><span class="p">(</span><span class="s2">&quot;methanol-reactor-001&quot;</span><span class="p">,</span> <span class="n">reactor</span><span class="p">)</span>
-<a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Synced: T=</span><span class="si">{</span><span class="n">reactor</span><span class="o">.</span><span class="n">temperature</span><span class="si">}</span><span class="s2">°C, P=</span><span class="si">{</span><span class="n">reactor</span><span class="o">.</span><span class="n">pressure</span><span class="si">}</span><span class="s2"> bar&quot;</span><span class="p">)</span>
-<a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a><span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-9-25" name="__codelineno-9-25" href="#__codelineno-9-25"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Azure DT not configured — using internal simulator&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">methanol_apc_env.cheme_bridge</span><span class="w"> </span><span class="kn">import</span> <span class="n">AzureDigitalTwinBridge</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="c1"># Connect (reads AZURE_DIGITAL_TWINS_URL from environment)</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="n">adt</span> <span class="o">=</span> <span class="n">AzureDigitalTwinBridge</span><span class="p">()</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="k">if</span> <span class="n">adt</span><span class="o">.</span><span class="n">is_available</span><span class="p">:</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Connected to Azure Digital Twins!&quot;</span><span class="p">)</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>    <span class="c1"># Read twin state</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>    <span class="n">state</span> <span class="o">=</span> <span class="n">adt</span><span class="o">.</span><span class="n">get_twin_state</span><span class="p">(</span><span class="s2">&quot;methanol-reactor-001&quot;</span><span class="p">)</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Temperature: </span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;temperature&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">°C&quot;</span><span class="p">)</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>    <span class="c1"># Push an agent action to the twin</span>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>    <span class="n">adt</span><span class="o">.</span><span class="n">push_action</span><span class="p">(</span><span class="s2">&quot;methanol-reactor-001&quot;</span><span class="p">,</span> <span class="p">{</span>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>        <span class="s2">&quot;feed_rate_h2&quot;</span><span class="p">:</span> <span class="mf">5.5</span><span class="p">,</span>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>        <span class="s2">&quot;cooling_water_flow&quot;</span><span class="p">:</span> <span class="mf">45.0</span><span class="p">,</span>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>    <span class="p">})</span>
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>
+<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a>    <span class="c1"># Sync twin state into a ReactorState object</span>
+<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a>    <span class="kn">from</span><span class="w"> </span><span class="nn">methanol_apc_env.server.reactor_sim</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReactorState</span>
+<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a>    <span class="n">reactor</span> <span class="o">=</span> <span class="n">ReactorState</span><span class="p">()</span>
+<a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a>    <span class="n">adt</span><span class="o">.</span><span class="n">sync_to_reactor_state</span><span class="p">(</span><span class="s2">&quot;methanol-reactor-001&quot;</span><span class="p">,</span> <span class="n">reactor</span><span class="p">)</span>
+<a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Synced: T=</span><span class="si">{</span><span class="n">reactor</span><span class="o">.</span><span class="n">temperature</span><span class="si">}</span><span class="s2">°C, P=</span><span class="si">{</span><span class="n">reactor</span><span class="o">.</span><span class="n">pressure</span><span class="si">}</span><span class="s2"> bar&quot;</span><span class="p">)</span>
+<a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a><span class="k">else</span><span class="p">:</span>
+<a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Azure DT not configured — using internal simulator&quot;</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="authentication-methods">Authentication Methods</h2>
 <p><code>DefaultAzureCredential</code> tries these in order — use whichever fits your setup:</p>
@@ -1758,20 +1744,8 @@ or supplements the internal simulator with your company's plant-specific model.<
 </table>
 <p>Model ID: <code>dtmi:openenv:MethanolReactor;1</code></p>
 <h2 id="architecture">Architecture</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>┌─────────────┐     ┌──────────────────┐     ┌─────────────────────┐
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>│  RL Agent   │────→│  OpenEnv Server  │────→│  Azure Digital Twin │
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>│  (LLM/PPO)  │     │  (FastAPI)       │     │  (your plant model) │
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>│             │←────│                  │←────│                     │
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>│  13 actions │     │  AzureDTBridge   │     │  DTDL properties    │
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>│  30+ obs    │     │  (cheme_bridge)  │     │  Simulation engine  │
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>└─────────────┘     └──────────────────┘     └─────────────────────┘
-<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>
-<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>Fallback (no Azure):
-<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>┌─────────────┐     ┌──────────────────┐     ┌─────────────────────┐
-<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>│  RL Agent   │────→│  OpenEnv Server  │────→│  reactor_sim.py     │
-<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>│             │←────│                  │←────│  (internal physics) │
-<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>└─────────────┘     └──────────────────┘     └─────────────────────┘
-</code></pre></div>
+<p><img src="../assets/integration-azure-dt.svg" width="100%" alt="Azure DT architecture: Agent → OpenEnv Server → Azure Digital Twin"></p>
+<p><img src="../assets/integration-fallback.svg" width="100%" alt="Fallback: Agent → OpenEnv Server → internal reactor_sim.py"></p>
 <h2 id="cost-estimate">Cost Estimate</h2>
 <table>
 <thead>
