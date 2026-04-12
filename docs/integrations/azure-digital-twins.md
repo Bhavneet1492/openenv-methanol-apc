@@ -185,9 +185,7 @@ Model ID: `dtmi:openenv:MethanolReactor;1`
 
 ## Architecture
 
-<img src="../integration-azure-dt.svg" width="100%" alt="Azure DT architecture">
-
-<img src="../integration-fallback.svg" width="100%" alt="Fallback architecture">
+See the diagrams in the [Overview](#overview) section above.
 
 ## Cost Estimate
 
