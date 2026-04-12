@@ -137,17 +137,17 @@
 
   <!-- ═══════ RECYCLE LOOP (THE NON-LINEAR PART) ═══════ -->
   <!-- Unreacted gas goes UP from separator, curves LEFT back to compressor -->
-  <path d="M 995,68 L 995,48 Q 995,38 975,38 L 625,38 Q 605,38 605,48 L 605,75"
+  <path d="M 995,68 L 995,60 Q 995,52 975,52 L 625,52 Q 605,52 605,60 L 605,75"
         fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="8,4" class="pf-flow"/>
   <polygon points="600,73 605,85 610,73" fill="#f59e0b"/>
   <!-- Recycle label -->
-  <rect x="730" y="26" width="170" height="22" rx="9" fill="#451a03" stroke="#f59e0b" stroke-width="1"/>
-  <text x="815" y="41" font-family="'Segoe UI', sans-serif" font-size="10" fill="#fbbf24" text-anchor="middle" font-weight="600">♻ Recycle Loop  RR = 3.5</text>
+  <rect x="730" y="40" width="170" height="22" rx="9" fill="#451a03" stroke="#f59e0b" stroke-width="1"/>
+  <text x="815" y="55" font-family="'Segoe UI', sans-serif" font-size="10" fill="#fbbf24" text-anchor="middle" font-weight="600">♻ Recycle Loop  RR = 3.5</text>
 
   <!-- ═══════ PURGE GAS BRANCH ═══════ -->
-  <line x1="920" y1="38" x2="920" y2="-5" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3"/>
-  <text x="920" y="-14" font-family="'Segoe UI', sans-serif" font-size="9" fill="#f87171" text-anchor="middle">Purge → Fuel/Flare</text>
-  <text x="920" y="-4" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">(inerts: N₂, CH₄, Ar)</text>
+  <line x1="920" y1="52" x2="920" y2="10" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <text x="920" y="2" font-family="'Segoe UI', sans-serif" font-size="9" fill="#f87171" text-anchor="middle">Purge → Fuel/Flare</text>
+  <text x="920" y="12" font-family="'Segoe UI', sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">(inerts: N₂, CH₄, Ar)</text>
 
   <!-- ═══════ DOWN TO DISTILLATION ═══════ -->
   <line x1="995" y1="155" x2="995" y2="240" stroke="#c084fc" stroke-width="2.5" marker-end="url(#pfArrowPurple)"/>
