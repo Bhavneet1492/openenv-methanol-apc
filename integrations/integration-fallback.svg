@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 230" width="820" height="230">
+  <defs>
+    <linearGradient id="fbBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#1a1a2e"/>
+    </linearGradient>
+    <style>
+      @keyframes fbFlow { to { stroke-dashoffset: -16; } }
+      .fb-flow { stroke-dasharray: 8 4; animation: fbFlow 1.2s linear infinite; }
+    </style>
+  </defs>
+  <rect width="820" height="230" fill="url(#fbBg)" rx="12"/>
+  <text x="410" y="26" font-family="'Segoe UI',system-ui,sans-serif" font-size="13" fill="white" text-anchor="middle" font-weight="700" letter-spacing="1">FALLBACK MODE — NO AZURE CONFIGURED</text>
+  <text x="410" y="44" font-family="'Segoe UI',sans-serif" font-size="10" fill="#94a3b8" text-anchor="middle">Internal physics engine runs — zero external dependencies</text>
+
+  <!-- Agent -->
+  <rect x="30" y="65" width="150" height="80" rx="10" fill="#1e293b" stroke="#3b82f6" stroke-width="2"/>
+  <text x="105" y="98" font-family="'Segoe UI',sans-serif" font-size="14" fill="white" text-anchor="middle" font-weight="700">RL Agent</text>
+  <text x="105" y="118" font-family="'Segoe UI',sans-serif" font-size="10" fill="#60a5fa" text-anchor="middle">LLM / Policy Net</text>
+
+  <!-- Arrow Agent → Server -->
+  <line x1="185" y1="105" x2="275" y2="105" stroke="#f59e0b" stroke-width="2.5" class="fb-flow"/>
+  <polygon points="272,99 286,105 272,111" fill="#f59e0b"/>
+  <text x="230" y="97" font-family="'Segoe UI',sans-serif" font-size="9" fill="#fbbf24" text-anchor="middle">13 Actions</text>
+
+  <!-- Server -->
+  <rect x="290" y="60" width="180" height="90" rx="10" fill="#1e293b" stroke="#8b5cf6" stroke-width="2"/>
+  <text x="380" y="92" font-family="'Segoe UI',sans-serif" font-size="13" fill="white" text-anchor="middle" font-weight="700">OpenEnv Server</text>
+  <text x="380" y="110" font-family="'Segoe UI',sans-serif" font-size="10" fill="#a78bfa" text-anchor="middle">FastAPI + WebSocket</text>
+  <text x="380" y="128" font-family="'Segoe UI',sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">adt.is_available = False</text>
+
+  <!-- Arrow Server → Internal Sim -->
+  <line x1="475" y1="105" x2="555" y2="105" stroke="#10b981" stroke-width="2.5" class="fb-flow"/>
+  <polygon points="552,99 566,105 552,111" fill="#10b981"/>
+
+  <!-- Internal Sim -->
+  <rect x="570" y="55" width="220" height="100" rx="10" fill="#1e293b" stroke="#10b981" stroke-width="2"/>
+  <text x="680" y="85" font-family="'Segoe UI',sans-serif" font-size="13" fill="white" text-anchor="middle" font-weight="700">reactor_sim.py</text>
+  <text x="680" y="105" font-family="'Segoe UI',sans-serif" font-size="10" fill="#34d399" text-anchor="middle">Internal Physics Engine</text>
+  <text x="680" y="122" font-family="'Segoe UI',sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">RK4 · SRK · LHHW · 3 reactions</text>
+  <text x="680" y="138" font-family="'Segoe UI',sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">No dependencies needed</text>
+
+  <!-- Return arrow -->
+  <path d="M 680,160 L 680,180 Q 680,195 665,195 L 120,195 Q 105,195 105,180 L 105,150" fill="none" stroke="#60a5fa" stroke-width="2" class="fb-flow"/>
+  <polygon points="99,153 105,140 111,153" fill="#60a5fa"/>
+  <rect x="330" y="185" width="140" height="20" rx="6" fill="#1e293b" stroke="#60a5fa" stroke-width="0.5"/>
+  <text x="400" y="199" font-family="'Segoe UI',sans-serif" font-size="10" fill="#60a5fa" text-anchor="middle">30+ Observations</text>
+
+  <!-- Badge -->
+  <rect x="30" y="208" width="100" height="16" rx="4" fill="#064e3b" stroke="#10b981" stroke-width="0.5"/>
+  <text x="80" y="220" font-family="'Segoe UI',sans-serif" font-size="9" fill="#34d399" text-anchor="middle">Default mode</text>
+  <text x="200" y="220" font-family="'Segoe UI',sans-serif" font-size="9" fill="#94a3b8">Works out of the box — pip install only</text>
+</svg>

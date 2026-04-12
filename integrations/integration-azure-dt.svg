@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 280" width="820" height="280">
+  <defs>
+    <linearGradient id="adBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#1a1a2e"/>
+    </linearGradient>
+    <style>
+      @keyframes adFlow { to { stroke-dashoffset: -16; } }
+      .ad-flow { stroke-dasharray: 8 4; animation: adFlow 1.2s linear infinite; }
+    </style>
+  </defs>
+  <rect width="820" height="280" fill="url(#adBg)" rx="12"/>
+  <text x="410" y="26" font-family="'Segoe UI',system-ui,sans-serif" font-size="13" fill="white" text-anchor="middle" font-weight="700" letter-spacing="1">AZURE DIGITAL TWINS MODE</text>
+  <text x="410" y="44" font-family="'Segoe UI',sans-serif" font-size="10" fill="#94a3b8" text-anchor="middle">Your company's plant model replaces internal simulator</text>
+
+  <!-- Agent -->
+  <rect x="30" y="70" width="150" height="100" rx="10" fill="#1e293b" stroke="#3b82f6" stroke-width="2"/>
+  <text x="105" y="100" font-family="'Segoe UI',sans-serif" font-size="14" fill="white" text-anchor="middle" font-weight="700">RL Agent</text>
+  <text x="105" y="118" font-family="'Segoe UI',sans-serif" font-size="10" fill="#60a5fa" text-anchor="middle">LLM / PPO / SAC</text>
+  <text x="105" y="136" font-family="'Segoe UI',sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">13 actions</text>
+  <text x="105" y="150" font-family="'Segoe UI',sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">30+ observations</text>
+
+  <!-- Arrow Agent → Server -->
+  <line x1="185" y1="108" x2="275" y2="108" stroke="#f59e0b" stroke-width="2.5" class="ad-flow"/>
+  <polygon points="272,102 286,108 272,114" fill="#f59e0b"/>
+  <text x="230" y="100" font-family="'Segoe UI',sans-serif" font-size="9" fill="#fbbf24" text-anchor="middle">Actions</text>
+
+  <!-- Server -->
+  <rect x="290" y="60" width="180" height="120" rx="10" fill="#1e293b" stroke="#8b5cf6" stroke-width="2"/>
+  <text x="380" y="92" font-family="'Segoe UI',sans-serif" font-size="13" fill="white" text-anchor="middle" font-weight="700">OpenEnv Server</text>
+  <text x="380" y="110" font-family="'Segoe UI',sans-serif" font-size="10" fill="#a78bfa" text-anchor="middle">FastAPI + WebSocket</text>
+  <rect x="305" y="120" width="150" height="22" rx="5" fill="#1e1b4b" stroke="#8b5cf6" stroke-width="0.5"/>
+  <text x="380" y="135" font-family="'Segoe UI',sans-serif" font-size="9" fill="#c084fc" text-anchor="middle">AzureDigitalTwinIntegration</text>
+  <text x="380" y="155" font-family="'Segoe UI',sans-serif" font-size="8" fill="#94a3b8" text-anchor="middle">DefaultAzureCredential</text>
+
+  <!-- Arrow Server → Azure -->
+  <line x1="475" y1="108" x2="555" y2="108" stroke="#0284c7" stroke-width="2.5" class="ad-flow"/>
+  <polygon points="552,102 566,108 552,114" fill="#0284c7"/>
+  <text x="515" y="100" font-family="'Segoe UI',sans-serif" font-size="9" fill="#38bdf8" text-anchor="middle">DTDL API</text>
+
+  <!-- Azure DT -->
+  <rect x="570" y="55" width="220" height="130" rx="10" fill="#1e293b" stroke="#0284c7" stroke-width="2"/>
+  <!-- Azure logo hint -->
+  <rect x="585" y="68" width="30" height="20" rx="4" fill="#0284c7" opacity="0.3"/>
+  <text x="600" y="82" font-family="'Segoe UI',sans-serif" font-size="9" fill="#38bdf8" text-anchor="middle">Azure</text>
+  <text x="680" y="85" font-family="'Segoe UI',sans-serif" font-size="13" fill="white" text-anchor="middle" font-weight="700">Digital Twin</text>
+  <text x="680" y="105" font-family="'Segoe UI',sans-serif" font-size="10" fill="#38bdf8" text-anchor="middle">Your Plant Model</text>
+  <g font-family="'Segoe UI',sans-serif" font-size="9" fill="#94a3b8">
+    <text x="680" y="125" text-anchor="middle">DTDL v2 properties</text>
+    <text x="680" y="140" text-anchor="middle">Custom physics engine</text>
+    <text x="680" y="155" text-anchor="middle">Real plant parameters</text>
+  </g>
+  <rect x="585" y="160" width="80" height="16" rx="4" fill="#064e3b" stroke="#0284c7" stroke-width="0.5"/>
+  <text x="625" y="172" font-family="'Segoe UI',sans-serif" font-size="8" fill="#38bdf8" text-anchor="middle">Enterprise</text>
+
+  <!-- Return arrow -->
+  <path d="M 680,190 L 680,215 Q 680,230 665,230 L 120,230 Q 105,230 105,215 L 105,175" fill="none" stroke="#34d399" stroke-width="2" class="ad-flow"/>
+  <polygon points="99,178 105,165 111,178" fill="#34d399"/>
+  <rect x="330" y="220" width="140" height="20" rx="6" fill="#1e293b" stroke="#34d399" stroke-width="0.5"/>
+  <text x="400" y="234" font-family="'Segoe UI',sans-serif" font-size="10" fill="#34d399" text-anchor="middle">30+ Observations</text>
+
+  <!-- Badge -->
+  <rect x="30" y="255" width="100" height="18" rx="4" fill="#0284c7" opacity="0.2" stroke="#0284c7" stroke-width="0.5"/>
+  <text x="80" y="268" font-family="'Segoe UI',sans-serif" font-size="9" fill="#38bdf8" text-anchor="middle">Optional</text>
+  <text x="200" y="268" font-family="'Segoe UI',sans-serif" font-size="9" fill="#94a3b8">Requires: az login + AZURE_DIGITAL_TWINS_URL in .env</text>
+</svg>

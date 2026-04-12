@@ -56,4 +56,12 @@
          <loc>https://bhavneet1492.github.io/openenv-methanol-apc/integrations/dwsim/</loc>
          <lastmod>2026-04-12</lastmod>
     </url>
+    <url>
+         <loc>https://bhavneet1492.github.io/openenv-methanol-apc/integrations/opcua/</loc>
+         <lastmod>2026-04-12</lastmod>
+    </url>
+    <url>
+         <loc>https://bhavneet1492.github.io/openenv-methanol-apc/integrations/redis-state-store/</loc>
+         <lastmod>2026-04-12</lastmod>
+    </url>
 </urlset>

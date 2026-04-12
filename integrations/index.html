@@ -823,6 +823,62 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="opcua/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OPC-UA Bridge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="redis-state-store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Redis State Store
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1277,7 +1333,7 @@
 </code></pre></div>
 <hr />
 <h2 id="how-integrations-work">How Integrations Work</h2>
-<p><img src="../assets/integration-default.svg" width="100%" alt="Default mode: Agent → OpenEnv API → internal reactor_sim.py → Observations"></p>
+<p><img src="integration-default.svg" width="100%" alt="Default mode: Agent → OpenEnv API → internal reactor_sim.py → Observations"></p>
 <p>Every integration follows the <strong>same pattern</strong> — try the external tool, fall back to internal model if unavailable:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">integration</span> <span class="o">=</span> <span class="n">DWSIMIntegration</span><span class="p">()</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
@@ -1334,6 +1390,20 @@
 <td>Internal <code>reactor_sim.py</code></td>
 <td><code>pip install azure-digitaltwins-core azure-identity</code> + <code>az login</code></td>
 </tr>
+<tr>
+<td><a href="opcua/"><code>OPCUABridge</code></a></td>
+<td>OPC-UA (DCS/SCADA)</td>
+<td>Bi-directional connection to real plant DCS — server + client mode, ISA-95 tags</td>
+<td>No plant connection</td>
+<td><code>pip install asyncua</code></td>
+</tr>
+<tr>
+<td><a href="redis-state-store/"><code>StateStore</code></a></td>
+<td><a href="https://redis.io/">Redis</a></td>
+<td>Shared state for multi-agent coordination, energy price caching, atomic counters</td>
+<td>Thread-safe in-memory <code>dict</code></td>
+<td><code>pip install redis</code></td>
+</tr>
 </tbody>
 </table>
 <hr />
@@ -1365,6 +1435,14 @@
 <tr>
 <td><strong>Enterprise deployment</strong></td>
 <td>Azure DT — replace internal sim with your company's own plant model</td>
+</tr>
+<tr>
+<td><strong>Connecting to real plant</strong></td>
+<td>OPC-UA — shadow mode first, then pilot, then production</td>
+</tr>
+<tr>
+<td><strong>Multi-agent coordination</strong></td>
+<td>Redis StateStore — shared state, price caching, violation counters</td>
 </tr>
 <tr>
 <td><strong>Academic paper</strong></td>

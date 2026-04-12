@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://bhavneet1492.github.io/openenv-methanol-apc/integrations/azure-digital-twins/">
+        <link rel="canonical" href="https://bhavneet1492.github.io/openenv-methanol-apc/integrations/redis-state-store/">
       
       
-        <link rel="prev" href="../chemsep/">
+        <link rel="prev" href="../opcua/">
       
       
-        <link rel="next" href="../opcua/">
+        <link rel="next" href="../../api/models/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Azure Digital Twins - Methanol APC Environment</title>
+        <title>Redis State Store - Methanol APC Environment</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#azure-digital-twins-integration-guide" class="md-skip">
+        <a href="#redis-state-store" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Azure Digital Twins
+              Redis State Store
             
           </span>
         </div>
@@ -680,37 +680,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Azure Digital Twins
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../azure-digital-twins/" class="md-nav__link">
         
   
   
@@ -726,208 +699,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Overview
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Prerequisites
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#step-by-step-setup" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Step-by-Step Setup
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Step-by-Step Setup">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-install-azure-packages" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Install Azure packages
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-create-an-azure-digital-twins-instance" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Create an Azure Digital Twins instance
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-assign-yourself-as-owner" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Assign yourself as owner
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-upload-the-dtdl-model" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Upload the DTDL model
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-create-a-twin-instance" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Create a twin instance
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#6-configure-the-environment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6. Configure the environment
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#7-authenticate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        7. Authenticate
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#8-use-in-code" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        8. Use in code
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#authentication-methods" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Authentication Methods
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#dtdl-model-schema" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        DTDL Model Schema
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#architecture" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Architecture
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cost-estimate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cost Estimate
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Troubleshooting
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -965,10 +736,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../redis-state-store/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Redis State Store
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -984,6 +782,153 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-a-state-store" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why a State Store?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic Operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ttl-time-to-live-cache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TTL (Time-to-Live) Cache
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#batch-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Batch Operations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multi-agent-reactor-state-sharing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multi-Agent Reactor State Sharing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#energy-pricing-cache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Energy Pricing Cache
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#atomic-counters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Atomic Counters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#multi-agent-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multi-Agent Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fallback-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fallback Behavior
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1341,10 +1286,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#setup" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overview
+        Setup
       
     </span>
   </a>
@@ -1352,10 +1297,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
+  <a href="#why-a-state-store" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Prerequisites
+        Why a State Store?
       
     </span>
   </a>
@@ -1363,22 +1308,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-by-step-setup" class="md-nav__link">
+  <a href="#usage" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step-by-Step Setup
+        Usage
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Step-by-Step Setup">
+    <nav class="md-nav" aria-label="Usage">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-install-azure-packages" class="md-nav__link">
+  <a href="#basic-operations" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Install Azure packages
+        Basic Operations
       
     </span>
   </a>
@@ -1386,10 +1331,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-create-an-azure-digital-twins-instance" class="md-nav__link">
+  <a href="#ttl-time-to-live-cache" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Create an Azure Digital Twins instance
+        TTL (Time-to-Live) Cache
       
     </span>
   </a>
@@ -1397,10 +1342,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-assign-yourself-as-owner" class="md-nav__link">
+  <a href="#batch-operations" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Assign yourself as owner
+        Batch Operations
       
     </span>
   </a>
@@ -1408,10 +1353,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#4-upload-the-dtdl-model" class="md-nav__link">
+  <a href="#multi-agent-reactor-state-sharing" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Upload the DTDL model
+        Multi-Agent Reactor State Sharing
       
     </span>
   </a>
@@ -1419,10 +1364,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#5-create-a-twin-instance" class="md-nav__link">
+  <a href="#energy-pricing-cache" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5. Create a twin instance
+        Energy Pricing Cache
       
     </span>
   </a>
@@ -1430,32 +1375,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#6-configure-the-environment" class="md-nav__link">
+  <a href="#atomic-counters" class="md-nav__link">
     <span class="md-ellipsis">
       
-        6. Configure the environment
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#7-authenticate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        7. Authenticate
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#8-use-in-code" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        8. Use in code
+        Atomic Counters
       
     </span>
   </a>
@@ -1468,10 +1391,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#authentication-methods" class="md-nav__link">
+  <a href="#multi-agent-example" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Authentication Methods
+        Multi-Agent Example
       
     </span>
   </a>
@@ -1479,43 +1402,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#dtdl-model-schema" class="md-nav__link">
+  <a href="#fallback-behavior" class="md-nav__link">
     <span class="md-ellipsis">
       
-        DTDL Model Schema
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#architecture" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Architecture
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cost-estimate" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cost Estimate
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#troubleshooting" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Troubleshooting
+        Fallback Behavior
       
     </span>
   </a>
@@ -1542,318 +1432,191 @@
   
 
 
-<h1 id="azure-digital-twins-integration-guide">Azure Digital Twins Integration Guide</h1>
-<p>Connect your existing Azure Digital Twin instance to the Methanol APC Environment
-for training RL agents on your specific plant model.</p>
-<h2 id="overview">Overview</h2>
-<p>The integration is <strong>fully optional</strong>. By default, the environment uses its internal
-physics engine (<code>reactor_sim.py</code>). When you connect an Azure Digital Twin, it replaces
-or supplements the internal simulator with your company's plant-specific model.</p>
-<p><img src="integration-fallback.svg" width="100%" alt="Fallback mode"></p>
-<p><img src="integration-azure-dt.svg" width="100%" alt="Azure DT mode"></p>
-<h2 id="prerequisites">Prerequisites</h2>
-<p>You need these <strong>only</strong> if you choose to use Azure Digital Twins:</p>
+<h1 id="redis-state-store">Redis State Store</h1>
+<p>Shared state store for multi-agent coordination and caching, backed by <a href="https://redis.io/">Redis</a> with an automatic in-memory fallback.</p>
+<h2 id="setup">Setup</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>redis
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># Start Redis (Docker)</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>redis<span class="w"> </span>-p<span class="w"> </span><span class="m">6379</span>:6379<span class="w"> </span>redis:7-alpine
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c1"># Or set connection URL</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="nb">export</span><span class="w"> </span><span class="nv">REDIS_URL</span><span class="o">=</span>redis://localhost:6379/0
+</code></pre></div>
+<p>No Redis? No problem — the store automatically uses a thread-safe in-memory dict with the same API.</p>
+<h2 id="why-a-state-store">Why a State Store?</h2>
+<p>In a multi-agent setup, agents need to share information:</p>
 <table>
 <thead>
 <tr>
-<th>Requirement</th>
-<th>Purpose</th>
+<th>Problem</th>
+<th>Without StateStore</th>
+<th>With StateStore</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Azure subscription</td>
-<td>Hosts the Digital Twin instance</td>
+<td>Agent A changes steam flow → Agent B needs to know</td>
+<td>Agents can't communicate</td>
+<td>Agent A writes, Agent B reads from shared store</td>
 </tr>
 <tr>
-<td>Azure Digital Twins instance</td>
-<td>Your plant model lives here</td>
+<td>MCP tool returns energy prices → all 4 agents need it</td>
+<td>Each agent calls MCP separately (4× latency)</td>
+<td>One call → cache → all agents read from cache</td>
 </tr>
 <tr>
-<td>Azure CLI (<code>az</code>)</td>
-<td>Authentication via <code>az login</code></td>
+<td>Count constraint violations across episode</td>
+<td>Each agent tracks locally</td>
+<td>Atomic <code>increment()</code> on shared counter</td>
 </tr>
 <tr>
-<td>Python packages</td>
-<td><code>azure-digitaltwins-core</code>, <code>azure-identity</code></td>
+<td>Track global reactor state</td>
+<td>Agents only see their local view</td>
+<td><code>publish_state()</code> makes full state available</td>
 </tr>
 </tbody>
 </table>
-<p>The default internal simulation mode requires <strong>none of these</strong>.</p>
-<h2 id="step-by-step-setup">Step-by-Step Setup</h2>
-<h3 id="1-install-azure-packages">1. Install Azure packages</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>azure-digitaltwins-core<span class="w"> </span>azure-identity
+<h2 id="usage">Usage</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">methanol_apc_env.integrations</span><span class="w"> </span><span class="kn">import</span> <span class="n">StateStore</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># Auto-detects Redis from REDIS_URL env var</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">store</span> <span class="o">=</span> <span class="n">StateStore</span><span class="p">()</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Backend: </span><span class="si">{</span><span class="n">store</span><span class="o">.</span><span class="n">backend</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># &quot;redis&quot; or &quot;memory&quot;</span>
 </code></pre></div>
-<h3 id="2-create-an-azure-digital-twins-instance">2. Create an Azure Digital Twins instance</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Create resource group</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>az<span class="w"> </span>group<span class="w"> </span>create<span class="w"> </span>--name<span class="w"> </span>methanol-apc-rg<span class="w"> </span>--location<span class="w"> </span>eastus
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Create Azure Digital Twins instance</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>az<span class="w"> </span>dt<span class="w"> </span>create<span class="w"> </span>--dt-name<span class="w"> </span>methanol-apc-adt<span class="w"> </span>--resource-group<span class="w"> </span>methanol-apc-rg
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Get the instance URL</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>az<span class="w"> </span>dt<span class="w"> </span>show<span class="w"> </span>--dt-name<span class="w"> </span>methanol-apc-adt<span class="w"> </span>--query<span class="w"> </span><span class="s2">&quot;hostName&quot;</span><span class="w"> </span>-o<span class="w"> </span>tsv
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="c1"># Output: methanol-apc-adt.api.eus.digitaltwins.azure.net</span>
+<h3 id="basic-operations">Basic Operations</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Store any JSON-serializable value</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">store</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;plant_mode&quot;</span><span class="p">,</span> <span class="s2">&quot;optimization&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">store</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;global_temperature&quot;</span><span class="p">,</span> <span class="mf">252.3</span><span class="p">)</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">store</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;pricing&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;gas&quot;</span><span class="p">:</span> <span class="mf">3.42</span><span class="p">,</span> <span class="s2">&quot;electricity&quot;</span><span class="p">:</span> <span class="mf">0.11</span><span class="p">})</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="c1"># Retrieve</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="n">temp</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;global_temperature&quot;</span><span class="p">)</span>           <span class="c1"># 252.3</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="n">pricing</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pricing&quot;</span><span class="p">)</span>                    <span class="c1"># {&quot;gas&quot;: 3.42, ...}</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="n">missing</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;nonexistent&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>   <span class="c1"># 0.0</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="c1"># Check existence</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="n">store</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s2">&quot;plant_mode&quot;</span><span class="p">)</span>   <span class="c1"># True</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="c1"># Delete</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="n">store</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="s2">&quot;plant_mode&quot;</span><span class="p">)</span>
 </code></pre></div>
-<h3 id="3-assign-yourself-as-owner">3. Assign yourself as owner</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Get your Azure AD user object ID</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nv">USER_ID</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>ad<span class="w"> </span>signed-in-user<span class="w"> </span>show<span class="w"> </span>--query<span class="w"> </span>id<span class="w"> </span>-o<span class="w"> </span>tsv<span class="k">)</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Assign &quot;Azure Digital Twins Data Owner&quot; role</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>az<span class="w"> </span>dt<span class="w"> </span>role-assignment<span class="w"> </span>create<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span>--dt-name<span class="w"> </span>methanol-apc-adt<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">    </span>--assignee<span class="w"> </span><span class="nv">$USER_ID</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">    </span>--role<span class="w"> </span><span class="s2">&quot;Azure Digital Twins Data Owner&quot;</span>
+<h3 id="ttl-time-to-live-cache">TTL (Time-to-Live) Cache</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Cache energy pricing for 5 minutes (300 seconds)</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">store</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;energy_pricing&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;gas&quot;</span><span class="p">:</span> <span class="mf">3.42</span><span class="p">,</span> <span class="s2">&quot;elec&quot;</span><span class="p">:</span> <span class="mf">0.11</span><span class="p">},</span> <span class="n">ttl_seconds</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># After 5 minutes, key auto-expires (Redis only; memory store has no TTL)</span>
 </code></pre></div>
-<h3 id="4-upload-the-dtdl-model">4. Upload the DTDL model</h3>
-<p>The environment provides a ready-made DTDL model definition:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">methanol_apc_env.cheme_bridge</span><span class="w"> </span><span class="kn">import</span> <span class="n">AzureDigitalTwinBridge</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># Export the DTDL model JSON</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">bridge</span> <span class="o">=</span> <span class="n">AzureDigitalTwinBridge</span><span class="p">()</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="n">dtdl_model</span> <span class="o">=</span> <span class="n">bridge</span><span class="o">.</span><span class="n">export_dtdl_model</span><span class="p">()</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;methanol_reactor.json&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">([</span><span class="n">dtdl_model</span><span class="p">],</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<h3 id="batch-operations">Batch Operations</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Write multiple keys atomically (single Redis pipeline)</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">store</span><span class="o">.</span><span class="n">set_many</span><span class="p">({</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="s2">&quot;reactor_temp&quot;</span><span class="p">:</span> <span class="mf">252.3</span><span class="p">,</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="s2">&quot;reactor_pressure&quot;</span><span class="p">:</span> <span class="mf">81.2</span><span class="p">,</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="s2">&quot;catalyst_health&quot;</span><span class="p">:</span> <span class="mf">0.93</span><span class="p">,</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="p">})</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="c1"># Read multiple keys in one call</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="n">data</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">get_many</span><span class="p">([</span><span class="s2">&quot;reactor_temp&quot;</span><span class="p">,</span> <span class="s2">&quot;reactor_pressure&quot;</span><span class="p">,</span> <span class="s2">&quot;catalyst_health&quot;</span><span class="p">])</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="c1"># {&quot;reactor_temp&quot;: 252.3, &quot;reactor_pressure&quot;: 81.2, &quot;catalyst_health&quot;: 0.93}</span>
 </code></pre></div>
-<p>Upload it:
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>az<span class="w"> </span>dt<span class="w"> </span>model<span class="w"> </span>create<span class="w"> </span>--dt-name<span class="w"> </span>methanol-apc-adt<span class="w"> </span>--models<span class="w"> </span>methanol_reactor.json
-</code></pre></div></p>
-<h3 id="5-create-a-twin-instance">5. Create a twin instance</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>az<span class="w"> </span>dt<span class="w"> </span>twin<span class="w"> </span>create<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span>--dt-name<span class="w"> </span>methanol-apc-adt<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span>--dtmi<span class="w"> </span><span class="s2">&quot;dtmi:openenv:MethanolReactor;1&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span>--twin-id<span class="w"> </span><span class="s2">&quot;methanol-reactor-001&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span>--properties<span class="w"> </span><span class="s1">&#39;{</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="s1">        &quot;temperature&quot;: 250.0,</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="s1">        &quot;pressure&quot;: 80.0,</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="s1">        &quot;catalystHealth&quot;: 1.0,</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="s1">        &quot;feedRateH2&quot;: 5.0,</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="s1">        &quot;feedRateCO&quot;: 2.5,</span>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="s1">        &quot;coolingWaterFlow&quot;: 40.0,</span>
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="s1">        &quot;coolingWaterTemp&quot;: 25.0,</span>
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="s1">        &quot;compressorPower&quot;: 65.0,</span>
-<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="s1">        &quot;emergencyShutdown&quot;: false</span>
-<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="s1">    }&#39;</span>
+<h3 id="multi-agent-reactor-state-sharing">Multi-Agent Reactor State Sharing</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># After each env.step(), publish the full state</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">store</span><span class="o">.</span><span class="n">publish_state</span><span class="p">(</span><span class="n">reactor_state</span><span class="p">)</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># Any agent reads the latest state</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">state</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">get_reactor_state</span><span class="p">()</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="c1"># {&quot;temperature&quot;: 252.3, &quot;pressure&quot;: 81.2, &quot;feed_rate_h2&quot;: 5.0, ...}</span>
 </code></pre></div>
-<h3 id="6-configure-the-environment">6. Configure the environment</h3>
-<p>Add to your <code>.env</code> file (never commit this):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>AZURE_DIGITAL_TWINS_URL=https://methanol-apc-adt.api.eus.digitaltwins.azure.net
+<h3 id="energy-pricing-cache">Energy Pricing Cache</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Cache MCP tool result (avoids redundant API calls)</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">store</span><span class="o">.</span><span class="n">cache_energy_pricing</span><span class="p">(</span><span class="n">gas_price</span><span class="o">=</span><span class="mf">3.42</span><span class="p">,</span> <span class="n">elec_price</span><span class="o">=</span><span class="mf">0.11</span><span class="p">)</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># All agents read from cache (5-minute TTL)</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">pricing</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">get_energy_pricing</span><span class="p">()</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="c1"># {&quot;gas_price&quot;: 3.42, &quot;electricity_price&quot;: 0.11}</span>
 </code></pre></div>
-<h3 id="7-authenticate">7. Authenticate</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>az<span class="w"> </span>login
+<h3 id="atomic-counters">Atomic Counters</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Count constraint violations across episode</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">store</span><span class="o">.</span><span class="n">increment</span><span class="p">(</span><span class="s2">&quot;constraint_violations&quot;</span><span class="p">)</span>      <span class="c1"># → 1</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">store</span><span class="o">.</span><span class="n">increment</span><span class="p">(</span><span class="s2">&quot;constraint_violations&quot;</span><span class="p">)</span>      <span class="c1"># → 2</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="n">store</span><span class="o">.</span><span class="n">increment</span><span class="p">(</span><span class="s2">&quot;constraint_violations&quot;</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>   <span class="c1"># → 5</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="c1"># Reset at episode start</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="n">store</span><span class="o">.</span><span class="n">clear_all</span><span class="p">()</span>
 </code></pre></div>
-<p>That's it. <code>DefaultAzureCredential</code> will automatically use your <code>az login</code> session.</p>
-<h3 id="8-use-in-code">8. Use in code</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">methanol_apc_env.cheme_bridge</span><span class="w"> </span><span class="kn">import</span> <span class="n">AzureDigitalTwinBridge</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="c1"># Connect (reads AZURE_DIGITAL_TWINS_URL from environment)</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="n">adt</span> <span class="o">=</span> <span class="n">AzureDigitalTwinBridge</span><span class="p">()</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="k">if</span> <span class="n">adt</span><span class="o">.</span><span class="n">is_available</span><span class="p">:</span>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Connected to Azure Digital Twins!&quot;</span><span class="p">)</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>    <span class="c1"># Read twin state</span>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>    <span class="n">state</span> <span class="o">=</span> <span class="n">adt</span><span class="o">.</span><span class="n">get_twin_state</span><span class="p">(</span><span class="s2">&quot;methanol-reactor-001&quot;</span><span class="p">)</span>
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Temperature: </span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;temperature&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">°C&quot;</span><span class="p">)</span>
-<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>
-<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>    <span class="c1"># Push an agent action to the twin</span>
-<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>    <span class="n">adt</span><span class="o">.</span><span class="n">push_action</span><span class="p">(</span><span class="s2">&quot;methanol-reactor-001&quot;</span><span class="p">,</span> <span class="p">{</span>
-<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>        <span class="s2">&quot;feed_rate_h2&quot;</span><span class="p">:</span> <span class="mf">5.5</span><span class="p">,</span>
-<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>        <span class="s2">&quot;cooling_water_flow&quot;</span><span class="p">:</span> <span class="mf">45.0</span><span class="p">,</span>
-<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>    <span class="p">})</span>
-<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>
-<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a>    <span class="c1"># Sync twin state into a ReactorState object</span>
-<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a>    <span class="kn">from</span><span class="w"> </span><span class="nn">methanol_apc_env.server.reactor_sim</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReactorState</span>
-<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a>    <span class="n">reactor</span> <span class="o">=</span> <span class="n">ReactorState</span><span class="p">()</span>
-<a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a>    <span class="n">adt</span><span class="o">.</span><span class="n">sync_to_reactor_state</span><span class="p">(</span><span class="s2">&quot;methanol-reactor-001&quot;</span><span class="p">,</span> <span class="n">reactor</span><span class="p">)</span>
-<a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Synced: T=</span><span class="si">{</span><span class="n">reactor</span><span class="o">.</span><span class="n">temperature</span><span class="si">}</span><span class="s2">°C, P=</span><span class="si">{</span><span class="n">reactor</span><span class="o">.</span><span class="n">pressure</span><span class="si">}</span><span class="s2"> bar&quot;</span><span class="p">)</span>
-<a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a><span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Azure DT not configured — using internal simulator&quot;</span><span class="p">)</span>
+<h2 id="multi-agent-example">Multi-Agent Example</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">methanol_apc_env.integrations</span><span class="w"> </span><span class="kn">import</span> <span class="n">StateStore</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">methanol_apc_env.agents</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReformerAgent</span><span class="p">,</span> <span class="n">SynthesisAgent</span><span class="p">,</span> <span class="n">SupervisoryAgent</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="n">store</span> <span class="o">=</span> <span class="n">StateStore</span><span class="p">()</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="n">env</span> <span class="o">=</span> <span class="n">MethanolAPCEnvironment</span><span class="p">()</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="n">obs</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="n">task_name</span><span class="o">=</span><span class="s2">&quot;optimization&quot;</span><span class="p">)</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>    <span class="c1"># Publish state so all agents see it</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>    <span class="n">store</span><span class="o">.</span><span class="n">publish_state</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">_sim_state</span><span class="p">)</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>    <span class="c1"># Cache energy pricing (one MCP call, not 4)</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>    <span class="k">if</span> <span class="n">step</span> <span class="o">%</span> <span class="mi">10</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>        <span class="n">store</span><span class="o">.</span><span class="n">cache_energy_pricing</span><span class="p">(</span><span class="n">gas_price</span><span class="o">=</span><span class="mf">3.42</span><span class="p">,</span> <span class="n">elec_price</span><span class="o">=</span><span class="mf">0.11</span><span class="p">)</span>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>    <span class="c1"># Each agent reads shared state</span>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>    <span class="n">pricing</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">get_energy_pricing</span><span class="p">()</span>
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>    <span class="n">global_state</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">get_reactor_state</span><span class="p">()</span>
+<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a>
+<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a>    <span class="c1"># Agents make decisions with full context</span>
+<a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a>    <span class="n">r</span> <span class="o">=</span> <span class="n">ReformerAgent</span><span class="p">()</span><span class="o">.</span><span class="n">rule_based_action</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span>
+<a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a>    <span class="n">s</span> <span class="o">=</span> <span class="n">SynthesisAgent</span><span class="p">()</span><span class="o">.</span><span class="n">rule_based_action</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span>
+<a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a>
+<a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a>    <span class="c1"># Track violations</span>
+<a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a>    <span class="k">if</span> <span class="n">obs</span><span class="o">.</span><span class="n">temperature</span> <span class="o">&gt;</span> <span class="mi">280</span><span class="p">:</span>
+<a id="__codelineno-8-26" name="__codelineno-8-26" href="#__codelineno-8-26"></a>        <span class="n">store</span><span class="o">.</span><span class="n">increment</span><span class="p">(</span><span class="s2">&quot;constraint_violations&quot;</span><span class="p">)</span>
+<a id="__codelineno-8-27" name="__codelineno-8-27" href="#__codelineno-8-27"></a>
+<a id="__codelineno-8-28" name="__codelineno-8-28" href="#__codelineno-8-28"></a>    <span class="n">action</span> <span class="o">=</span> <span class="n">SupervisoryAgent</span><span class="o">.</span><span class="n">merge_actions</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+<a id="__codelineno-8-29" name="__codelineno-8-29" href="#__codelineno-8-29"></a>    <span class="n">obs</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+<a id="__codelineno-8-30" name="__codelineno-8-30" href="#__codelineno-8-30"></a>
+<a id="__codelineno-8-31" name="__codelineno-8-31" href="#__codelineno-8-31"></a><span class="n">violations</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;constraint_violations&quot;</span><span class="p">)</span>
+<a id="__codelineno-8-32" name="__codelineno-8-32" href="#__codelineno-8-32"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total violations: </span><span class="si">{</span><span class="n">violations</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </code></pre></div>
-<h2 id="authentication-methods">Authentication Methods</h2>
-<p><code>DefaultAzureCredential</code> tries these in order — use whichever fits your setup:</p>
+<h2 id="fallback-behavior">Fallback Behavior</h2>
 <table>
 <thead>
 <tr>
-<th>Method</th>
-<th>When to Use</th>
-<th>Setup</th>
+<th>Feature</th>
+<th style="text-align: center;">Redis Mode</th>
+<th style="text-align: center;">Memory Mode</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Azure CLI</strong></td>
-<td>Local development</td>
-<td><code>az login</code></td>
+<td><code>set</code> / <code>get</code></td>
+<td style="text-align: center;">Redis server</td>
+<td style="text-align: center;"><code>dict</code> with <code>threading.Lock</code></td>
 </tr>
 <tr>
-<td><strong>VS Code</strong></td>
-<td>Developing in VS Code</td>
-<td>Sign into Azure extension</td>
+<td>TTL expiry</td>
+<td style="text-align: center;">Automatic</td>
+<td style="text-align: center;">Not supported (keys persist)</td>
 </tr>
 <tr>
-<td><strong>Managed Identity</strong></td>
-<td>Production on Azure</td>
-<td>Enable MI on VM/Container App</td>
+<td>Batch operations</td>
+<td style="text-align: center;">Redis pipeline (atomic)</td>
+<td style="text-align: center;">Sequential dict updates</td>
 </tr>
 <tr>
-<td><strong>Service Principal</strong></td>
-<td>CI/CD pipelines</td>
-<td>Set <code>AZURE_CLIENT_ID</code> + <code>AZURE_TENANT_ID</code> + <code>AZURE_CLIENT_SECRET</code> env vars</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Important:</strong> Never commit credentials. Use <code>.env</code> (in <code>.gitignore</code>) or Azure Key Vault.</p>
-<h2 id="dtdl-model-schema">DTDL Model Schema</h2>
-<p>The <code>MethanolReactor</code> twin model maps directly to the environment's <code>ReactorState</code>:</p>
-<table>
-<thead>
-<tr>
-<th>DTDL Property</th>
-<th>Type</th>
-<th>ReactorState Field</th>
-<th>Unit</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>temperature</code></td>
-<td>double</td>
-<td><code>temperature</code></td>
-<td>°C</td>
+<td><code>increment</code></td>
+<td style="text-align: center;"><code>INCRBY</code> (atomic)</td>
+<td style="text-align: center;">Lock-protected <code>+=</code></td>
 </tr>
 <tr>
-<td><code>pressure</code></td>
-<td>double</td>
-<td><code>pressure</code></td>
-<td>bar</td>
+<td>Persistence</td>
+<td style="text-align: center;">Survives process restart</td>
+<td style="text-align: center;">Lost on restart</td>
 </tr>
 <tr>
-<td><code>catalystHealth</code></td>
-<td>double</td>
-<td><code>catalyst_health</code></td>
-<td>0–1</td>
-</tr>
-<tr>
-<td><code>methanolProduced</code></td>
-<td>double</td>
-<td><code>methanol_produced</code></td>
-<td>kg</td>
-</tr>
-<tr>
-<td><code>reactionRate</code></td>
-<td>double</td>
-<td><code>reaction_rate</code></td>
-<td>mol/s</td>
-</tr>
-<tr>
-<td><code>feedRateH2</code></td>
-<td>double</td>
-<td><code>feed_rate_h2</code></td>
-<td>mol/s</td>
-</tr>
-<tr>
-<td><code>feedRateCO</code></td>
-<td>double</td>
-<td><code>feed_rate_co</code></td>
-<td>mol/s</td>
-</tr>
-<tr>
-<td><code>coolingWaterFlow</code></td>
-<td>double</td>
-<td><code>cooling_water_flow</code></td>
-<td>L/min</td>
-</tr>
-<tr>
-<td><code>coolingWaterTemp</code></td>
-<td>double</td>
-<td><code>cooling_water_temp</code></td>
-<td>°C</td>
-</tr>
-<tr>
-<td><code>compressorPower</code></td>
-<td>double</td>
-<td><code>compressor_power</code></td>
-<td>kW</td>
-</tr>
-<tr>
-<td><code>cumulativeProfit</code></td>
-<td>double</td>
-<td><code>cumulative_profit</code></td>
-<td>$</td>
-</tr>
-<tr>
-<td><code>h2CoRatio</code></td>
-<td>double</td>
-<td><code>h2_co_ratio</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>emergencyShutdown</code></td>
-<td>boolean</td>
-<td><code>emergency_shutdown</code></td>
-<td>—</td>
-</tr>
-</tbody>
-</table>
-<p>Model ID: <code>dtmi:openenv:MethanolReactor;1</code></p>
-<h2 id="architecture">Architecture</h2>
-<p><img src="integration-azure-dt.svg" width="100%" alt="Azure DT architecture"></p>
-<p><img src="integration-fallback.svg" width="100%" alt="Fallback architecture"></p>
-<h2 id="cost-estimate">Cost Estimate</h2>
-<table>
-<thead>
-<tr>
-<th>Resource</th>
-<th style="text-align: center;">Cost (approx.)</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Azure Digital Twins</td>
-<td style="text-align: center;">~$0.025 per 1000 operations</td>
-</tr>
-<tr>
-<td>Training run (10K steps)</td>
-<td style="text-align: center;">~$0.25</td>
-</tr>
-<tr>
-<td>Azure CLI / SDK</td>
-<td style="text-align: center;">Free</td>
-</tr>
-</tbody>
-</table>
-<p>For development/testing, the internal simulator is free and requires no Azure resources.</p>
-<h2 id="troubleshooting">Troubleshooting</h2>
-<table>
-<thead>
-<tr>
-<th>Issue</th>
-<th>Solution</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>ModuleNotFoundError: azure</code></td>
-<td><code>pip install azure-digitaltwins-core azure-identity</code></td>
-</tr>
-<tr>
-<td><code>DefaultAzureCredential failed</code></td>
-<td>Run <code>az login</code> or check service principal env vars</td>
-</tr>
-<tr>
-<td><code>Twin not found</code></td>
-<td>Verify twin ID with <code>az dt twin show --dt-name &lt;name&gt; --twin-id &lt;id&gt;</code></td>
-</tr>
-<tr>
-<td><code>Permission denied</code></td>
-<td>Assign "Azure Digital Twins Data Owner" role to your user</td>
-</tr>
-<tr>
-<td><code>Connection timeout</code></td>
-<td>Check <code>AZURE_DIGITAL_TWINS_URL</code> matches your instance hostname</td>
+<td>Multi-process</td>
+<td style="text-align: center;">Shared across processes</td>
+<td style="text-align: center;">Per-process only</td>
 </tr>
 </tbody>
 </table>
