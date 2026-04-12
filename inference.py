@@ -33,14 +33,14 @@ if HF_TOKEN is None:
 client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
 
 TASKS = [
-    {"name": "startup", "max_steps": 50},
-    {"name": "optimization", "max_steps": 100},
-    {"name": "disturbance_rejection", "max_steps": 100},
-    {"name": "emergency_recovery", "max_steps": 80},
-    {"name": "cost_minimization", "max_steps": 100},
-    {"name": "day_night_cycle", "max_steps": 150},
-    {"name": "aged_catalyst", "max_steps": 100},
-    {"name": "multi_disturbance", "max_steps": 150},
+    {"name": "startup", "max_steps": 25},
+    {"name": "optimization", "max_steps": 40},
+    {"name": "disturbance_rejection", "max_steps": 40},
+    {"name": "emergency_recovery", "max_steps": 30},
+    {"name": "cost_minimization", "max_steps": 30},
+    {"name": "day_night_cycle", "max_steps": 40},
+    {"name": "aged_catalyst", "max_steps": 30},
+    {"name": "multi_disturbance", "max_steps": 40},
 ]
 BENCHMARK = "methanol_apc"
 
