@@ -1,0 +1,63 @@
+site_name: Methanol APC Environment
+site_description: Digital Twin of Industrial Methanol Synthesis for Reinforcement Learning
+site_url: https://bhavneet1492.github.io/openenv-methanol-apc/
+repo_url: https://github.com/Bhavneet1492/openenv-methanol-apc
+repo_name: Bhavneet1492/openenv-methanol-apc
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: blue
+      accent: teal
+      toggle:
+        icon: material/brightness-7
+        name: Light mode
+    - scheme: default
+      primary: blue
+      accent: teal
+      toggle:
+        icon: material/brightness-4
+        name: Dark mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.highlight
+    - content.code.copy
+  icon:
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - tables
+  - attr_list
+  - md_in_html
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Quick Start: quickstart.md
+    - Installation: installation.md
+  - Integrations:
+    - Overview: integrations/index.md
+    - DWSIM: integrations/dwsim.md
+    - Cantera: integrations/cantera.md
+    - ChemSep: integrations/chemsep.md
+    - Azure Digital Twins: integrations/azure-digital-twins.md
+  - API Reference:
+    - Action & Observation: api/models.md
+    - Environment: api/environment.md
+    - Agents: api/agents.md
+    - Physics Engine: api/reactor.md
+  - Examples:
+    - Baselines: examples/baselines.md
+    - TRL / Unsloth: examples/trl-training.md

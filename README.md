@@ -552,19 +552,22 @@ The environment includes bridges to open-source chemical engineering simulators 
 | [ChemSep/COCO](http://www.chemsep.org) | `ChemSepBridge` | VLE data for distillation validation (Antoine fallback) | Bridge ready |
 | [Azure Digital Twins](https://azure.microsoft.com/en-us/products/digital-twins) | `AzureDigitalTwinBridge` | Swap internal sim for company's own plant model, DTDL schema included | Bridge ready, Azure optional |
 
-All bridges are **fully optional** with **internal fallback models** — the environment runs standalone without any external tools. For Azure DT setup, see [docs/azure-digital-twins.md](docs/azure-digital-twins.md).
+All bridges are **fully optional** with **internal fallback models** — the environment runs standalone without any external tools.
+
+**Full documentation:** [bhavneet1492.github.io/openenv-methanol-apc/integrations/](https://bhavneet1492.github.io/openenv-methanol-apc/integrations/)
 
 ```python
-from methanol_apc_env.cheme_bridge import DWSIMBridge, CanteraBridge
+from methanol_apc_env.integrations import DWSIMIntegration, CanteraIntegration
 
 # Validate SRK fugacity coefficients against DWSIM
-dwsim = DWSIMBridge()
+dwsim = DWSIMIntegration()
 thermo = dwsim.get_thermodynamic_properties(T=523.15, P=80e5)
 print(thermo.fugacity_coefficients)  # {"H2": 1.04, "CO": 0.98, ...}
 
 # Cross-check reaction rates with Cantera
-cantera = CanteraBridge()
-rate = cantera.get_reaction_rate(T=523.15, P=80e5, X={"CO": 0.1, "H2": 0.6})
+cantera = CanteraIntegration()
+result = cantera.get_reaction_rates(T=523.15, P=80e5, X={"CO": 0.1, "H2": 0.6})
+print(f"CO hydrogenation: {result.rate_co_hydrogenation:.4e} mol/s")
 ```
 
 ---
@@ -684,6 +687,11 @@ kubectl apply -f k8s/
 │   ├── client.py                   # WebSocket client
 │   ├── agents.py                   # 4 multi-agent classes
 │   ├── trl_bridge.py               # GRPO reward function + Unsloth config
+│   ├── integrations/               # External tool bridges
+│   │   ├── dwsim.py                # DWSIM process simulator
+│   │   ├── cantera_kinetics.py     # Cantera chemical kinetics
+│   │   ├── chemsep.py              # ChemSep VLE thermodynamics
+│   │   └── azure_digital_twins.py  # Azure Digital Twins (optional)
 │   ├── openenv.yaml                # Environment manifest
 │   ├── reactor_config.json         # 10 regional config bundles
 │   ├── server/
