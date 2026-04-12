@@ -61,6 +61,4 @@ nav:
   - Examples:
     - Baselines: examples/baselines.md
     - TRL / Unsloth Training: examples/trl-training.md
-  - Examples:
-    - Baselines: examples/baselines.md
     - TRL / Unsloth: examples/trl-training.md

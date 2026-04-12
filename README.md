@@ -4,11 +4,12 @@
 
 <p align="center">
   <a href="https://huggingface.co/spaces/glitchfilter/methanol-apc-env"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20HuggingFace-Live%20Demo-FFD21E?style=for-the-badge" alt="HuggingFace Space"></a>
+  <a href="https://bhavneet1492.github.io/openenv-methanol-apc/"><img src="https://img.shields.io/badge/Docs-GitHub%20Pages-blue?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Documentation"></a>
   <a href="https://github.com/Bhavneet1492/openenv-methanol-apc/actions"><img src="https://img.shields.io/github/actions/workflow/status/Bhavneet1492/openenv-methanol-apc/ci.yml?style=for-the-badge&logo=github&label=CI" alt="CI"></a>
   <img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/OpenEnv-v0.2.3-00D4AA?style=for-the-badge" alt="OpenEnv">
   <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
-  <img src="https://img.shields.io/badge/Tests-36%20Passing-success?style=for-the-badge" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-86%20Passing-success?style=for-the-badge" alt="Tests">
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License">
 </p>
 
