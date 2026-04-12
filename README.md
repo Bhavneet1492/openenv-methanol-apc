@@ -205,7 +205,8 @@ How does this environment compare to existing methanol plant control solutions?
 | **Web Server** | FastAPI + Uvicorn | HTTP + WebSocket API for OpenEnv protocol |
 | **Simulation Engine** | Pure Python (NumPy) | RK4 ODE solver, SRK EOS, 5 kinetic models |
 | **Agent Decomposition** | 4 agent classes | Microservice-like separation within monolith |
-| **State Management** | In-memory trajectory | `List[ReactorState]` — no DB needed for episodic RL |
+| State Management | In-memory + Redis (optional) | `StateStore` — thread-safe dict fallback, Redis for distributed agents |
+| Caching | Redis TTL cache (optional) | Energy pricing cached 5 min, reactor state cached 60s via `StateStore` |
 | **Containerization** | Docker + docker-compose | Isolated, reproducible deployment |
 | **Orchestration** | Kubernetes (k8s/) | 2 replicas, auto-restart, health probes |
 | **CI/CD** | GitHub Actions | Automated testing on 3 Python versions |
@@ -213,8 +214,8 @@ How does this environment compare to existing methanol plant control solutions?
 | **Monitoring** | Health endpoint + structured logging | `/health` probe, `[START]/[STEP]/[END]` log format |
 | **MCP Tools** | FastMCP server | 4 context tools exposed via Model Context Protocol |
 | **Safety Layer** | Predictive alarming | 5-step temperature lookahead, 4-level warning system |
-| **Game Theory** | Nash equilibrium shifts | Day/night pricing strategy via `get_shift_context()` |
-
+| **Game Theory** | Nash equilibrium shifts | Day/night pricing strategy via `get_shift_context()` || Real Plant Bridge | OPC-UA (asyncua) | `OPCUABridge` — server mode (shadow deploy) + client mode (real DCS) |
+| Concurrency | asyncio + threading | OPC-UA async I/O, thread-safe state store, parallel K8s replicas |
 **Why no database?** RL training is episodic — each episode runs for 50–500 steps, then resets. Persisting intermediate states to a DB would add ~1ms per step with zero benefit (the trajectory is discarded at reset). The `List[ReactorState]` in-memory approach gives sub-microsecond state access.
 
 **Why no caching?** Every simulation step depends on the previous state. There's no repeated computation to cache — each step produces a unique state based on the agent's action and stochastic noise.
@@ -551,8 +552,8 @@ The environment includes bridges to open-source chemical engineering simulators 
 | [DWSIM](https://dwsim.org) | `DWSIMBridge` | SRK fugacity validation, stream export, thermodynamic properties | Bridge ready, DWSIM optional |
 | [Cantera](https://cantera.org) | `CanteraBridge` | Reaction rate cross-validation against published mechanisms | Bridge ready, Cantera optional |
 | [ChemSep/COCO](http://www.chemsep.org) | `ChemSepBridge` | VLE data for distillation validation (Antoine fallback) | Bridge ready |
-| [Azure Digital Twins](https://azure.microsoft.com/en-us/products/digital-twins) | `AzureDigitalTwinBridge` | Swap internal sim for company's own plant model, DTDL schema included | Bridge ready, Azure optional |
-
+| [Azure Digital Twins](https://azure.microsoft.com/en-us/products/digital-twins) | `AzureDigitalTwinBridge` | Swap internal sim for company's own plant model, DTDL schema included | Bridge ready, Azure optional || OPC-UA (DCS/SCADA) | `OPCUABridge` | Bi-directional connection to real plant DCS (server + client mode) | Bridge ready, `pip install asyncua` |
+| Redis State Store | `StateStore` | Shared state for multi-agent coordination, energy price caching | Bridge ready, `pip install redis` |
 All bridges are **fully optional** with **internal fallback models** — the environment runs standalone without any external tools.
 
 **Full documentation:** [bhavneet1492.github.io/openenv-methanol-apc/integrations/](https://bhavneet1492.github.io/openenv-methanol-apc/integrations/)
@@ -608,8 +609,9 @@ Can companies adopt this environment directly?
 | Safety constraints | ✅ | 4-level alarming + emergency shutdown |
 | Regional economics | ✅ | 10 market configurations (APAC, NA, EU, ME, etc.) |
 | External tool validation | ✅ | DWSIM, Cantera, ChemSep bridges + Azure Digital Twins |
-| Azure Digital Twins | ✅ | `AzureDigitalTwinBridge` with DTDL schema, [full guide](docs/azure-digital-twins.md) |
-| Real plant bridge | ⚠️ | OPC-UA adapter for DCS integration planned |
+| Azure Digital Twins | ✅ | `AzureDigitalTwinIntegration` with DTDL schema, [full guide](docs/integrations/azure-digital-twins.md) |
+| Real plant bridge | ✅ | `OPCUABridge` — server + client mode, ISA-95 tag naming, security policy support |
+| Shared state / caching | ✅ | `StateStore` — Redis-backed with in-memory fallback, TTL, batch ops |
 | Distributed training | ⚠️ | Single-instance; horizontal scale via K8s replicas |
 
 **Integration path for companies:**
@@ -692,7 +694,9 @@ kubectl apply -f k8s/
 │   │   ├── dwsim.py                # DWSIM process simulator
 │   │   ├── cantera_kinetics.py     # Cantera chemical kinetics
 │   │   ├── chemsep.py              # ChemSep VLE thermodynamics
-│   │   └── azure_digital_twins.py  # Azure Digital Twins (optional)
+│   │   ├── azure_digital_twins.py  # Azure Digital Twins (optional)
+│   │   ├── opcua_bridge.py         # OPC-UA DCS/SCADA bridge
+│   │   └── state_store.py          # Redis shared state (optional)
 │   ├── openenv.yaml                # Environment manifest
 │   ├── reactor_config.json         # 10 regional config bundles
 │   ├── server/
