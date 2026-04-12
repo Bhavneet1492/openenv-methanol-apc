@@ -21,24 +21,7 @@
       <stop offset="0%" stop-color="#0891b2"/>
       <stop offset="100%" stop-color="#06b6d4"/>
     </linearGradient>
-    <marker id="epArr" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-auto">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#34d399"/>
-    </marker>
-    <marker id="epArrA" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-auto">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#f59e0b"/>
-    </marker>
-    <marker id="epArrB" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-auto">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#60a5fa"/>
-    </marker>
-    <marker id="epArrC" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-auto">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#06b6d4"/>
-    </marker>
-    <marker id="epArrP" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-auto">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#c084fc"/>
-    </marker>
-    <marker id="epArrR" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-auto">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#ef4444"/>
-    </marker>
+    <!-- Markers removed: using explicit polygon arrowheads instead -->
     <filter id="eqSh">
       <feDropShadow dx="2" dy="2" stdDeviation="4" flood-opacity="0.4"/>
     </filter>
@@ -78,7 +61,8 @@
   <!-- Feed input arrow -->
   <text x="85" y="155" font-family="'Segoe UI',sans-serif" font-size="10" fill="#34d399" text-anchor="middle" font-weight="600">Natural Gas</text>
   <text x="85" y="167" font-family="'Segoe UI',sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">CH₄ + H₂S</text>
-  <line x1="85" y1="170" x2="85" y2="178" stroke="#34d399" stroke-width="2" marker-end="url(#epArr)"/>
+  <line x1="85" y1="170" x2="85" y2="176" stroke="#34d399" stroke-width="2"/>
+  <polygon points="79,174 85,186 91,174" fill="#34d399"/>
 
   <!-- ============================================= -->
   <!-- 2. STEAM METHANE REFORMER -->
@@ -113,7 +97,8 @@
   <line x1="210" y1="430" x2="210" y2="383" stroke="#06b6d4" stroke-width="1.5" stroke-dasharray="4 3"/>
 
   <!-- Pipe: Desulf → Reformer -->
-  <line x1="132" y1="270" x2="173" y2="270" stroke="#34d399" stroke-width="2.5" marker-end="url(#epArr)"/>
+  <line x1="132" y1="270" x2="168" y2="270" stroke="#34d399" stroke-width="2.5"/>
+  <polygon points="166,264 180,270 166,276" fill="#34d399"/>
 
   <!-- ============================================= -->
   <!-- 3. FEED/EFFLUENT HEAT EXCHANGER -->
@@ -135,7 +120,8 @@
   <text x="400" y="383" font-family="'Segoe UI',sans-serif" font-size="9" fill="#f59e0b" text-anchor="middle">Feed preheat 200°C</text>
 
   <!-- Pipe: Reformer → Heat Exchanger -->
-  <line x1="307" y1="265" x2="348" y2="265" stroke="#f59e0b" stroke-width="2.5" marker-end="url(#epArrA)"/>
+  <line x1="307" y1="265" x2="343" y2="265" stroke="#f59e0b" stroke-width="2.5"/>
+  <polygon points="341,259 355,265 341,271" fill="#f59e0b"/>
   <text x="328" y="258" font-family="'Segoe UI',sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">Syngas</text>
 
   <!-- ============================================= -->
@@ -153,7 +139,8 @@
   <text x="545" y="393" font-family="'Segoe UI',sans-serif" font-size="9" fill="#60a5fa" text-anchor="middle">50–100 bar</text>
 
   <!-- Pipe: HX → Compressor -->
-  <line x1="452" y1="265" x2="493" y2="305" stroke="#f59e0b" stroke-width="2.5" marker-end="url(#epArrA)"/>
+  <line x1="452" y1="265" x2="488" y2="300" stroke="#f59e0b" stroke-width="2.5"/>
+  <polygon points="482,296 496,308 492,292" fill="#f59e0b"/>
 
   <!-- ============================================= -->
   <!-- 5. SYNTHESIS REACTOR (main) -->
@@ -191,7 +178,8 @@
   <text x="690" y="478" font-family="'Segoe UI',sans-serif" font-size="9" fill="#34d399" text-anchor="middle">CO + 2H₂ → CH₃OH</text>
 
   <!-- Pipe: Compressor → Reactor -->
-  <line x1="587" y1="310" x2="628" y2="260" stroke="#60a5fa" stroke-width="2.5" marker-end="url(#epArrB)"/>
+  <line x1="587" y1="310" x2="623" y2="265" stroke="#60a5fa" stroke-width="2.5"/>
+  <polygon points="617,261 631,253 627,271" fill="#60a5fa"/>
 
   <!-- ============================================= -->
   <!-- 6. COOLING WATER SYSTEM (right of reactor) -->
@@ -236,22 +224,25 @@
   <text x="910" y="425" font-family="'Segoe UI',sans-serif" font-size="9" fill="#c084fc" text-anchor="middle">Flash @ 30 bar</text>
 
   <!-- Pipe: Reactor → Separator -->
-  <line x1="752" y1="370" x2="868" y2="310" stroke="#34d399" stroke-width="2.5" class="flow-anim" marker-end="url(#epArr)"/>
+  <line x1="752" y1="370" x2="862" y2="315" stroke="#34d399" stroke-width="2.5" class="flow-anim"/>
+  <polygon points="856,311 872,305 866,321" fill="#34d399"/>
   <text x="810" y="332" font-family="'Segoe UI',sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">Product gas</text>
 
   <!-- ============================================= -->
   <!-- 8. RECYCLE LOOP (top, from separator back to compressor) -->
   <!-- ============================================= -->
-  <path d="M 910,178 L 910,100 Q 910,80 890,80 L 560,80 Q 540,80 540,100 L 540,218"
-        fill="none" stroke="#f59e0b" stroke-width="2.5" class="flow-anim" marker-end="url(#epArrA)"/>
+  <path d="M 910,178 L 910,100 Q 910,80 890,80 L 560,80 Q 540,80 540,100 L 540,212"
+        fill="none" stroke="#f59e0b" stroke-width="2.5" class="flow-anim"/>
+  <polygon points="534,210 540,224 546,210" fill="#f59e0b"/>
   <rect x="660" y="67" width="140" height="22" rx="8" fill="#451a03" stroke="#f59e0b" stroke-width="1"/>
   <text x="730" y="82" font-family="'Segoe UI',sans-serif" font-size="10" fill="#fbbf24" text-anchor="middle" font-weight="600">♻ Recycle Loop RR=3.5</text>
   <text x="730" y="62" font-family="'Segoe UI',sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">Unreacted H₂+CO (~95%)</text>
 
   <!-- Purge gas branch -->
-  <line x1="820" y1="80" x2="820" y2="55" stroke="#ef4444" stroke-width="1.5" marker-end="url(#epArrR)"/>
-  <text x="820" y="48" font-family="'Segoe UI',sans-serif" font-size="9" fill="#f87171" text-anchor="middle">Purge</text>
-  <text x="820" y="38" font-family="'Segoe UI',sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">Inerts: N₂, CH₄</text>
+  <line x1="820" y1="80" x2="820" y2="62" stroke="#ef4444" stroke-width="1.5"/>
+  <polygon points="814,64 820,52 826,64" fill="#ef4444"/>
+  <text x="850" y="62" font-family="'Segoe UI',sans-serif" font-size="9" fill="#f87171">Purge</text>
+  <text x="850" y="74" font-family="'Segoe UI',sans-serif" font-size="9" fill="#94a3b8">N₂, CH₄</text>
 
   <!-- ============================================= -->
   <!-- 9. DISTILLATION COLUMN -->
@@ -293,7 +284,8 @@
   </g>
   <line x1="1082" y1="125" x2="1088" y2="118" stroke="#a855f7" stroke-width="1.5"/>
   <!-- Reflux return -->
-  <path d="M 1120,137 L 1120,155 Q 1120,165 1110,165 L 1082,165" fill="none" stroke="#06b6d4" stroke-width="1.5" marker-end="url(#epArrC)"/>
+  <path d="M 1120,137 L 1120,155 Q 1120,165 1112,165 L 1088,165" fill="none" stroke="#06b6d4" stroke-width="1.5"/>
+  <polygon points="1090,159 1076,165 1090,171" fill="#06b6d4"/>
   <text x="1125" y="155" font-family="'Segoe UI',sans-serif" font-size="9" fill="#22d3ee">Reflux</text>
 
   <!-- Reboiler (bottom of column) -->
@@ -309,7 +301,8 @@
   <text x="1130" y="408" font-family="'Segoe UI',sans-serif" font-size="9" fill="#94a3b8">50 kW</text>
 
   <!-- Pipe: Separator → Distillation -->
-  <line x1="952" y1="330" x2="1008" y2="250" stroke="#c084fc" stroke-width="2.5" marker-end="url(#epArrP)"/>
+  <line x1="952" y1="330" x2="1003" y2="255" stroke="#c084fc" stroke-width="2.5"/>
+  <polygon points="997,251 1011,243 1007,261" fill="#c084fc"/>
   <text x="980" y="280" font-family="'Segoe UI',sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">Crude MeOH</text>
 
   <!-- Water output from reboiler -->
@@ -328,7 +321,8 @@
     <text x="60" y="90" font-family="'Segoe UI',sans-serif" font-size="9" fill="#94a3b8" text-anchor="middle">$740/MT</text>
   </g>
   <!-- Pipe: Distillation top product → Tank -->
-  <path d="M 1152,118 L 1190,118 Q 1210,118 1210,138 L 1210,198" fill="none" stroke="#10b981" stroke-width="2.5" marker-end="url(#epArr)"/>
+  <path d="M 1152,118 L 1190,118 Q 1210,118 1210,138 L 1210,192" fill="none" stroke="#10b981" stroke-width="2.5"/>
+  <polygon points="1204,190 1210,204 1216,190" fill="#10b981"/>
   <text x="1195" y="160" font-family="'Segoe UI',sans-serif" font-size="9" fill="#34d399">Product</text>
 
   <!-- ============================================= -->
