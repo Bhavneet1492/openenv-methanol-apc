@@ -9,23 +9,9 @@ The integration is **fully optional**. By default, the environment uses its inte
 physics engine (`reactor_sim.py`). When you connect an Azure Digital Twin, it replaces
 or supplements the internal simulator with your company's plant-specific model.
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│                    DEFAULT MODE                               │
-│                                                               │
-│  Agent  →  OpenEnv API  →  internal reactor_sim.py  →  Obs   │
-│                                                               │
-└──────────────────────────────────────────────────────────────┘
+<img src="../assets/integration-fallback.svg" width="100%" alt="Fallback mode: Agent → OpenEnv → internal reactor_sim.py">
 
-┌──────────────────────────────────────────────────────────────┐
-│                 AZURE DT MODE (optional)                      │
-│                                                               │
-│  Agent  →  OpenEnv API  →  Azure Digital Twin  →  Obs         │
-│                              ↕                                │
-│                         Your Plant Model                      │
-│                    (DTDL, custom physics)                      │
-└──────────────────────────────────────────────────────────────┘
-```
+<img src="../assets/integration-azure-dt.svg" width="100%" alt="Azure DT mode: Agent → OpenEnv → Azure Digital Twin → Your Plant Model">
 
 ## Prerequisites
 
@@ -199,21 +185,9 @@ Model ID: `dtmi:openenv:MethanolReactor;1`
 
 ## Architecture
 
-```
-┌─────────────┐     ┌──────────────────┐     ┌─────────────────────┐
-│  RL Agent   │────→│  OpenEnv Server  │────→│  Azure Digital Twin │
-│  (LLM/PPO)  │     │  (FastAPI)       │     │  (your plant model) │
-│             │←────│                  │←────│                     │
-│  13 actions │     │  AzureDTBridge   │     │  DTDL properties    │
-│  30+ obs    │     │  (cheme_bridge)  │     │  Simulation engine  │
-└─────────────┘     └──────────────────┘     └─────────────────────┘
+<img src="../assets/integration-azure-dt.svg" width="100%" alt="Azure DT architecture: Agent → OpenEnv Server → Azure Digital Twin">
 
-Fallback (no Azure):
-┌─────────────┐     ┌──────────────────┐     ┌─────────────────────┐
-│  RL Agent   │────→│  OpenEnv Server  │────→│  reactor_sim.py     │
-│             │←────│                  │←────│  (internal physics) │
-└─────────────┘     └──────────────────┘     └─────────────────────┘
-```
+<img src="../assets/integration-fallback.svg" width="100%" alt="Fallback: Agent → OpenEnv Server → internal reactor_sim.py">
 
 ## Cost Estimate
 
