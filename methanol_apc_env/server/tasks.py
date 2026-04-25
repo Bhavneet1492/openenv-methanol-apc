@@ -97,7 +97,7 @@ LONG_HORIZON_TASK = TaskConfig(
     initial_cooling_flow=50.0,
     initial_compressor=50.0,
     operation_mode="batch",
-    batch_target_kg=5000.0,  # produce 5000 kg methanol
+    batch_target_kg=50000.0,  # produce 50000 kg methanol (matches grade_long_horizon and env termination)
 )
 
 TASKS: Dict[str, TaskConfig] = {
@@ -134,8 +134,9 @@ FEED_UPSET_TASK = TaskConfig(
     initial_cooling_flow=50.0,
     initial_compressor=50.0,
     # At step 30: simulate upstream reformer fluctuation
-    # Agent must compensate by adjusting feed rates
-    disturbances={30: {"cooling_water_temp": 25.0}},  # placeholder — actual feed upset handled in env
+    # H2 feed drops 30% (reformer tube fouling), CO stays same → ratio shifts from 2.0 to ~1.4
+    # Agent must compensate by adjusting feed rates to restore stoichiometry
+    disturbances={30: {"feed_h2_factor": 0.7}},
 )
 
 # Medium: Cost minimization — fixed production target, minimize opex
@@ -160,8 +161,10 @@ PRESSURE_LOSS_TASK = TaskConfig(
     initial_feed_co=2.0,
     initial_cooling_flow=50.0,
     initial_compressor=50.0,
-    # At step 20: compressor output drops
-    disturbances={20: {"cooling_water_temp": 25.0}},  # placeholder
+    # At step 20: compressor output drops 40% (mechanical failure — bearing wear or seal leak)
+    # Reactor pressure falls, reducing reaction rate and methanol yield
+    # Agent must maintain production with reduced compression capacity
+    disturbances={20: {"compressor_power_factor": 0.6}},
 )
 
 # Hard: Day-night cycle — cooling water temp oscillates
@@ -209,10 +212,12 @@ MULTI_DISTURBANCE_TASK = TaskConfig(
     initial_feed_co=2.0,
     initial_cooling_flow=50.0,
     initial_compressor=50.0,
-    # Cascading failures: cooling at 25, then worse at 50
+    # Cascading failures: cooling failure at step 25, feed upset + worse cooling at step 50,
+    # compressor pressure drop at step 75 (matches task prompt in inference.py)
     disturbances={
         25: {"cooling_water_temp": 35.0},
-        50: {"cooling_water_temp": 45.0},
+        50: {"cooling_water_temp": 45.0, "feed_h2_factor": 0.7},
+        75: {"compressor_power_factor": 0.6},
     },
 )
 
@@ -590,6 +595,55 @@ def compute_step_reward(
         production_rate = curr.methanol_produced - prev.methanol_produced
         progress_reward = 0.15 * min(1.0, production_rate / 0.2)
         progress_reward += 0.05 * curr.catalyst_health
+    elif task.name == "emergency_recovery":
+        # Reward cooling down from 290C toward 250C without crashing
+        if curr.temperature < prev.temperature and curr.temperature > 240:
+            progress_reward = 0.2 * (prev.temperature - curr.temperature) / 50.0
+        elif curr.temperature < 260:
+            progress_reward = 0.15  # stabilized in safe zone
+        else:
+            progress_reward = -0.05  # still too hot
+    elif task.name == "feed_composition_upset":
+        # Reward maintaining profit through H2/CO ratio disruption
+        if curr.time_step > 30:
+            progress_reward = 0.2 * max(0.0, min(1.0, curr.profit_this_step / 0.3))
+            progress_reward += 0.1 * max(0.0, 1.0 - temp_change / 3.0)
+        else:
+            progress_reward = 0.1 * max(0.0, curr.profit_this_step / 0.3)
+    elif task.name == "cost_minimization":
+        # Reward high profit efficiency (profit per unit feed cost)
+        production_rate = curr.methanol_produced - prev.methanol_produced
+        if production_rate > 0.05:
+            progress_reward = 0.2 * max(0.0, min(1.0, curr.profit_this_step / 0.2))
+        else:
+            progress_reward = -0.05  # not producing enough
+    elif task.name == "pressure_loss":
+        # Reward maintaining production after compressor drops 40%
+        if curr.time_step > 20:
+            production_rate = curr.methanol_produced - prev.methanol_produced
+            progress_reward = 0.2 * min(1.0, production_rate / 0.15)
+            progress_reward += 0.1 * max(0.0, 1.0 - temp_change / 3.0)
+        else:
+            progress_reward = 0.1 * max(0.0, curr.profit_this_step / 0.3)
+    elif task.name == "day_night_cycle":
+        # Reward stability through oscillating cooling water temp
+        progress_reward = 0.15 * max(0.0, 1.0 - temp_change / 3.0)
+        progress_reward += 0.1 * max(0.0, min(1.0, curr.profit_this_step / 0.2))
+    elif task.name == "aged_catalyst":
+        # Reward production despite low catalyst health (starts at 0.5)
+        production_rate = curr.methanol_produced - prev.methanol_produced
+        progress_reward = 0.15 * min(1.0, production_rate / 0.15)
+        # Extra reward for preserving remaining catalyst
+        progress_reward += 0.1 * curr.catalyst_health
+    elif task.name == "multi_disturbance":
+        # Reward survival + any production through cascading failures
+        production_rate = curr.methanol_produced - prev.methanol_produced
+        progress_reward = 0.1 * min(1.0, production_rate / 0.1)
+        progress_reward += 0.15 * max(0.0, 1.0 - temp_change / 4.0)
+    elif task.name == "maximum_yield":
+        # Reward raw methanol production rate
+        production_rate = curr.methanol_produced - prev.methanol_produced
+        progress_reward = 0.25 * min(1.0, production_rate / 0.25)
 
     total = profit_reward + safety_reward + stability_reward + catalyst_reward + progress_reward
     # Sigmoid mapping: preserves relative signal in (0.01, 0.99)

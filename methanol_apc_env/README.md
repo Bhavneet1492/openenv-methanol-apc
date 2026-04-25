@@ -161,11 +161,17 @@ curl http://localhost:8000/health
 
 ## Baseline Performance
 
+Scores from `examples/compare_baselines.py` (deterministic, reproducible):
+
 | Controller | Optimization | Startup | Disturbance | Emergency | Aged Cat | Average |
 |-----------|-------------|---------|-------------|-----------|----------|---------|
-| PID (PI) | 0.98 | 0.03 | 0.98 | 0.95 | 0.98 | 0.82 |
-| MPC (DMC) | 0.98 | 0.03 | 0.98 | 0.95 | 0.98 | 0.82 |
-| Heuristic | 0.98 | 0.03 | 0.98 | 0.95 | 0.98 | 0.82 |
+| PID (PI) | 0.98 ($394) | 0.03 | 0.98 ($394) | 0.95 ($429) | 0.98 ($197) | 0.82 |
+| MPC (DMC) | 0.98 ($459) | 0.03 | 0.98 ($459) | 0.95 ($532) | 0.98 ($189) | 0.82 |
+| Heuristic | 0.98 ($560) | 0.03 | 0.98 ($560) | 0.95 ($528) | 0.98 ($216) | 0.82 |
+
+> **Note**: Grader scores converge because all three controllers keep the reactor safe.
+> The real differentiation is in **profit** — Heuristic earns 42% more than PID on optimization ($560 vs $394).
+> An RL-trained agent should beat all three by learning the temperature-yield-catalyst tradeoff.
 
 ## Physics Model
 

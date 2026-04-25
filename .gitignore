@@ -8,6 +8,7 @@ build/
 
 # Virtual environment
 .venv/
+.env/
 
 # Secrets
 .env
@@ -33,3 +34,6 @@ wandb/
 
 # Test artifacts
 training/test_*
+
+# Miscellaneous
+context/

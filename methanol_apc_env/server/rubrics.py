@@ -26,12 +26,18 @@ try:
     from reactor_sim import EMERGENCY_SHUTDOWN_TEMP
     from tasks import (
         grade_startup, grade_optimization, grade_disturbance, grade_long_horizon,
+        grade_emergency_recovery, grade_feed_upset, grade_cost_minimization,
+        grade_pressure_loss, grade_day_night, grade_aged_catalyst,
+        grade_multi_disturbance, grade_max_yield,
         compute_step_reward, TASKS, TaskConfig, _clamp_score,
     )
 except ImportError:
     from .reactor_sim import EMERGENCY_SHUTDOWN_TEMP
     from .tasks import (
         grade_startup, grade_optimization, grade_disturbance, grade_long_horizon,
+        grade_emergency_recovery, grade_feed_upset, grade_cost_minimization,
+        grade_pressure_loss, grade_day_night, grade_aged_catalyst,
+        grade_multi_disturbance, grade_max_yield,
         compute_step_reward, TASKS, TaskConfig, _clamp_score,
     )
 
@@ -120,6 +126,52 @@ class MethanolLongHorizonRubric(TrajectoryRubric):
 
 
 # ---------------------------------------------------------------------------
+# Rubrics for 8 additional tasks (reuse TrajectoryRubric pattern)
+# ---------------------------------------------------------------------------
+
+class _GraderRubric(TrajectoryRubric):
+    """Generic trajectory rubric wrapping any grader function."""
+
+    _grader = staticmethod(grade_startup)  # overridden by subclasses
+
+    def __init__(self):
+        super().__init__(intermediate_reward=0.01)
+
+    def score_trajectory(self, trajectory: List[Tuple[Any, Any]]) -> float:
+        states = _extract_reactor_states(trajectory)
+        return self._grader(states)
+
+    def compute_step_rewards(self) -> List[float]:
+        score = self.score_trajectory(self._trajectory)
+        return [score] * len(self._trajectory)
+
+
+class MethanolEmergencyRecoveryRubric(_GraderRubric):
+    _grader = staticmethod(grade_emergency_recovery)
+
+class MethanolFeedUpsetRubric(_GraderRubric):
+    _grader = staticmethod(grade_feed_upset)
+
+class MethanolCostMinimizationRubric(_GraderRubric):
+    _grader = staticmethod(grade_cost_minimization)
+
+class MethanolPressureLossRubric(_GraderRubric):
+    _grader = staticmethod(grade_pressure_loss)
+
+class MethanolDayNightRubric(_GraderRubric):
+    _grader = staticmethod(grade_day_night)
+
+class MethanolAgedCatalystRubric(_GraderRubric):
+    _grader = staticmethod(grade_aged_catalyst)
+
+class MethanolMultiDisturbanceRubric(_GraderRubric):
+    _grader = staticmethod(grade_multi_disturbance)
+
+class MethanolMaxYieldRubric(_GraderRubric):
+    _grader = staticmethod(grade_max_yield)
+
+
+# ---------------------------------------------------------------------------
 # Composite rubric — auto-selects based on task
 # ---------------------------------------------------------------------------
 
@@ -128,6 +180,14 @@ TASK_RUBRICS = {
     "optimization": MethanolOptimizationRubric,
     "disturbance_rejection": MethanolDisturbanceRubric,
     "long_horizon_production": MethanolLongHorizonRubric,
+    "emergency_recovery": MethanolEmergencyRecoveryRubric,
+    "feed_composition_upset": MethanolFeedUpsetRubric,
+    "cost_minimization": MethanolCostMinimizationRubric,
+    "pressure_loss": MethanolPressureLossRubric,
+    "day_night_cycle": MethanolDayNightRubric,
+    "aged_catalyst": MethanolAgedCatalystRubric,
+    "multi_disturbance": MethanolMultiDisturbanceRubric,
+    "maximum_yield": MethanolMaxYieldRubric,
 }
 
 
