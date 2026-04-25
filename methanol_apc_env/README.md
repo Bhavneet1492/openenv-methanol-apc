@@ -314,7 +314,7 @@ openenv validate methanol_apc_env/
 ```bibtex
 @software{methanol_apc_env,
   title={Methanol APC Environment: Multi-Agent Process Control Digital Twin},
-  author={Kaur, Bhavneet},
+  author={Kaur, Bhavneet and Gupta, Ananya and Sharma, Rahul},
   year={2026},
   url={https://huggingface.co/spaces/glitchfilter/methanol-apc-env},
   note={OpenEnv-compatible RL environment for methanol synthesis APC}
