@@ -251,17 +251,13 @@ TASKS.update({
 # ---------------------------------------------------------------------------
 
 def _clamp_score(score: float) -> float:
-    """Map score in [0, 1] to strictly (0, 1) using centered sigmoid.
+    """Linearly clamp raw score in [0, 1] to (0.01, 0.99).
 
-    sigmoid(k*(x - 0.5)) centers the S-curve so that:
-      0.0 -> ~0.02  (bad stays clearly bad)
-      0.5 -> 0.50   (midpoint preserved)
-      1.0 -> ~0.98  (good stays clearly good)
-    k=10 gives wide spread; final affine scales to [0.01, 0.99].
+    Linear preserves the full gradient between trajectories; the previous
+    sigmoid (k=10) saturated anything above raw 0.7 to ~0.98 and was the
+    primary cause of identical baseline scores.
     """
-    import math
-    mapped = 1.0 / (1.0 + math.exp(-10.0 * (score - 0.5)))
-    return 0.01 + 0.98 * mapped  # scale to (0.01, 0.99)
+    return max(0.01, min(0.99, score))
 
 def grade_startup(trajectory: List[ReactorState]) -> float:
     """Grade the startup task.
@@ -313,10 +309,12 @@ def grade_optimization(trajectory: List[ReactorState]) -> float:
     shutdown = any(s.emergency_shutdown for s in trajectory)
     total_profit = trajectory[-1].cumulative_profit
 
-    # Baseline: conservative operation yields ~$5 over 100 steps
-    # Theoretical max: aggressive-but-safe yields ~$25 over 100 steps
-    baseline_profit = 5.0
-    max_profit = 25.0
+    # Calibrated against real controller trajectories on this task:
+    # PID ~$394, MPC ~$459, Heuristic ~$560 over 100 steps. Spreading the
+    # 0.0–1.0 score across $200 (poor) → $700 (excellent) keeps controllers
+    # discriminable instead of all saturating at 1.0.
+    baseline_profit = 200.0
+    max_profit = 700.0
 
     if shutdown:
         # Still give partial credit for profit earned before shutdown
@@ -344,14 +342,16 @@ def grade_disturbance(trajectory: List[ReactorState]) -> float:
         return survival_score
 
     production_after = sum(
-        max(0.0, post_disturbance[i].methanol_produced - 
-            (post_disturbance[i - 1].methanol_produced if i > 0 else 
+        max(0.0, post_disturbance[i].methanol_produced -
+            (post_disturbance[i - 1].methanol_produced if i > 0 else
              post_disturbance[0].methanol_produced))
         for i in range(1, len(post_disturbance))
     )
 
-    # Expected production at steady state over 75 steps: ~12 kg
-    expected = 12.0
+    # Calibrated against measured controller throughput over 75 post-disturbance steps:
+    # PID ~530 kg, MPC ~600 kg, Heuristic ~750 kg. Setting target=800 kg keeps the
+    # 0.0–0.5 yield_score range discriminating instead of saturating.
+    expected = 800.0
     yield_score = min(0.5, 0.5 * production_after / max(expected, 1e-6))
 
     return max(0.0, min(1.0, survival_score + yield_score))
@@ -419,10 +419,11 @@ def grade_emergency_recovery(trajectory: List[ReactorState]) -> float:
     # Score based on how close to target 250C and how quickly
     if final_temp > 270:
         return 0.2  # still too hot
-    temp_score = 0.5 * max(0.0, 1.0 - abs(final_temp - 250.0) / 40.0)
-    # Production bonus
+    # Tighter temp band: ±10C instead of ±40C — separates good from great recoveries.
+    temp_score = 0.5 * max(0.0, 1.0 - abs(final_temp - 250.0) / 10.0)
+    # Production bonus calibrated to measured ~700-900 kg over 80 steps.
     production = trajectory[-1].methanol_produced
-    prod_score = 0.5 * min(1.0, production / 200.0)
+    prod_score = 0.5 * min(1.0, production / 1000.0)
     return temp_score + prod_score
 
 
@@ -433,8 +434,9 @@ def grade_feed_upset(trajectory: List[ReactorState]) -> float:
     shutdown = any(s.emergency_shutdown for s in trajectory)
     if shutdown:
         return 0.1
+    # Same scale as grade_optimization: $200 baseline → $700 excellent.
     profit = trajectory[-1].cumulative_profit
-    return min(1.0, max(0.0, profit / 20.0))
+    return min(1.0, max(0.0, (profit - 200.0) / 500.0))
 
 
 def grade_cost_minimization(trajectory: List[ReactorState]) -> float:
@@ -446,9 +448,11 @@ def grade_cost_minimization(trajectory: List[ReactorState]) -> float:
     production = trajectory[-1].methanol_produced
     if shutdown or production < 10.0:
         return 0.1
-    # Profit per kg of methanol produced
+    # Profit per kg of methanol produced. Measured controller efficiencies are
+    # ~$0.55–0.57/kg, so threshold $0.80/kg keeps the metric discriminating
+    # against an excellent agent rather than saturating on classical baselines.
     efficiency = profit / max(production, 1.0)
-    return min(1.0, max(0.0, efficiency / 0.5))  # ~$0.50/kg is excellent
+    return min(1.0, max(0.0, efficiency / 0.8))
 
 
 def grade_pressure_loss(trajectory: List[ReactorState]) -> float:
@@ -483,8 +487,9 @@ def grade_aged_catalyst(trajectory: List[ReactorState]) -> float:
         return 0.1
     production = trajectory[-1].methanol_produced
     catalyst_preserved = trajectory[-1].catalyst_health
-    # With aged catalyst (start at 0.4), getting any production is good
-    prod_score = 0.6 * min(1.0, production / 200.0)
+    # With aged catalyst (start at 0.4), measured controllers produce 430–545 kg.
+    # Threshold 700 kg leaves headroom for an RL agent to outperform.
+    prod_score = 0.6 * min(1.0, production / 700.0)
     cat_score = 0.4 * (catalyst_preserved / 0.4)  # relative preservation
     return min(1.0, prod_score + cat_score)
 
@@ -533,120 +538,147 @@ GRADERS.update({
 # Step reward computation (dense, per-step)
 # ---------------------------------------------------------------------------
 
+import math
+
+
+def _step_index(state) -> int:
+    """Read step counter from a ReactorState (``time_step``) or
+    Observation (``step_number``). Allows the same progress functions to
+    work with either input type.
+    """
+    return getattr(state, "step_number", getattr(state, "time_step", 0))
+
+
+# ---- Per-task progress callbacks --------------------------------------------
+# Each takes (prev, curr) and returns a raw progress signal in roughly
+# [-0.1, +0.25]. Both ``compute_step_reward`` (env hot path) and the
+# ``TaskProgressRubric`` in rubrics.py dispatch through this single table,
+# so task-specific progress logic lives in exactly one place.
+
+def _progress_default(prev, curr) -> float:
+    return 0.0
+
+
+def _progress_startup(prev, curr) -> float:
+    target = 250.0
+    dist_now = abs(curr.temperature - target)
+    dist_prev = abs(prev.temperature - target)
+    if dist_now < dist_prev:
+        return 0.2 * (dist_prev - dist_now) / target
+    if curr.temperature > target + 5:
+        return -0.1
+    return 0.0
+
+
+def _progress_optimization(prev, curr) -> float:
+    return 0.2 * max(0.0, min(1.0, curr.profit_this_step / 0.3))
+
+
+def _progress_disturbance(prev, curr) -> float:
+    delta = abs(curr.temperature - prev.temperature)
+    if _step_index(curr) > 25:
+        return 0.2 * max(0.0, 1.0 - delta / 3.0)
+    return 0.1 * max(0.0, curr.profit_this_step / 0.3)
+
+
+def _progress_long_horizon(prev, curr) -> float:
+    rate = curr.methanol_produced - prev.methanol_produced
+    return 0.15 * min(1.0, rate / 0.2) + 0.05 * curr.catalyst_health
+
+
+def _progress_emergency_recovery(prev, curr) -> float:
+    if curr.temperature < prev.temperature and curr.temperature > 240:
+        return 0.2 * (prev.temperature - curr.temperature) / 50.0
+    if curr.temperature < 260:
+        return 0.15
+    return -0.05
+
+
+def _progress_feed_upset(prev, curr) -> float:
+    delta = abs(curr.temperature - prev.temperature)
+    if _step_index(curr) > 30:
+        return 0.2 * max(0.0, min(1.0, curr.profit_this_step / 0.3)) + 0.1 * max(0.0, 1.0 - delta / 3.0)
+    return 0.1 * max(0.0, curr.profit_this_step / 0.3)
+
+
+def _progress_cost_minimization(prev, curr) -> float:
+    rate = curr.methanol_produced - prev.methanol_produced
+    if rate > 0.05:
+        return 0.2 * max(0.0, min(1.0, curr.profit_this_step / 0.2))
+    return -0.05
+
+
+def _progress_pressure_loss(prev, curr) -> float:
+    delta = abs(curr.temperature - prev.temperature)
+    if _step_index(curr) > 20:
+        rate = curr.methanol_produced - prev.methanol_produced
+        return 0.2 * min(1.0, rate / 0.15) + 0.1 * max(0.0, 1.0 - delta / 3.0)
+    return 0.1 * max(0.0, curr.profit_this_step / 0.3)
+
+
+def _progress_day_night(prev, curr) -> float:
+    delta = abs(curr.temperature - prev.temperature)
+    return 0.15 * max(0.0, 1.0 - delta / 3.0) + 0.1 * max(0.0, min(1.0, curr.profit_this_step / 0.2))
+
+
+def _progress_aged_catalyst(prev, curr) -> float:
+    rate = curr.methanol_produced - prev.methanol_produced
+    return 0.15 * min(1.0, rate / 0.15) + 0.1 * curr.catalyst_health
+
+
+def _progress_multi_disturbance(prev, curr) -> float:
+    rate = curr.methanol_produced - prev.methanol_produced
+    delta = abs(curr.temperature - prev.temperature)
+    return 0.1 * min(1.0, rate / 0.1) + 0.15 * max(0.0, 1.0 - delta / 4.0)
+
+
+def _progress_max_yield(prev, curr) -> float:
+    rate = curr.methanol_produced - prev.methanol_produced
+    return 0.25 * min(1.0, rate / 0.25)
+
+
+TASK_PROGRESS_FNS = {
+    "startup": _progress_startup,
+    "optimization": _progress_optimization,
+    "disturbance_rejection": _progress_disturbance,
+    "long_horizon_production": _progress_long_horizon,
+    "emergency_recovery": _progress_emergency_recovery,
+    "feed_composition_upset": _progress_feed_upset,
+    "cost_minimization": _progress_cost_minimization,
+    "pressure_loss": _progress_pressure_loss,
+    "day_night_cycle": _progress_day_night,
+    "aged_catalyst": _progress_aged_catalyst,
+    "multi_disturbance": _progress_multi_disturbance,
+    "maximum_yield": _progress_max_yield,
+}
+
+
 def compute_step_reward(
     prev: ReactorState,
     curr: ReactorState,
     task: TaskConfig,
 ) -> float:
-    """Compute dense per-step reward.
+    """Dense per-step reward in (0.01, 0.99).
 
-    Six components normalized to roughly [-1, +1]:
-    1. profit_reward:        normalized step profit
-    2. safety_reward:        distance from safety limits
-    3. stability_reward:     low temperature variance
-    4. catalyst_reward:      catalyst health preservation
-    5. task_progress_reward: task-specific progress signal
-    6. shutdown_penalty:     -1.0 if emergency shutdown
+    Five components: profit + safety + stability + catalyst + task progress.
+    Hard short-circuit on emergency shutdown returns ~0.06 (sigmoid(-1.0)).
     """
     if curr.emergency_shutdown:
-        import math
-        mapped = 1.0 / (1.0 + math.exp(-3.0 * (-1.0)))  # raw = -1.0
-        return 0.01 + 0.98 * mapped  # ≈ 0.06
+        return 0.01 + 0.98 * (1.0 / (1.0 + math.exp(3.0)))  # ≈ 0.06
 
-    # 1. Profit reward (0 to +0.4)
     profit_reward = max(-0.2, min(0.4, curr.profit_this_step / 0.5))
 
-    # 2. Safety reward: distance from 300 degC limit (-0.3 to +0.2)
-    temp_margin = (EMERGENCY_SHUTDOWN_TEMP - curr.temperature) / EMERGENCY_SHUTDOWN_TEMP
     if curr.temperature > 280:
         safety_reward = -0.3 * (curr.temperature - 280) / 20.0
     elif curr.temperature > 270:
         safety_reward = -0.1
     else:
-        safety_reward = 0.1 * temp_margin
+        safety_reward = 0.1 * (EMERGENCY_SHUTDOWN_TEMP - curr.temperature) / EMERGENCY_SHUTDOWN_TEMP
 
-    # 3. Stability reward: low temperature change (+0.0 to +0.1)
-    temp_change = abs(curr.temperature - prev.temperature)
-    stability_reward = 0.1 * max(0.0, 1.0 - temp_change / 5.0)
-
-    # 4. Catalyst reward (+0.0 to +0.1)
+    stability_reward = 0.1 * max(0.0, 1.0 - abs(curr.temperature - prev.temperature) / 5.0)
     catalyst_reward = 0.1 * curr.catalyst_health
-
-    # 5. Task-specific progress
-    progress_reward = 0.0
-    if task.name == "startup":
-        target = 250.0
-        dist_now = abs(curr.temperature - target)
-        dist_prev = abs(prev.temperature - target)
-        if dist_now < dist_prev:
-            progress_reward = 0.2 * (dist_prev - dist_now) / target
-        elif curr.temperature > target + 5:
-            progress_reward = -0.1
-    elif task.name == "optimization":
-        progress_reward = 0.2 * max(0.0, min(1.0, curr.profit_this_step / 0.3))
-    elif task.name == "disturbance_rejection":
-        # Reward stability after disturbance
-        if curr.time_step > 25:
-            progress_reward = 0.2 * max(0.0, 1.0 - temp_change / 3.0)
-        else:
-            progress_reward = 0.1 * max(0.0, curr.profit_this_step / 0.3)
-    elif task.name == "long_horizon_production":
-        # Reward production rate while preserving catalyst
-        production_rate = curr.methanol_produced - prev.methanol_produced
-        progress_reward = 0.15 * min(1.0, production_rate / 0.2)
-        progress_reward += 0.05 * curr.catalyst_health
-    elif task.name == "emergency_recovery":
-        # Reward cooling down from 290C toward 250C without crashing
-        if curr.temperature < prev.temperature and curr.temperature > 240:
-            progress_reward = 0.2 * (prev.temperature - curr.temperature) / 50.0
-        elif curr.temperature < 260:
-            progress_reward = 0.15  # stabilized in safe zone
-        else:
-            progress_reward = -0.05  # still too hot
-    elif task.name == "feed_composition_upset":
-        # Reward maintaining profit through H2/CO ratio disruption
-        if curr.time_step > 30:
-            progress_reward = 0.2 * max(0.0, min(1.0, curr.profit_this_step / 0.3))
-            progress_reward += 0.1 * max(0.0, 1.0 - temp_change / 3.0)
-        else:
-            progress_reward = 0.1 * max(0.0, curr.profit_this_step / 0.3)
-    elif task.name == "cost_minimization":
-        # Reward high profit efficiency (profit per unit feed cost)
-        production_rate = curr.methanol_produced - prev.methanol_produced
-        if production_rate > 0.05:
-            progress_reward = 0.2 * max(0.0, min(1.0, curr.profit_this_step / 0.2))
-        else:
-            progress_reward = -0.05  # not producing enough
-    elif task.name == "pressure_loss":
-        # Reward maintaining production after compressor drops 40%
-        if curr.time_step > 20:
-            production_rate = curr.methanol_produced - prev.methanol_produced
-            progress_reward = 0.2 * min(1.0, production_rate / 0.15)
-            progress_reward += 0.1 * max(0.0, 1.0 - temp_change / 3.0)
-        else:
-            progress_reward = 0.1 * max(0.0, curr.profit_this_step / 0.3)
-    elif task.name == "day_night_cycle":
-        # Reward stability through oscillating cooling water temp
-        progress_reward = 0.15 * max(0.0, 1.0 - temp_change / 3.0)
-        progress_reward += 0.1 * max(0.0, min(1.0, curr.profit_this_step / 0.2))
-    elif task.name == "aged_catalyst":
-        # Reward production despite low catalyst health (starts at 0.5)
-        production_rate = curr.methanol_produced - prev.methanol_produced
-        progress_reward = 0.15 * min(1.0, production_rate / 0.15)
-        # Extra reward for preserving remaining catalyst
-        progress_reward += 0.1 * curr.catalyst_health
-    elif task.name == "multi_disturbance":
-        # Reward survival + any production through cascading failures
-        production_rate = curr.methanol_produced - prev.methanol_produced
-        progress_reward = 0.1 * min(1.0, production_rate / 0.1)
-        progress_reward += 0.15 * max(0.0, 1.0 - temp_change / 4.0)
-    elif task.name == "maximum_yield":
-        # Reward raw methanol production rate
-        production_rate = curr.methanol_produced - prev.methanol_produced
-        progress_reward = 0.25 * min(1.0, production_rate / 0.25)
+    progress_reward = TASK_PROGRESS_FNS.get(task.name, _progress_default)(prev, curr)
 
     total = profit_reward + safety_reward + stability_reward + catalyst_reward + progress_reward
-    # Sigmoid mapping: preserves relative signal in (0.01, 0.99)
-    import math
     mapped = 1.0 / (1.0 + math.exp(-3.0 * total))
     return 0.01 + 0.98 * mapped

@@ -209,13 +209,15 @@ class TestAllGraders:
         assert score < 0.2
 
     def test_grade_cost_minimization_profitable(self):
+        # Realistic profitable trajectory: $0.55/kg (real controllers achieve
+        # 0.55-0.57). Threshold $0.80 means score = 0.55/0.80 ~ 0.69.
         states = []
         s = ReactorState()
-        s.cumulative_profit = 15.0
+        s.cumulative_profit = 55.0
         s.methanol_produced = 100.0
         states.append(s)
         score = grade_cost_minimization(states)
-        assert score >= 0.3
+        assert score >= 0.5
 
     def test_grade_cost_minimization_shutdown(self):
         s = ReactorState()
@@ -338,17 +340,20 @@ class TestTRLBridge:
 
     def test_grpo_config(self):
         from methanol_apc_env.trl_bridge import MethanolGRPOConfig
-        config = MethanolGRPOConfig.get_config()
-        assert "model_name" in config
+        config = MethanolGRPOConfig.base_kwargs()
+        # Validate that returned kwargs are valid TRL GRPOConfig parameters.
         assert "learning_rate" in config
-        assert config["group_size"] > 0
+        assert config["num_generations"] > 0  # GRPO group size (real TRL key)
+        assert config["beta"] >= 0            # KL penalty coefficient
+        assert "max_grad_norm" in config
 
     def test_unsloth_config(self):
         from methanol_apc_env.trl_bridge import MethanolGRPOConfig
-        config = MethanolGRPOConfig.get_unsloth_config()
-        assert config["load_in_4bit"] is True
-        assert "lora_r" in config
-        assert "lora_alpha" in config
+        model_kw = MethanolGRPOConfig.unsloth_model_kwargs()
+        lora_kw = MethanolGRPOConfig.unsloth_lora_kwargs()
+        assert model_kw["load_in_4bit"] is True
+        assert lora_kw["r"] > 0
+        assert lora_kw["lora_alpha"] > 0
 
 
 # ============================================================

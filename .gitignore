@@ -36,3 +36,5 @@ training/test_*
 
 # Miscellaneous
 context/
+.claude
+

@@ -2,7 +2,7 @@
   {
     "controller": "PID",
     "task": "optimization",
-    "score": 0.9834,
+    "score": 0.3873,
     "steps": 100,
     "profit": 393.67,
     "methanol_kg": 708.79,
@@ -14,7 +14,7 @@
   {
     "controller": "MPC",
     "task": "optimization",
-    "score": 0.9834,
+    "score": 0.5185,
     "steps": 100,
     "profit": 459.26,
     "methanol_kg": 799.38,
@@ -26,7 +26,7 @@
   {
     "controller": "Heuristic",
     "task": "optimization",
-    "score": 0.9834,
+    "score": 0.7203,
     "steps": 100,
     "profit": 560.15,
     "methanol_kg": 1009.34,
@@ -38,7 +38,7 @@
   {
     "controller": "PID",
     "task": "startup",
-    "score": 0.0267,
+    "score": 0.0943,
     "steps": 50,
     "profit": 122.59,
     "methanol_kg": 253.22,
@@ -50,7 +50,7 @@
   {
     "controller": "MPC",
     "task": "startup",
-    "score": 0.0267,
+    "score": 0.0943,
     "steps": 50,
     "profit": 128.6,
     "methanol_kg": 261.62,
@@ -62,7 +62,7 @@
   {
     "controller": "Heuristic",
     "task": "startup",
-    "score": 0.0266,
+    "score": 0.0941,
     "steps": 50,
     "profit": 129.83,
     "methanol_kg": 278.83,
@@ -74,7 +74,7 @@
   {
     "controller": "PID",
     "task": "disturbance_rejection",
-    "score": 0.9834,
+    "score": 0.8123,
     "steps": 100,
     "profit": 393.67,
     "methanol_kg": 708.79,
@@ -86,7 +86,7 @@
   {
     "controller": "MPC",
     "task": "disturbance_rejection",
-    "score": 0.9834,
+    "score": 0.8566,
     "steps": 100,
     "profit": 459.26,
     "methanol_kg": 799.38,
@@ -98,7 +98,7 @@
   {
     "controller": "Heuristic",
     "task": "disturbance_rejection",
-    "score": 0.9834,
+    "score": 0.9559,
     "steps": 100,
     "profit": 560.15,
     "methanol_kg": 1009.34,
@@ -110,7 +110,7 @@
   {
     "controller": "PID",
     "task": "emergency_recovery",
-    "score": 0.9465,
+    "score": 0.3607,
     "steps": 80,
     "profit": 428.89,
     "methanol_kg": 721.39,
@@ -122,7 +122,7 @@
   {
     "controller": "MPC",
     "task": "emergency_recovery",
-    "score": 0.9465,
+    "score": 0.4315,
     "steps": 80,
     "profit": 532.06,
     "methanol_kg": 862.92,
@@ -134,7 +134,7 @@
   {
     "controller": "Heuristic",
     "task": "emergency_recovery",
-    "score": 0.9465,
+    "score": 0.4541,
     "steps": 80,
     "profit": 528.38,
     "methanol_kg": 908.12,
@@ -146,7 +146,7 @@
   {
     "controller": "PID",
     "task": "cost_minimization",
-    "score": 0.9834,
+    "score": 0.6943,
     "steps": 100,
     "profit": 393.67,
     "methanol_kg": 708.79,
@@ -158,7 +158,7 @@
   {
     "controller": "MPC",
     "task": "cost_minimization",
-    "score": 0.9834,
+    "score": 0.7182,
     "steps": 100,
     "profit": 459.26,
     "methanol_kg": 799.38,
@@ -170,7 +170,7 @@
   {
     "controller": "Heuristic",
     "task": "cost_minimization",
-    "score": 0.9834,
+    "score": 0.6937,
     "steps": 100,
     "profit": 560.15,
     "methanol_kg": 1009.34,
@@ -182,7 +182,7 @@
   {
     "controller": "PID",
     "task": "aged_catalyst",
-    "score": 0.9831,
+    "score": 0.7745,
     "steps": 100,
     "profit": 197.04,
     "methanol_kg": 443.07,
@@ -194,7 +194,7 @@
   {
     "controller": "MPC",
     "task": "aged_catalyst",
-    "score": 0.9831,
+    "score": 0.7655,
     "steps": 100,
     "profit": 189.49,
     "methanol_kg": 432.65,
@@ -206,7 +206,7 @@
   {
     "controller": "Heuristic",
     "task": "aged_catalyst",
-    "score": 0.9831,
+    "score": 0.8603,
     "steps": 100,
     "profit": 215.97,
     "methanol_kg": 543.17,

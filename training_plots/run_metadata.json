@@ -1,0 +1,81 @@
+{
+  "schema": "openenv-training-run/v1",
+  "description": "Provenance metadata for the committed GRPO training plots in this directory. Generated alongside loss_curve.png, reward_curve.png, and baseline_vs_trained.png by training/train_grpo.ipynb.",
+
+  "model": {
+    "name": "unsloth/Qwen2.5-3B-Instruct-bnb-4bit",
+    "precision": "4-bit (bnb)",
+    "lora": {
+      "r": 16,
+      "alpha": 32,
+      "target_modules": ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
+      "dropout": 0
+    }
+  },
+
+  "trainer": {
+    "framework": "TRL >= 0.15 (Unsloth FastLanguageModel)",
+    "algorithm": "GRPO",
+    "max_steps": 200,
+    "per_device_train_batch_size": 2,
+    "gradient_accumulation_steps": 4,
+    "effective_batch_size_prompts": 8,
+    "num_generations_per_prompt": 8,
+    "total_completions_per_step": 64,
+    "learning_rate": 5e-6,
+    "warmup_ratio": 0.05,
+    "max_grad_norm": 1.0,
+    "beta_kl_coef": 0.05,
+    "max_completion_length": 120,
+    "temperature": 0.7,
+    "fp16": true,
+    "seed": 42
+  },
+
+  "environment": {
+    "package": "methanol_apc_env",
+    "transport": "in-process (notebook imports MethanolAPCEnvironment directly)",
+    "num_prompts": 300,
+    "curriculum": {
+      "startup": 0.40,
+      "optimization": 0.35,
+      "disturbance_rejection": 0.25
+    },
+    "steps_per_prompt": "single-step env.step + 3-step lookahead per completion"
+  },
+
+  "reward": {
+    "components": [
+      {"name": "physics_reward", "source": "env.step().reward", "weight": 0.55, "range": [0.01, 0.99]},
+      {"name": "format_bonus",   "source": "valid JSON + valid action fields", "value": 0.10},
+      {"name": "action_quality", "source": "score_action_quality (physics-aware)", "range": [-0.30, 0.20]},
+      {"name": "lookahead_penalty", "source": "3-step rollout temperature check", "range": [-0.20, 0.0]}
+    ],
+    "final_clamp": [0.01, 0.99]
+  },
+
+  "plots": {
+    "loss_curve.png":         "GRPO loss per logged step from trainer.state.log_history",
+    "reward_curve.png":       "Mean reward per logged step from trainer.state.log_history",
+    "baseline_vs_trained.png": "Random-baseline vs GRPO-trained agent over 5 episodes x 15 steps on the optimization task; baseline uses uniform sampling from the action space, trained uses temperature=0.3 greedy-ish decoding"
+  },
+
+  "evaluation": {
+    "eval_episodes": 5,
+    "eval_steps_per_episode": 15,
+    "eval_decoding_temperature": 0.3,
+    "tasks": ["optimization"]
+  },
+
+  "reproduce": {
+    "instructions": "Open training/train_grpo.ipynb in Colab (T4 16GB or larger). Cells execute top-to-bottom; the final cells regenerate the three plots in this directory.",
+    "hardware_used": "Colab T4 (16 GB VRAM) - matches the 3B model + 4-bit + LoRA config above",
+    "approx_runtime_minutes": 35
+  },
+
+  "notes": [
+    "Switching to 7B requires changing MODEL_NAME in Cell 4 to 'unsloth/Qwen2.5-7B-Instruct-bnb-4bit' and running on A100/H100 (>=24GB VRAM).",
+    "The reward function (Cell 6) is also re-exported from methanol_apc_env.trl_bridge for use outside the notebook.",
+    "Wandb is not used in this submission; trainer.state.log_history is the source of truth for the curves."
+  ]
+}
