@@ -321,6 +321,68 @@
 
 <div id="tooltip"></div>
 
+<!-- Orchestrator detail popup (shown on tour step 10) -->
+<div id="orch-popup" style="display:none;position:absolute;top:50%;right:30px;transform:translateY(-50%);
+  background:rgba(10,14,23,0.96);border:1px solid rgba(0,188,212,0.4);border-radius:10px;
+  padding:20px 24px;width:360px;z-index:160;pointer-events:auto;
+  box-shadow:0 8px 40px rgba(0,0,0,0.6);backdrop-filter:blur(8px);">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <h3 style="color:#00BCD4;font-size:13px;text-transform:uppercase;letter-spacing:1.2px;margin:0;">&#9670; Supervisory Agent — Orchestrator</h3>
+    <button onclick="closeOrchPopup()" style="background:none;border:none;color:#666;font-size:18px;cursor:pointer;padding:0 4px;">&times;</button>
+  </div>
+  <div style="font-size:12px;color:#8892a4;margin-bottom:12px;">Sees ALL 30+ observations. Controls ALL 13 action variables.</div>
+
+  <div style="margin-bottom:12px;">
+    <div style="font-size:11px;color:#00BCD4;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600;">Coordinates 3 Sub-Agents</div>
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(255,152,0,0.08);border-radius:5px;margin:4px 0;">
+      <span style="width:8px;height:8px;border-radius:50%;background:#FF9800;flex-shrink:0;"></span>
+      <span style="font-size:12px;font-weight:600;color:#FF9800;width:100px;">ReformerAgent</span>
+      <span style="font-size:11px;color:#8892a4;">fuel_gas, steam_flow</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(33,150,243,0.08);border-radius:5px;margin:4px 0;">
+      <span style="width:8px;height:8px;border-radius:50%;background:#2196F3;flex-shrink:0;"></span>
+      <span style="font-size:12px;font-weight:600;color:#2196F3;width:100px;">SynthesisAgent</span>
+      <span style="font-size:11px;color:#8892a4;">H2, CO, cooling, compressor, purge, recycle</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(156,39,176,0.08);border-radius:5px;margin:4px 0;">
+      <span style="width:8px;height:8px;border-radius:50%;background:#9C27B0;flex-shrink:0;"></span>
+      <span style="font-size:12px;font-weight:600;color:#9C27B0;width:100px;">PurificationAgent</span>
+      <span style="font-size:11px;color:#8892a4;">reflux, reboiler_duty</span>
+    </div>
+  </div>
+
+  <div style="margin-bottom:12px;">
+    <div style="font-size:11px;color:#00BCD4;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600;">Decision Framework</div>
+    <div style="font-size:12px;color:#b0bec5;line-height:1.7;padding-left:8px;">
+      &#9654; Profit maximization vs Safety constraints<br>
+      &#9654; Catalyst life preservation (Cu/ZnO/Al&#8322;O&#8323;)<br>
+      &#9654; Game theory: day/night shift cooperation
+    </div>
+  </div>
+
+  <div>
+    <div style="font-size:11px;color:#00BCD4;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600;">4 MCP Tools</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+      <div style="background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:5px;">
+        <div style="font-size:10px;color:#666;">get_energy_pricing()</div>
+        <div style="font-size:11px;color:#e0e0e0;">Gas &amp; electricity rates</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:5px;">
+        <div style="font-size:10px;color:#666;">get_catalyst_status()</div>
+        <div style="font-size:11px;color:#e0e0e0;">Remaining hours</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:5px;">
+        <div style="font-size:10px;color:#666;">get_maintenance_schedule()</div>
+        <div style="font-size:11px;color:#e0e0e0;">Turnaround plan</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:5px;">
+        <div style="font-size:10px;color:#666;">calculate_carbon_footprint()</div>
+        <div style="font-size:11px;color:#e0e0e0;">EU ETS cost</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="connect-dialog">
   <h2 style="margin-bottom:6px;">Connect to Methanol APC</h2>
   <p style="color:#8892a4;margin-bottom:16px;">Enter your HuggingFace Space URL or run locally</p>
@@ -1222,6 +1284,60 @@ ctrlRoom.add(dish);
 plant.add(ctrlRoom);
 plant.add(mkLabel('CONTROL ROOM', new THREE.Vector3(-8, 5, -12), 0.5));
 
+// ── Control Room Interior Detail: Monitor screens, Agent boards ──
+const screenMat = new THREE.MeshStandardMaterial({ color: 0x112233, emissive: 0x1a3a5a, emissiveIntensity: 0.6, roughness: 0.3 });
+const screenGlow = new THREE.MeshStandardMaterial({ color: 0x00d4aa, emissive: 0x00d4aa, emissiveIntensity: 0.8, transparent: true, opacity: 0.7 });
+
+// 3 monitor screens on the back wall (inside, visible through window)
+for (let i = 0; i < 3; i++) {
+  const scr = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.8, 0.05), screenMat);
+  scr.position.set(-9.3 + i * 1.4, 2.2, -12);
+  scr.userData = { type: 'monitor', label: ['Reformer Monitor\nFuel gas, steam, S/C ratio\nAgent: ReformerAgent', 'Reactor & Synthesis Monitor\nTemp, pressure, 4-bed quench\nAgent: SynthesisAgent', 'Purification Monitor\nDistillation, purity, reflux\nAgent: PurificationAgent'][i] };
+  ctrlRoom.add(scr);
+  // Screen "glow" bar at bottom
+  const bar = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.06, 0.06), screenGlow);
+  bar.position.set(-9.3 + i * 1.4, 1.75, -12);
+  ctrlRoom.add(bar);
+}
+
+// Supervisory Agent "brain" hologram above the control room
+const holoGeo = new THREE.OctahedronGeometry(0.5, 1);
+const holoMat = new THREE.MeshStandardMaterial({ color: 0x00BCD4, emissive: 0x00BCD4, emissiveIntensity: 0.6, transparent: true, opacity: 0.5, wireframe: true });
+const holo = new THREE.Mesh(holoGeo, holoMat);
+holo.position.set(-8, 4.5, -12);
+holo.userData = { type: 'orchestrator', label: 'Supervisory Agent (Orchestrator)\nSees ALL 30+ observations\nControls ALL 13 action variables\nResolves: profit vs safety vs catalyst\nGame theory: day/night shifts\nMCP tools: pricing, catalyst, maintenance, carbon' };
+plant.add(holo);
+// Holo glow ring
+const ringGeo = new THREE.TorusGeometry(0.7, 0.03, 8, 32);
+const ringMat = new THREE.MeshStandardMaterial({ color: 0x00BCD4, emissive: 0x00BCD4, emissiveIntensity: 0.4, transparent: true, opacity: 0.4 });
+const holoRing = new THREE.Mesh(ringGeo, ringMat);
+holoRing.position.set(-8, 4.5, -12);
+holoRing.rotation.x = Math.PI / 2;
+plant.add(holoRing);
+
+// Agent connection lines: hologram → each plant zone (dashed glow lines)
+const agentTargets = [
+  { pos: new THREE.Vector3(-18, 5, 0), color: 0xFF9800, name: 'ReformerAgent' },
+  { pos: new THREE.Vector3(0, 10, 0), color: 0x2196F3, name: 'SynthesisAgent' },
+  { pos: new THREE.Vector3(14, 8, 0), color: 0x9C27B0, name: 'PurificationAgent' },
+];
+const agentLines = [];
+agentTargets.forEach(at => {
+  const pts = [new THREE.Vector3(-8, 4.5, -12), at.pos];
+  const geo = new THREE.BufferGeometry().setFromPoints(pts);
+  const mat = new THREE.LineDashedMaterial({ color: at.color, dashSize: 0.8, gapSize: 0.4, transparent: true, opacity: 0.5 });
+  const line = new THREE.Line(geo, mat);
+  line.computeLineDistances();
+  line.userData = { type: 'agent_link', label: `${at.name}\nCommand link from Supervisory Agent` };
+  plant.add(line);
+  agentLines.push(line);
+});
+
+// Orchestration info board (floating billboard near control room)
+// Hidden by default — shown only on tour step 10
+holo.visible = false; holoRing.visible = false;
+agentLines.forEach(l => l.visible = false);
+
 /* ═══════════════════════════════════════════════════════════════
    10. PIPE RACK (structural steel frame)
    ═══════════════════════════════════════════════════════════════ */
@@ -1589,6 +1705,12 @@ function showTourStep(n) {
   currentTourStep = n;
   const step = TOUR_STEPS[n-1];
 
+  // Show/hide orchestrator elements only on step 10
+  const showOrch = (n === 10);
+  holo.visible = showOrch; holoRing.visible = showOrch;
+  agentLines.forEach(l => l.visible = showOrch);
+  document.getElementById('orch-popup').style.display = showOrch ? 'block' : 'none';
+
   // Move camera
   if (window.setCam) window.setCam(step.cam);
 
@@ -1623,6 +1745,10 @@ function closeTour() {
   document.getElementById('tour-panel').style.display = 'none';
   currentTourStep = 0;
   stepSprites.forEach(sp => { sp.scale.set(2.2, 2.2, 1); sp.material.opacity = 1.0; });
+  // Hide orchestrator elements
+  holo.visible = false; holoRing.visible = false;
+  agentLines.forEach(l => l.visible = false);
+  document.getElementById('orch-popup').style.display = 'none';
   if (window.setCam) window.setCam('overview');
 }
 window.closeTour = closeTour;
@@ -1797,6 +1923,11 @@ function closeBedPopup() {
   requestAnimationFrame(animOut);
 }
 window.closeBedPopup = closeBedPopup;
+
+function closeOrchPopup() {
+  document.getElementById('orch-popup').style.display = 'none';
+}
+window.closeOrchPopup = closeOrchPopup;
 
 // Steam particles from reformer stack
 const steamCount = 80;
@@ -2078,6 +2209,15 @@ function animate() {
     flameCore.scale.set(1+Math.sin(t*12)*0.15, 1+Math.sin(t*8)*0.2, 1+Math.cos(t*10)*0.15);
     flameOuter.scale.set(1+Math.sin(t*7)*0.2, 1+Math.cos(t*6)*0.25, 1+Math.sin(t*9)*0.2);
     flameGroup.rotation.y = t*2;
+  }
+
+  // Orchestrator hologram rotation + ring pulse (only when visible)
+  if (holo.visible) {
+    holo.rotation.y += dt * 0.8;
+    holo.rotation.x = Math.sin(t * 0.5) * 0.2;
+    holoRing.scale.setScalar(1 + Math.sin(t * 2) * 0.1);
+    holoRing.material.opacity = 0.25 + Math.sin(t * 3) * 0.15;
+    agentLines.forEach((l, i) => { l.material.opacity = 0.3 + Math.sin(t * 2 + i * 2) * 0.2; });
   }
 
   // Demo tick
