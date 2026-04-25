@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MS-AOS | Methanol Synthesis - OpenEnv Environment</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#05080c;--panel:#080d14;--card:#0b1219;
+  --amber:#ffb300;--amber-dim:#7a5500;
+  --cyan:#00e5ff;--green:#00e676;--red:#ff1744;--orange:#ff6d00;
+  --text:#e0e8f0;--muted:#4a6070;--dim:#2a3a48;--border:#1a2a38;
+  --glow-a:0 0 12px rgba(255,179,0,0.5);--glow-c:0 0 12px rgba(0,229,255,0.4);
+  --glow-r:0 0 12px rgba(255,23,68,0.6);--glow-g:0 0 10px rgba(0,230,118,0.4);
+}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:'Share Tech Mono',monospace;color:var(--text)}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.1) 2px,rgba(0,0,0,0.1) 4px);pointer-events:none;z-index:9999}
+
+.shell{display:grid;grid-template-rows:42px 1fr 140px;height:100vh}
+.main{display:grid;grid-template-columns:280px 1fr 260px;gap:1px;background:#0a1018;overflow:hidden}
+
+/* TOPBAR */
+.top{display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:var(--panel);border-bottom:1px solid rgba(255,179,0,0.2)}
+.brand{font-family:'Orbitron',monospace;font-size:11px;font-weight:700;color:var(--amber);text-shadow:var(--glow-a);letter-spacing:0.12em}
+.sub{font-family:'Orbitron',monospace;font-size:7px;letter-spacing:0.2em;color:var(--muted)}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:2px;font-size:8px;letter-spacing:0.08em;border:1px solid}
+.p-ok{border-color:var(--green);color:var(--green);background:rgba(0,230,118,0.08)}
+.p-warn{border-color:var(--orange);color:var(--orange);background:rgba(255,109,0,0.08)}
+.p-crit{border-color:var(--red);color:var(--red);background:rgba(255,23,68,0.1);animation:flash .8s infinite}
+@keyframes flash{50%{box-shadow:var(--glow-r)}}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.2}}
+.clk{font-size:10px;color:var(--cyan);text-shadow:var(--glow-c);letter-spacing:.06em}
+
+/* PANEL */
+.pnl{background:var(--panel);border:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.ph{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border-bottom:1px solid rgba(255,179,0,0.15);background:rgba(255,179,0,0.02)}
+.pt{font-family:'Orbitron',monospace;font-size:7px;font-weight:700;letter-spacing:0.18em;color:var(--amber);text-transform:uppercase}
+.pb{flex:1;overflow-y:auto;padding:6px}
+.pb::-webkit-scrollbar{width:2px}
+.pb::-webkit-scrollbar-thumb{background:var(--amber-dim)}
+
+.sl{font-size:7px;letter-spacing:0.15em;color:var(--muted);text-transform:uppercase;margin:6px 0 4px;padding-bottom:2px;border-bottom:1px solid var(--border)}
+
+/* TASK BUTTONS */
+.tg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;margin-bottom:5px}
+.tb{background:var(--card);border:1px solid var(--border);padding:4px 2px;font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:.05em;color:var(--muted);cursor:pointer;text-align:center;text-transform:uppercase;transition:.2s}
+.tb:hover{border-color:var(--amber-dim);color:var(--amber)}
+.tb.on{border-color:var(--amber);color:var(--amber);background:rgba(255,179,0,0.06)}
+.ab{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;margin-bottom:5px}
+.abtn{background:var(--card);border:1px solid var(--border);padding:4px;font-family:'Orbitron',monospace;font-size:6px;font-weight:700;letter-spacing:.08em;color:var(--muted);cursor:pointer;text-align:center;text-transform:uppercase;transition:.2s}
+.abtn:hover{color:var(--cyan);border-color:var(--cyan)}
+.abtn.go{color:var(--green);border-color:var(--green);background:rgba(0,230,118,0.06)}
+
+/* CONTROLS */
+.cb{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:6px;margin-bottom:4px}
+.cb:hover{border-color:rgba(255,179,0,0.3)}
+.ch{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px}
+.cn{font-size:7px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+.cv{font-family:'Orbitron',monospace;font-size:12px;color:var(--amber);text-shadow:var(--glow-a)}
+input[type=range]{width:100%;-webkit-appearance:none;height:2px;background:var(--border);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:10px;border-radius:1px;background:var(--amber);box-shadow:var(--glow-a)}
+
+/* STATS */
+.sr{display:flex;align-items:center;justify-content:space-between;padding:3px 5px;background:var(--card);border:1px solid var(--border);margin-bottom:2px;position:relative;overflow:hidden}
+.sr-bar{position:absolute;bottom:0;left:0;height:2px;transition:.4s}
+.sr-l{font-size:8px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+.sr-v{font-family:'Orbitron',monospace;font-size:10px}
+
+/* BIG VALUES */
+.bv{font-family:'Orbitron',monospace;font-size:26px;font-weight:900;text-align:center;line-height:1}
+.bu{font-size:9px;color:var(--muted);text-align:center}
+.bn{font-size:8px;color:var(--muted);text-align:center;letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+.profit{font-family:'Orbitron',monospace;font-size:18px;font-weight:900;text-align:center;padding:6px 0}
+.profit.pos{color:var(--green);text-shadow:var(--glow-g)}
+.profit.neg{color:var(--red);text-shadow:var(--glow-r)}
+
+/* CATALYST */
+.cat-t{height:5px;background:var(--border);border-radius:1px;margin-top:3px;overflow:hidden}
+.cat-f{height:100%;border-radius:1px;transition:.5s}
+
+/* LOG */
+.le{display:flex;gap:3px;padding:2px 3px;border-bottom:1px solid var(--border);font-size:7px}
+.lt{color:var(--dim);min-width:18px}
+.lc{color:var(--red)}.lw{color:var(--orange)}.li{color:var(--muted)}.lo{color:var(--green)}
+
+/* ALARM */
+.alarm{display:none;position:fixed;top:42px;left:0;right:0;z-index:1000;background:rgba(255,23,68,0.12);border-bottom:2px solid var(--red);padding:5px 12px;font-family:'Orbitron',monospace;font-size:9px;font-weight:700;color:var(--red);letter-spacing:.1em;text-align:center;animation:afl .5s infinite}
+@keyframes afl{50%{background:rgba(255,23,68,0.25)}}
+.alarm.on{display:block}
+
+/* DONE BOX */
+.done-box{display:none;margin-top:5px;border:1px solid var(--green);border-radius:2px;padding:6px;text-align:center;background:rgba(0,230,118,0.06)}
+.done-box.fail{border-color:var(--red);background:rgba(255,23,68,0.06)}
+.done-box.on{display:block}
+
+/* CHARTS */
+.bot{background:var(--panel);border-top:1px solid rgba(255,179,0,0.15);display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px}
+.cp{background:var(--panel);padding:5px 8px}
+.cl{font-size:7px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:3px;display:flex;justify-content:space-between}
+.clv{color:var(--cyan);font-family:'Orbitron',monospace;font-size:8px}
+.cw{position:relative;height:95px}
+
+/* PROGRESS */
+.prog-t{height:3px;background:var(--border);border-radius:1px;margin-top:3px;overflow:hidden}
+.prog-f{height:100%;background:linear-gradient(90deg,var(--cyan),var(--amber));transition:.4s}
+</style>
+</head>
+<body>
+<div class="alarm" id="alarm">EMERGENCY SHUTDOWN - REACTOR TEMPERATURE EXCEEDED 300C</div>
+<div class="shell">
+
+<div class="top">
+  <div style="display:flex;align-items:center;gap:10px">
+    <div><div class="brand">ICI-MeOH / RX-01</div><div class="sub">METHANOL SYNTHESIS APC</div></div>
+    <div class="pill p-ok" id="pill"><span class="dot"></span><span id="pillTxt">NOMINAL</span></div>
+  </div>
+  <div style="text-align:center"><div class="brand" style="font-size:9px">OPENENV ENVIRONMENT - REACTOR CONTROL</div><div class="sub">DIGITAL TWIN v0.2 | 86 TESTS | 12 TASKS | 5 KINETIC MODELS</div></div>
+  <div style="display:flex;align-items:center;gap:8px"><div class="clk" id="clk">--:--:--</div><span class="dot"></span></div>
+</div>
+
+<div class="main">
+
+<!-- LEFT -->
+<div class="pnl">
+  <div class="ph"><span class="pt">Control Panel</span><span style="font-size:6px;color:var(--muted)" id="tLbl">STARTUP</span></div>
+  <div class="pb">
+    <div class="sl">Task</div>
+    <div class="tg">
+      <button class="tb on" onclick="st('startup',this)">Startup</button>
+      <button class="tb" onclick="st('optimization',this)">Optimize</button>
+      <button class="tb" onclick="st('disturbance_rejection',this)">Disturb</button>
+      <button class="tb" onclick="st('emergency_recovery',this)">Emerg.</button>
+      <button class="tb" onclick="st('aged_catalyst',this)">Aged Cat</button>
+      <button class="tb" onclick="st('multi_disturbance',this)">Multi-D</button>
+    </div>
+    <div class="ab">
+      <button class="abtn" id="rBtn" onclick="tRun()">RUN</button>
+      <button class="abtn" onclick="doStep()">STEP</button>
+      <button class="abtn" onclick="doReset()">RESET</button>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);padding:4px 6px;margin-bottom:4px;border-radius:2px">
+      <div style="display:flex;justify-content:space-between;font-size:7px;color:var(--muted)"><span>PROGRESS</span><span style="font-family:'Orbitron',monospace;font-size:9px;color:var(--cyan)" id="sDisp">0/100</span></div>
+      <div class="prog-t"><div class="prog-f" id="sFill" style="width:0%"></div></div>
+    </div>
+    <div class="sl">Feed</div>
+    <div class="cb"><div class="ch"><span class="cn">H2 Feed</span><span class="cv" id="h2D">5.0</span><span style="font-size:7px;color:var(--dim)">mol/s</span></div><input type="range" min="0" max="10" step=".1" value="5" id="h2" oninput="document.getElementById('h2D').textContent=parseFloat(this.value).toFixed(1)"></div>
+    <div class="cb"><div class="ch"><span class="cn">CO Feed</span><span class="cv" id="coD">2.5</span><span style="font-size:7px;color:var(--dim)">mol/s</span></div><input type="range" min="0" max="5" step=".1" value="2.5" id="co" oninput="document.getElementById('coD').textContent=parseFloat(this.value).toFixed(1)"></div>
+    <div class="sl">Thermal</div>
+    <div class="cb"><div class="ch"><span class="cn">Cooling</span><span class="cv" id="cwD">40</span><span style="font-size:7px;color:var(--dim)">L/min</span></div><input type="range" min="0" max="100" step="1" value="40" id="cw" oninput="document.getElementById('cwD').textContent=this.value"></div>
+    <div class="cb"><div class="ch"><span class="cn">Compressor</span><span class="cv" id="cpD">65</span><span style="font-size:7px;color:var(--dim)">kW</span></div><input type="range" min="0" max="100" step="1" value="65" id="cp" oninput="document.getElementById('cpD').textContent=this.value"></div>
+    <div class="sl">Log</div>
+    <div id="log" style="max-height:120px;overflow-y:auto;border:1px solid var(--border);border-radius:2px">
+      <div class="le"><span class="lt">0</span><span class="li">Ready.</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- CENTER -->
+<div class="pnl">
+  <div class="ph"><span class="pt">Reactor Telemetry</span><span style="font-size:6px" id="stLbl">IDLE</span></div>
+  <div class="pb">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:6px">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:2px;padding:8px;text-align:center">
+        <div class="bv" id="tV" style="color:var(--orange)">---</div>
+        <div class="bu">C</div><div class="bn">Temperature</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:2px;padding:8px;text-align:center">
+        <div class="bv" id="pV" style="color:var(--cyan)">---</div>
+        <div class="bu">bar</div><div class="bn">Pressure</div>
+      </div>
+    </div>
+    <div class="sl">Process</div>
+    <div class="sr"><span class="sr-l">Reaction Rate</span><span class="sr-v" id="rrV" style="color:var(--green)">--</span><div class="sr-bar" id="rrB" style="width:0%;background:var(--green)"></div></div>
+    <div class="sr"><span class="sr-l">MeOH Produced</span><span class="sr-v" id="mV">-- kg</span></div>
+    <div class="sr"><span class="sr-l">H2:CO Ratio</span><span class="sr-v" id="raV">--</span></div>
+    <div class="sr"><span class="sr-l">Temp Trend</span><span class="sr-v" id="trV">-- C/step</span></div>
+    <div class="sr"><span class="sr-l">CW Temp</span><span class="sr-v" id="cwT">-- C</span></div>
+    <div class="sl">Catalyst</div>
+    <div style="background:var(--card);border:1px solid var(--border);padding:5px 6px;margin-bottom:4px;border-radius:2px">
+      <div style="display:flex;justify-content:space-between"><span style="font-size:7px;color:var(--muted)">HEALTH</span><span style="font-family:'Orbitron',monospace;font-size:13px;font-weight:700" id="caV">--%</span></div>
+      <div class="cat-t"><div class="cat-f" id="caF" style="width:95%;background:var(--green)"></div></div>
+    </div>
+    <div class="sl">Economics</div>
+    <div class="profit pos" id="prV">$0.00</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px">
+      <div class="sr" style="flex-direction:column;align-items:flex-start;padding:5px"><div class="sr-l">Step $</div><div class="sr-v" id="spV">$0</div></div>
+      <div class="sr" style="flex-direction:column;align-items:flex-start;padding:5px"><div class="sr-l">Reward</div><div class="sr-v" id="rwV" style="color:var(--cyan)">0</div></div>
+      <div class="sr" style="flex-direction:column;align-items:flex-start;padding:5px"><div class="sr-l">Score</div><div class="sr-v" id="scV" style="color:var(--amber)">--</div></div>
+    </div>
+    <div class="done-box" id="dBox">
+      <div style="font-family:'Orbitron',monospace;font-size:8px;letter-spacing:.1em;margin-bottom:3px" id="dTitle">EPISODE COMPLETE</div>
+      <div style="font-size:7px;color:var(--muted)" id="dSum">--</div>
+    </div>
+  </div>
+</div>
+
+<!-- RIGHT -->
+<div class="pnl">
+  <div class="ph"><span class="pt">Safety & Data</span></div>
+  <div class="pb">
+    <div class="sl">Safety Status</div>
+    <div style="background:var(--card);border:1px solid var(--border);padding:5px;margin-bottom:4px;text-align:center;border-radius:2px">
+      <div style="font-family:'Orbitron',monospace;font-size:9px;letter-spacing:.08em" id="saV" style="color:var(--green)">NOMINAL</div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);padding:4px;margin-bottom:4px;font-size:8px;color:var(--muted);min-height:24px;border-radius:2px" id="waV">No warnings.</div>
+    <div class="sl">Raw Observation</div>
+    <div style="background:#000;border:1px solid var(--border);padding:4px;font-size:7px;color:var(--cyan);max-height:200px;overflow-y:auto;font-family:'Share Tech Mono',monospace;white-space:pre-wrap;word-break:break-all;border-radius:2px" id="obsJ">{}</div>
+    <div class="sl" style="margin-top:6px">Environment Info</div>
+    <div style="font-size:7px;color:var(--dim);line-height:1.6">
+      <div>13 action variables | 30+ observation fields</div>
+      <div>12 tasks (Easy to Expert) | 5 kinetic models</div>
+      <div>86 tests passing | 92% coverage</div>
+      <div>RK4 ODE | SRK EOS | LHHW kinetics</div>
+      <div>TRL/Unsloth GRPO ready</div>
+      <div style="margin-top:4px;color:var(--amber)">POST /reset | POST /step | GET /health</div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<div class="bot">
+  <div class="cp"><div class="cl"><span>Temperature</span><span class="clv" id="tcV">--</span></div><div class="cw"><canvas id="tC"></canvas></div></div>
+  <div class="cp"><div class="cl"><span>Reaction Rate</span><span class="clv" id="rcV">--</span></div><div class="cw"><canvas id="rC"></canvas></div></div>
+  <div class="cp"><div class="cl"><span>Profit</span><span class="clv" id="pcV">--</span></div><div class="cw"><canvas id="pC"></canvas></div></div>
+</div>
+
+</div>
+
+<script>
+let task='startup',obs=null,run=false,H=[],L=[],B=window.location.origin;
+
+async function apiR(){
+  try{const r=await fetch(B+'/web/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task_name:task,seed:42})});obs=await r.json();H=[];L=[];al(0,'Reset: '+task,'o');$('dBox').className='done-box';$('alarm').classList.remove('on');ui();}catch(e){al(0,'Reset err: '+e.message,'c');}
+}
+async function apiS(){
+  if(!obs||obs.done)return;
+  const a={feed_rate_h2:+$('h2').value,feed_rate_co:+$('co').value,cooling_water_flow:+$('cw').value,compressor_power:+$('cp').value};
+  try{const r=await fetch(B+'/web/step',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:a})});obs=await r.json();H.push({s:obs.step_number,t:obs.temperature,r:obs.reaction_rate,p:obs.cumulative_profit});if(H.length>80)H.shift();if(obs.safety_warning)al(obs.step_number,obs.safety_warning,obs.temperature>285?'c':'w');if(obs.done)al(obs.step_number,'Done','o');ui();}catch(e){al(0,'Step err: '+e.message,'c');}
+}
+
+function $(id){return document.getElementById(id)}
+function al(s,m,t){L.unshift({s,m,t});L=L.slice(0,25)}
+function st(t,b){task=t;document.querySelectorAll('.tb').forEach(x=>x.classList.remove('on'));if(b)b.classList.add('on');$('tLbl').textContent=t.toUpperCase()}
+function tRun(){run=!run;const b=$('rBtn');if(run){b.textContent='PAUSE';b.classList.add('go');rl();}else{b.textContent='RUN';b.classList.remove('go');}}
+async function rl(){if(!run)return;await apiS();if(run&&obs&&!obs.done)setTimeout(rl,400);else{run=false;$('rBtn').textContent='RUN';$('rBtn').classList.remove('go');}}
+function doStep(){apiS()}
+function doReset(){if(run)tRun();apiR()}
+
+function ui(){
+  if(!obs)return;const o=obs;
+  const tc=o.temperature>290?'var(--red)':o.temperature>270?'var(--orange)':'var(--amber)';
+  $('tV').textContent=o.temperature.toFixed(1);$('tV').style.color=tc;
+  $('pV').textContent=o.pressure.toFixed(1);
+  $('rrV').textContent=o.reaction_rate.toFixed(3)+' mol/s';$('rrB').style.width=Math.min(o.reaction_rate/8*100,100)+'%';
+  $('mV').textContent=o.methanol_produced.toFixed(1)+' kg';
+  $('raV').textContent=(o.h2_co_ratio||0).toFixed(2);$('raV').style.color=Math.abs((o.h2_co_ratio||0)-2)<.3?'var(--green)':'var(--orange)';
+  $('trV').textContent=(o.temperature_trend>=0?'+':'')+o.temperature_trend.toFixed(2)+' C/step';$('trV').style.color=o.temperature_trend>.5?'var(--red)':o.temperature_trend<-.5?'var(--cyan)':'var(--muted)';
+  $('cwT').textContent=o.cooling_water_temp.toFixed(1)+' C';
+  const cp=o.catalyst_health*100,cc=o.catalyst_health>.7?'var(--green)':o.catalyst_health>.4?'var(--orange)':'var(--red)';
+  $('caV').textContent=cp.toFixed(1)+'%';$('caV').style.color=cc;$('caF').style.width=cp+'%';$('caF').style.background=cc;
+  const pe=$('prV');pe.textContent=(o.cumulative_profit>=0?'+':'')+'$'+o.cumulative_profit.toFixed(2);pe.className='profit '+(o.cumulative_profit>=0?'pos':'neg');
+  $('spV').textContent=(o.profit_this_step>=0?'+':'')+'$'+o.profit_this_step.toFixed(3);$('spV').style.color=o.profit_this_step>=0?'var(--green)':'var(--red)';
+  $('rwV').textContent=o.reward.toFixed(4);
+  $('sDisp').textContent=o.step_number+'/'+(o.max_steps||100);$('sFill').style.width=(o.step_number/(o.max_steps||100)*100)+'%';
+  const s=o.temperature>=300?'c':o.temperature>285?'c':o.temperature>270?'w':'ok';
+  $('pill').className='pill p-'+(s==='c'?'crit':s==='w'?'warn':'ok');$('pillTxt').textContent=s==='c'?'CRITICAL':s==='w'?'WARNING':'NOMINAL';
+  $('saV').textContent=o.safety_warning||'NOMINAL';$('saV').style.color=o.safety_warning?'var(--red)':'var(--green)';
+  $('waV').textContent=o.safety_warning||'No warnings.';$('waV').style.color=o.safety_warning?'var(--orange)':'var(--muted)';
+  if(o.temperature>=300)$('alarm').classList.add('on');
+  $('stLbl').textContent=o.done?'DONE':run?'RUNNING':'PAUSED';$('stLbl').style.color=run?'var(--green)':'var(--muted)';
+  $('obsJ').textContent=JSON.stringify(o,null,1);
+  if(o.done){const d=$('dBox');d.classList.add('on');d.classList.toggle('fail',o.temperature>=300);$('dTitle').textContent=o.temperature>=300?'SHUTDOWN':'EPISODE COMPLETE';$('dTitle').style.color=o.temperature>=300?'var(--red)':'var(--green)';$('dSum').textContent='Profit: $'+o.cumulative_profit.toFixed(2)+' | MeOH: '+o.methanol_produced.toFixed(0)+'kg | Steps: '+o.step_number;if(run)tRun();}
+  $('log').innerHTML=L.map(l=>'<div class="le"><span class="lt">'+l.s+'</span><span class="l'+l.t+'">'+l.m+'</span></div>').join('');
+  uc();
+}
+
+let tc,rc,pc;
+function ic(){
+  const g='rgba(255,255,255,0.03)',t='rgba(74,96,112,0.7)';
+  const mk=(id,c)=>new Chart($(id),{type:'line',data:{labels:[],datasets:[{data:[],borderColor:c,borderWidth:1.5,pointRadius:0,tension:.3,fill:true,backgroundColor:c.replace(')',',0.05)').replace('rgb','rgba')}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:0},plugins:{legend:{display:false}},scales:{x:{ticks:{color:t,font:{size:6},maxTicksLimit:5},grid:{color:g}},y:{ticks:{color:t,font:{size:6},maxTicksLimit:4},grid:{color:g}}}}});
+  tc=mk('tC','rgb(255,109,0)');rc=mk('rC','rgb(0,230,118)');pc=mk('pC','rgb(0,229,255)');
+}
+function uc(){
+  if(!H.length)return;const l=H.map(h=>h.s);
+  tc.data.labels=l;tc.data.datasets[0].data=H.map(h=>h.t);tc.update('none');
+  rc.data.labels=l;rc.data.datasets[0].data=H.map(h=>h.r);rc.update('none');
+  pc.data.labels=l;pc.data.datasets[0].data=H.map(h=>h.p);pc.update('none');
+  $('tcV').textContent=obs?obs.temperature.toFixed(1)+'C':'--';
+  $('rcV').textContent=obs?obs.reaction_rate.toFixed(2)+' mol/s':'--';
+  $('pcV').textContent=obs?'$'+obs.cumulative_profit.toFixed(1):'--';
+}
+setInterval(()=>{$('clk').textContent=new Date().toTimeString().slice(0,8)},1000);
+ic();apiR();
+</script>
+</body>
+</html>

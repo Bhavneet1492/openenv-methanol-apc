@@ -67,16 +67,24 @@
 
 ## Training Results
 
-> GRPO training with Unsloth (Qwen2.5-3B-Instruct, 4-bit LoRA, r=16/α=32) against the live physics environment. Notebook fits a Colab T4 (16 GB); a one-line switch upgrades to 7B for A100/H100. See [`training_plots/run_metadata.json`](training_plots/run_metadata.json) for the full run config.
+> **Real GRPO training on HF Jobs** — Qwen2.5-3B-Instruct, 4-bit QLoRA (r=16/α=32), 150 steps on Tesla T4 (15.8 GB VRAM). Completed in 86.9 minutes. **Baseline: 0.844 → Trained: 0.906 (+7.3% reward improvement)**.
 
-![Loss Curve](training_plots/loss_curve.png)
-*Training loss over GRPO steps*
+<table><tr>
+<td width="50%"><img src="training_plots/loss_curve.png" alt="Loss Curve"><br><em>GRPO policy loss — drops to near-zero by step 15, occasional negative spikes = reinforcing high-reward completions</em></td>
+<td width="50%"><img src="training_plots/reward_curve.png" alt="Reward Curve"><br><em>Mean reward per step with ±1σ band — moving average stabilizes at ~0.80</em></td>
+</tr></table>
 
-![Reward Curve](training_plots/reward_curve.png)
-*Average reward per step*
+<img src="training_plots/baseline_vs_trained.png" alt="Baseline vs Trained" width="100%">
 
-![Baseline vs Trained](training_plots/baseline_vs_trained.png)
-*Random baseline (red) vs GRPO-trained agent (green) — the trained agent maintains stable temperature, avoids shutdowns, and maximizes profit.*
+*Untrained baseline (0.844) vs GRPO-trained agent (0.906) — +7.3% reward improvement from 150 steps of training.*
+
+<details><summary>📊 Full Training Dashboard (LR, Entropy, Loss, Reward)</summary>
+
+<img src="training_plots/training_dashboard.png" alt="Training Dashboard" width="100%">
+
+*2×2 dashboard: Reward curve with std band, policy loss, linear LR decay (5e-6 → 0), policy entropy converging from 0.038 → 0.008.*
+
+</details>
 
 ### What the Agent Learned (Qualitative)
 

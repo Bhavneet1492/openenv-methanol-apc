@@ -7,21 +7,19 @@
 #   "matplotlib",
 #   "datasets",
 #   "openenv-core[core]>=0.2.2",
+#   "trl>=0.15",
+#   "peft",
+#   "accelerate",
+#   "bitsandbytes",
+#   "transformers",
 # ]
 # ///
 """GRPO Training for Methanol APC — HF Jobs runner.
 
 Run with:
-    hf jobs uv run training/train_hf_job.py --flavor t4-medium --timeout 2h
+    hf jobs uv run training/train_hf_job.py --flavor t4-small --timeout 2h
 """
-import json, os, random, sys, time, subprocess
-
-# ── Install ML deps that need special handling ──
-print("Installing ML dependencies...")
-subprocess.check_call([sys.executable, "-m", "pip", "install", "-q",
-    "unsloth", "trl>=0.15", "peft", "accelerate", "bitsandbytes"],
-    stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
-print("ML deps installed")
+import json, os, random, sys, time
 
 # Clone env repo
 REPO_DIR = "/tmp/methanol-apc"
@@ -41,23 +39,35 @@ print(f"GPU: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'C
 vram = torch.cuda.get_device_properties(0).total_memory / 1e9 if torch.cuda.is_available() else 0
 print(f"VRAM: {vram:.1f} GB")
 
-# ── Load model ──
-from unsloth import FastLanguageModel
+# ── Load model (no unsloth — use transformers + peft + bnb directly) ──
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 
 if vram >= 30:
-    MODEL = "unsloth/Qwen2.5-7B-Instruct-bnb-4bit"
+    MODEL = "Qwen/Qwen2.5-7B-Instruct"
 elif vram >= 10:
-    MODEL = "unsloth/Qwen2.5-3B-Instruct-bnb-4bit"
+    MODEL = "Qwen/Qwen2.5-3B-Instruct"
 else:
-    MODEL = "unsloth/Qwen2.5-1.5B-Instruct-bnb-4bit"
+    MODEL = "Qwen/Qwen2.5-1.5B-Instruct"
 print(f"Model: {MODEL}")
 
-model, tokenizer = FastLanguageModel.from_pretrained(
-    model_name=MODEL, max_seq_length=2048, dtype=None, load_in_4bit=True)
-model = FastLanguageModel.get_peft_model(
-    model, r=16, lora_alpha=32,
+bnb_config = BitsAndBytesConfig(
+    load_in_4bit=True, bnb_4bit_quant_type="nf4",
+    bnb_4bit_compute_dtype=torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16,
+    bnb_4bit_use_double_quant=True,
+)
+tokenizer = AutoTokenizer.from_pretrained(MODEL, trust_remote_code=True)
+model = AutoModelForCausalLM.from_pretrained(
+    MODEL, quantization_config=bnb_config, device_map="auto", trust_remote_code=True)
+model = prepare_model_for_kbit_training(model)
+
+lora_config = LoraConfig(
+    r=16, lora_alpha=32, lora_dropout=0,
     target_modules=["q_proj","k_proj","v_proj","o_proj","gate_proj","up_proj","down_proj"],
-    lora_dropout=0, bias="none", use_gradient_checkpointing="unsloth", random_state=42)
+    bias="none", task_type="CAUSAL_LM",
+)
+model = get_peft_model(model, lora_config)
+model.gradient_checkpointing_enable()
 print(f"Trainable: {sum(p.numel() for p in model.parameters() if p.requires_grad):,}")
 
 # ── Environment ──
@@ -194,7 +204,7 @@ print(f'Saved {PLOT_DIR}/loss_curve.png')
 
 # ── Evaluate ──
 def eval_agent(model, tok, task='optimization', eps=5, steps=15):
-    FastLanguageModel.for_inference(model)
+    model.eval()
     all_r = []
     for ep in range(eps):
         env, obs = make_env(task, ep*100); rs = []
