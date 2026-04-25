@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.svg" width="100%" alt="Methanol APC Environment — Digital Twin of Industrial Methanol Synthesis for Reinforcement Learning">
+  <img src="assets/banner.svg" width="100%" alt="Methanol APC Environment — RL-Powered Autonomous Process Control for Industrial Methanol Reactors">
 </p>
 
 <p align="center">
@@ -21,176 +21,98 @@
 
 ---
 
-## Submission Links
-
 | Deliverable | Link |
 |-------------|------|
-| HuggingFace Space | [methanol-apc-env](https://huggingface.co/spaces/glitchfilter/methanol-apc-env) |
-| Training Notebook | [train_grpo.ipynb](training/train_grpo.ipynb) |
-| Code Repository | [GitHub](https://github.com/Bhavneet1492/openenv-methanol-apc) |
-| Blog Post | [blog.md](blog.md) |
-| Documentation | [GitHub Pages](https://bhavneet1492.github.io/openenv-methanol-apc/) |
+| **HuggingFace Space** | [glitchfilter/methanol-apc-env](https://huggingface.co/spaces/glitchfilter/methanol-apc-env) |
+| **Training Notebook** | [train_grpo.ipynb](training/train_grpo.ipynb) |
+| **Blog Post** | [blog.md](blog.md) |
+| **Documentation** | [GitHub Pages](https://bhavneet1492.github.io/openenv-methanol-apc/) |
 
 ---
 
-## Training Results
-
-> GRPO training with Unsloth (Qwen2.5-3B-Instruct, 4-bit LoRA, r=16/α=32) against the live physics environment. Notebook fits a Colab T4 (16 GB); a one-line switch upgrades to 7B for A100/H100. See [`training_plots/run_metadata.json`](training_plots/run_metadata.json) for the full run config.
-
-![Loss Curve](training_plots/loss_curve.png)
-*Training loss over GRPO steps*
-
-![Reward Curve](training_plots/reward_curve.png)
-*Average reward per step*
-
-![Baseline vs Trained](training_plots/baseline_vs_trained.png)
-*Random baseline (red) vs GRPO-trained agent (green) — the trained agent maintains stable temperature, avoids shutdowns, and maximizes profit.*
-
-| Behavior | Untrained (Random) Agent | GRPO-Trained Agent |
-|----------|--------------------------|--------------------|
-| **Temperature** | Wildly oscillates, frequently hits 300C shutdown | Maintains 240-260C optimal range |
-| **Safety** | ~40% of episodes end in emergency shutdown | Avoids shutdown, uses predictive lookahead |
-| **Profit** | Negative (high costs, low production) | Consistently positive (balanced feed vs revenue) |
-| **Catalyst** | Rapid degradation from temperature spikes | Preserved by staying below 270C |
-| **Feed ratio** | Random H2/CO = poor selectivity | Learns H2/CO ~ 2.0 (stoichiometric optimum) |
-| **Cooling** | Either overcools (no production) or undercools (runaway) | Dynamic cooling matched to heat generation |
-
----
-
-## Problem Statement
+## Why This Matters
 
 In a methanol plant, 4–6 operators per shift manually manage hundreds of control loops 24/7. They make ~15 decisions/hour under cognitive load, with 3–5 second reaction times during emergencies. This costs **$2–5M/year in lost yield** from conservative operation, plus **$500K–$2M per unplanned shutdown**.
 
-This environment trains an AI agent that:
-- Controls **13 variables simultaneously** across 5 plant stages (not just 1 loop)
-- Responds in milliseconds, never fatigues, never loses context at shift handover
-- Uses **MCP tools** for external context (energy prices, maintenance, emissions)
-- Trains via **domain-randomized simulations** → robust to real-world uncertainties
+We built an environment where an AI agent replaces this entire control stack — handling **13 variables simultaneously** across 5 plant stages, responding in milliseconds, and never losing context at shift handover. It trains via domain-randomized physics simulations and uses **MCP tools** for real-world context like energy prices and maintenance schedules.
 
 ---
 
-## Architecture
+## What Makes This Environment Different
 
 <p align="center">
   <img src="assets/architecture.svg" width="100%" alt="System Architecture">
 </p>
 
----
-
-## The Reactor & Process Flow
-
-<p align="center">
-  <img src="assets/reactor-3d.svg" width="700" alt="ICI 4-Bed Quench Reactor Cross-Section">
-</p>
-
-The ICI Low-Pressure reactor contains 4 adiabatic catalyst beds with cold-shot quench injection between each bed. The exothermic reaction heats gas ~15–20°C per bed; quench gas cools it back down, creating a sawtooth temperature profile. The agent balances reaction speed (high T) against catalyst damage (>280°C = irreversible sintering).
-
-<table><tr>
-<td width="50%"><img src="assets/process-flow.svg" width="100%" alt="Process Flow"><br><em>Complete plant: Natural Gas → Desulfurization → Reformer → Compressor → Reactor → Separator → Distillation</em></td>
-<td width="50%"><img src="assets/plant-equipment.svg" width="100%" alt="Plant Equipment"><br><em>10 major equipment items controlled by 13 action variables</em></td>
-</tr></table>
+- **Full-plant physics engine** — 5 published kinetic models (LHHW, Graaf, VBF, Seyfert, Nestler), SRK equation of state, RK4 ODE integration, 3-reaction system with thermodynamically consistent equilibrium
+- **13-dimensional continuous action space** — feed rates, cooling, compression, purge, recycle, reformer, distillation, and safety valves — not a toy single-variable control problem
+- **12 graded tasks** from steady-state optimization (easy) to simultaneous multi-disturbance survival (expert), each with a **deterministic composable rubric** (Safety + Profit + Catalyst + Stability + TaskProgress) that cannot be gamed
+- **Multi-agent MARL** — 4 agents (Reformer, Synthesis, Purification, Supervisory) mirror real plant organization, each with its own observation slice and action subset
+- **Azure Digital Twins integration** — 10 DTDL v3 models, 15 live cloud twins, 25 relationships; every `env.step()` pushes to the cloud graph for real-time 3D visualization
+- **GPU-accelerated physics** — PyTorch-vectorized `BatchedReactorSim` runs 256 parallel environments on GPU (48× speedup over scalar CPU)
+- **Industrial integrations** — DWSIM, Cantera, ChemSep, OPC-UA, Redis — all optional with graceful fallbacks
+- **4 MCP tools** — energy pricing, catalyst status, maintenance schedule, carbon footprint — giving the agent external context just like a real operator
 
 ---
 
-## Azure Digital Twins — Cloud Integration
+## Training Results — +7.3% Reward Improvement via GRPO
 
-The environment connects to a **live Azure Digital Twins instance** — a cloud twin graph mirroring the entire plant. Every `env.step()` pushes state to 15 cloud twins; the 3D visualization reads from them in real-time.
+GRPO training with **Unsloth** (Qwen2.5-3B-Instruct, 4-bit LoRA, r=16/α=32) against the live physics environment. Runs on a free **Colab T4** (16 GB); one-line switch upgrades to 7B for A100/H100. Full config in [`training_plots/run_metadata.json`](training_plots/run_metadata.json).
 
-| Component | Count | Description |
-|---|---|---|
-| **DTDL v3 Models** | 10 | Plant, Reactor, Compressor, Syngas Feed, Separator, Distillation, Cooling Tower, Recycle Loop, Quench Zone, Agent Controller |
-| **Digital Twins** | 15 | 1 plant + 7 equipment + 3 quench zones + 4 AI agent controllers |
-| **Relationships** | 25 | Process flow (`feedsTo`), cooling (`cools`/`cooledBy`), containment, agent control zones |
+<table>
+<tr>
+<td><img src="training_plots/loss_curve.png" alt="Loss Curve"><br><em>Training loss over GRPO steps</em></td>
+<td><img src="training_plots/reward_curve.png" alt="Reward Curve"><br><em>Average reward: 0.844 → 0.906</em></td>
+</tr>
+</table>
 
-Each of the 4 agents has its own ADT twin tracking actions, rewards, and confidence in real-time. Fully optional — runs standalone when `AZURE_DIGITAL_TWINS_URL` is not set.
+![Baseline vs Trained](training_plots/baseline_vs_trained.png)
+*Random baseline (red) vs GRPO-trained agent (green) — stable temperature, no shutdowns, positive profit.*
 
----
+| Metric | Untrained Agent | GRPO-Trained Agent |
+|--------|----------------|--------------------|
+| **Avg Reward** | 0.844 | **0.906 (+7.3%)** |
+| **Temperature** | Oscillates, hits 300°C shutdown | Maintains 240–260°C optimal range |
+| **Safety** | ~40% emergency shutdowns | Zero shutdowns, predictive lookahead |
+| **Profit** | Negative | Consistently positive |
+| **Feed ratio** | Random H₂/CO | Learns H₂/CO ≈ 2.0 (stoichiometric optimum) |
 
-## GPU-Accelerated Physics (48× Speedup)
+### Baseline Comparison (Classical Controllers)
 
-The reactor simulation includes a **PyTorch-vectorized backend** (`BatchedReactorSim`) that runs 256 parallel environments on GPU — achieving **48× speedup** over the scalar CPU version on an RTX 3060.
-
-| Component | CPU (scalar) | GPU (batch=256) |
-|---|---|---|
-| SRK Fugacity | `math.exp/log` | `torch.exp/log` vectorized |
-| LHHW Kinetics | Scalar Arrhenius | Batched `torch.exp(-Ea/RT)` |
-| RK4 ODE Solver | 1 state at a time | 256 states in parallel |
-| Process Noise | `random.gauss` | `torch.randn` on GPU |
-
----
-
-## Action Space (13 Continuous Variables)
-
-| Category | Variable | Range | What It Controls |
-|----------|----------|-------|-----------------|
-| **Feed** | `feed_rate_h2` | 0–10 mol/s | Hydrogen feed to reactor |
-| **Feed** | `feed_rate_co` | 0–5 mol/s | Carbon monoxide feed |
-| **Thermal** | `cooling_water_flow` | 0–100 L/min | Shell-side heat removal |
-| **Thermal** | `compressor_power` | 0–100 kW | Reactor pressure via compression |
-| **Loop** | `purge_valve_position` | 0–100% | Inert gas removal from recycle |
-| **Loop** | `recycle_ratio` | 0–8 | Unreacted gas recycle rate |
-| **Loop** | `feed_preheat_temp` | 0–300°C | Feed gas preheater setpoint |
-| **Reformer** | `reformer_fuel_gas` | 0–20 mol/s | SMR burner fuel rate |
-| **Reformer** | `reformer_steam_flow` | 0–50 mol/s | Steam for reforming |
-| **Distillation** | `distillation_reflux` | 0–10 | Column reflux ratio |
-| **Distillation** | `reboiler_duty` | 0–200 kW | Separation energy input |
-| **Safety** | `flare_valve` | 0–100% | Emergency pressure relief |
-
----
-
-## Tasks (12 Scenarios)
-
-| Task | Difficulty | Steps | What the Agent Must Do |
-|------|:---------:|------:|----------------------|
-| Steady-State Optimization | 🟢 | 100 | Maximize profit at operating temperature |
-| Cold Start | 🟡 | 50 | Heat reactor 150°C → 250°C without overshoot |
-| Cost Minimization | 🟡 | 100 | Minimize OPEX while maintaining production |
-| Maximum Yield | 🟡 | 100 | Push for highest methanol output |
-| Disturbance Rejection | 🟡 | 100 | Handle cooling system failure at step 25 |
-| Emergency Recovery | 🔴 | 80 | Cool overheated reactor from 290°C |
-| Aged Catalyst | 🔴 | 100 | Operate profitably with 60% catalyst health |
-| Pressure Loss | 🔴 | 100 | Maintain production as compressor degrades |
-| Feed Composition Upset | 🔴 | 100 | Adapt to sudden H₂/CO ratio shift |
-| Day/Night Pricing | 🔴 | 150 | Optimize against time-varying electricity prices |
-| Long Horizon Production | 🔴 | 500 | Extended run managing catalyst aging |
-| Multi-Disturbance | 🟣 | 150 | Survive multiple simultaneous failures |
-
----
-
-## Baseline Performance
-
-| Controller | Optimization | Startup | Disturbance | Emergency | Cost Min. | Aged Cat. | Average |
+| Controller | Optimization | Startup | Disturbance | Emergency | Cost Min. | Aged Cat. | **Average** |
 |-----------|:-----------:|:-------:|:-----------:|:---------:|:---------:|:---------:|:-------:|
-| **PID** | 0.387 | 0.094 | 0.812 | 0.361 | 0.694 | 0.775 | **0.521** |
-| **MPC** | 0.519 | 0.094 | 0.857 | 0.432 | 0.718 | 0.766 | **0.564** |
-| **Heuristic** | 0.720 | 0.094 | 0.956 | 0.454 | 0.694 | 0.860 | **0.630** |
-
-The Heuristic controller outperforms PID and MPC — a deliberately strong baseline for RL to beat.
+| PID | 0.387 | 0.094 | 0.812 | 0.361 | 0.694 | 0.775 | **0.521** |
+| MPC | 0.519 | 0.094 | 0.857 | 0.432 | 0.718 | 0.766 | **0.564** |
+| Heuristic | 0.720 | 0.094 | 0.956 | 0.454 | 0.694 | 0.860 | **0.630** |
 
 ---
 
-## Multi-Agent Architecture
+## Composable Reward Rubrics
 
-```
-                    ┌─────────────────────┐
-                    │  Supervisory Agent   │  ← Coordinates, resolves conflicts
-                    │  (plant-wide view)   │
-                    └───┬───────┬─────┬───┘
-                        │       │     │
-              ┌─────────┘       │     └──────────┐
-              ↓                 ↓                 ↓
-    ┌─────────────────┐ ┌──────────────┐ ┌───────────────┐
-    │ Reformer Agent  │ │ Synthesis    │ │ Purification  │
-    │ fuel_gas,       │ │ Agent        │ │ Agent         │
-    │ steam_flow      │ │ h2, co,      │ │ reflux,       │
-    │                 │ │ cooling,     │ │ reboiler      │
-    │                 │ │ compressor,  │ │               │
-    │                 │ │ purge,       │ │               │
-    │                 │ │ recycle      │ │               │
-    └─────────────────┘ └──────────────┘ └───────────────┘
-```
+Rewards use **composable rubrics** (per RFC 004) — not a single monolithic score. Each rubric returns 0–1 and cannot be exploited independently:
 
-4 agents mirror real plant organization. Each controls its subsystem; the Supervisory agent merges actions and resolves conflicts using 4 MCP tools (energy pricing, catalyst status, maintenance schedule, carbon footprint).
+| Sub-rubric | Range | What It Captures |
+|---|---|---|
+| `SafetyRubric` | −0.30 → +0.20 | Distance from 300°C interlock; hard penalty above 280°C |
+| `ProfitRubric` | −0.20 → +0.40 | Per-step profit (revenue − feed − electricity − cooling) |
+| `CatalystRubric` | 0.0 → +0.10 | Catalyst-health preservation (the $2M asset) |
+| `StabilityRubric` | 0.0 → +0.10 | Low temperature variance across reactor beds |
+| `TaskProgressRubric` | task-specific | Progress toward the task's terminal grader |
+
+> *"An agent that exploits the reward without solving the task should not get high scores."* — judging guide
+
+---
+
+## Training Pipeline
+
+The full training pipeline runs end-to-end on a **free Colab T4**:
+
+1. **Environment** — HF Space serves the physics engine via REST API
+2. **Agent** — Qwen2.5-3B-Instruct with 4-bit QLoRA (Unsloth)
+3. **Algorithm** — TRL GRPO with the `trl_bridge.py` reward function calling the live environment
+4. **Artifacts** — Loss/reward curves, trained adapter, run metadata — all saved and reproducible
+
+See [`training/train_grpo.ipynb`](training/train_grpo.ipynb) for the notebook and [`training/train_hf_job.py`](training/train_hf_job.py) for the HF Jobs script.
 
 ---
 
@@ -209,33 +131,12 @@ async with MethanolAPCEnv.from_env("glitchfilter/methanol-apc-env").connect() as
 ```
 
 ```bash
-# Docker
-docker compose up
-curl http://localhost:8000/health
-
-# Tests (86 passing)
-python -m pytest methanol_apc_env/tests/ -v
-
-# OpenEnv validate
-openenv validate methanol_apc_env/
+docker compose up                            # Run locally
+python -m pytest methanol_apc_env/tests/ -v  # 86 tests passing
+openenv validate methanol_apc_env/           # OpenEnv validation
 ```
 
----
-
-## Key Technical Features
-
-| Feature | Details |
-|---------|---------|
-| **Physics** | 5 kinetic models (LHHW, Graaf, VBF, Seyfert, Nestler), SRK EOS, RK4 ODE, 3-reaction system |
-| **Safety** | 4-level alarming (Advisory → Warning → Predict → Shutdown) with 5-step lookahead |
-| **Integrations** | DWSIM, Cantera, ChemSep, Azure Digital Twins, OPC-UA, Redis — all optional with fallbacks |
-| **Regional Configs** | 10 market bundles (APAC, NA, EU, Middle East, India, China, Germany, Trinidad, Brazil, Green MeOH) |
-| **MCP Tools** | Energy pricing, catalyst status, maintenance schedule, carbon footprint |
-| **Training** | TRL GRPO bridge, Gymnasium wrapper, 4-bit QLoRA config for T4/A100 |
-| **Deployment** | Docker, docker-compose, Kubernetes (2 replicas, health probes), HF Space |
-| **Testing** | 86 tests, 92% coverage, CI on Python 3.10/3.11/3.12 |
-
-<details><summary>📁 Project Structure</summary>
+<details><summary>Project Structure</summary>
 
 ```
 ├── inference.py                    # Baseline inference (12 task-specific prompts)
@@ -244,13 +145,14 @@ openenv validate methanol_apc_env/
 │   ├── models.py                   # Pydantic Action (13 fields) + Observation (30+)
 │   ├── agents.py                   # 4 multi-agent classes
 │   ├── trl_bridge.py               # GRPO reward function + config
+│   ├── openenv.yaml                # 12 tasks with inline composable graders
 │   ├── integrations/               # DWSIM, Cantera, ChemSep, Azure DT, OPC-UA, Redis
 │   ├── server/
 │   │   ├── reactor_sim.py          # Physics engine (LHHW, RK4, SRK, 3-reaction)
-│   │   ├── methanol_environment.py # Environment class
+│   │   ├── methanol_environment.py # Environment class with Rubric attribute
 │   │   ├── tasks.py                # 12 tasks + deterministic graders
 │   │   └── app.py                  # FastAPI server
-│   └── tests/                      # 86 tests
+│   └── tests/                      # 86 tests, 92% coverage
 ├── examples/                       # PID, MPC, Heuristic baselines
 ├── training/                       # GRPO notebook + HF Jobs script
 └── assets/                         # SVG diagrams
@@ -272,6 +174,4 @@ openenv validate methanol_apc_env/
 }
 ```
 
-<p align="center">
-  <b>MIT License</b>
-</p>
+<p align="center"><b>MIT License</b></p>

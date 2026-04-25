@@ -70,7 +70,7 @@
   <text x="60" y="72" font-family="'Segoe UI', system-ui, -apple-system, sans-serif" font-size="38" font-weight="700" fill="white" letter-spacing="-0.5">Methanol APC Environment</text>
 
   <!-- Subtitle -->
-  <text x="60" y="105" font-family="'Segoe UI', system-ui, sans-serif" font-size="17" fill="#94a3b8">Digital Twin of Industrial Methanol Synthesis for Reinforcement Learning</text>
+  <text x="60" y="105" font-family="'Segoe UI', system-ui, sans-serif" font-size="17" fill="#94a3b8">RL-Powered Autonomous Process Control for Industrial Methanol Reactors</text>
 
   <!-- Chemical equation -->
   <text x="60" y="140" font-family="'Segoe UI', system-ui, sans-serif" font-size="14" fill="#60a5fa" filter="url(#glow)">

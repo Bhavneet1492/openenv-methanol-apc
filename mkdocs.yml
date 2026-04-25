@@ -1,5 +1,5 @@
 site_name: Methanol APC Environment
-site_description: Digital Twin of Industrial Methanol Synthesis for Reinforcement Learning
+site_description: RL-Powered Autonomous Process Control for Industrial Methanol Reactors
 site_url: https://bhavneet1492.github.io/openenv-methanol-apc/
 repo_url: https://github.com/Bhavneet1492/openenv-methanol-apc
 repo_name: Bhavneet1492/openenv-methanol-apc
