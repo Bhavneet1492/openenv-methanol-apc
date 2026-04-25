@@ -69,22 +69,11 @@
 
 > GRPO training with Unsloth (Qwen2.5-3B-Instruct, 4-bit LoRA, r=16/α=32) against the live physics environment. Notebook fits a Colab T4 (16 GB); a one-line switch upgrades to 7B for A100/H100. See [`training_plots/run_metadata.json`](training_plots/run_metadata.json) for the full run config.
 
-<table>
-<tr>
-<td width="50%">
-
 ![Loss Curve](training_plots/loss_curve.png)
 *Training loss over GRPO steps*
 
-</td>
-<td width="50%">
-
 ![Reward Curve](training_plots/reward_curve.png)
 *Average reward per step*
-
-</td>
-</tr>
-</table>
 
 ![Baseline vs Trained](training_plots/baseline_vs_trained.png)
 *Random baseline (red) vs GRPO-trained agent (green) — the trained agent maintains stable temperature, avoids shutdowns, and maximizes profit.*
@@ -365,24 +354,13 @@ The simulated reactor faithfully models the **ICI (Imperial Chemical Industries)
 
 ## Process Flow & Plant Equipment
 
-<table>
-<tr>
-<td width="50%">
-
 <img src="assets/process-flow.svg" width="100%" alt="Complete Plant Process Flow: Natural Gas → Desulfurization → Reformer → Compressor → Synthesis Reactor → Separator → Distillation, with recycle loop and purge">
 
 *Process flow with recycle loop and purge system*
 
-</td>
-<td width="50%">
-
 <img src="assets/plant-equipment.svg" width="100%" alt="Complete Plant Equipment Layout">
 
 *10 major equipment items controlled by the agent's 13 action variables*
-
-</td>
-</tr>
-</table>
 
 ---
 
@@ -947,16 +925,15 @@ kubectl apply -f k8s/
 
 ```bibtex
 @software{methanol_apc_env,
-  title   = {Methanol APC Environment: Multi-Agent Process Control Digital Twin},
-  author  = {Kaur, Bhavneet},
-  year    = {2026},
-  url     = {https://huggingface.co/spaces/glitchfilter/methanol-apc-env},
-  note    = {OpenEnv-compatible RL environment for methanol synthesis APC}
+  title={Methanol APC Environment: Multi-Agent Process Control Digital Twin},
+  author={Kaur, Bhavneet and Gupta, Ananya and Sharma, Rahul},
+  year={2026},
+  url={https://huggingface.co/spaces/glitchfilter/methanol-apc-env},
+  note={OpenEnv-compatible RL environment for methanol synthesis APC}
 }
 ```
-
 ---
 
 <p align="center">
-  <b>MIT License</b> · Built for the <a href="https://github.com/openenv-dev/OpenEnv">OpenEnv</a> hackathon
+  <b>MIT License</b>
 </p>
