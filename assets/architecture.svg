@@ -224,7 +224,13 @@
 
     <!-- HuggingFace -->
     <rect x="15" y="45" width="220" height="80" rx="10" fill="#0f172a" stroke="#ffd21e" stroke-width="1.5"/>
-    <text x="55" y="72" font-family="'Segoe UI', sans-serif" font-size="22" fill="#ffd21e">🤗</text>
+    <!-- HF logo (smiley face) -->
+    <g transform="translate(30, 62)">
+      <circle cx="15" cy="12" r="14" fill="none" stroke="#ffd21e" stroke-width="2"/>
+      <circle cx="10" cy="8" r="2" fill="#ffd21e"/>
+      <circle cx="20" cy="8" r="2" fill="#ffd21e"/>
+      <path d="M8 15 Q15 22 22 15" fill="none" stroke="#ffd21e" stroke-width="2" stroke-linecap="round"/>
+    </g>
     <text x="80" y="72" font-family="'Segoe UI', sans-serif" font-size="14" fill="white" font-weight="700">HuggingFace</text>
     <text x="80" y="90" font-family="'Segoe UI', sans-serif" font-size="10" fill="#94a3b8">Spaces · Live Deployment</text>
     <text x="80" y="106" font-family="'Segoe UI', sans-serif" font-size="9" fill="#fbbf24">glitchfilter/methanol-apc-env</text>
@@ -241,8 +247,8 @@
 
     <!-- Docker -->
     <rect x="15" y="235" width="220" height="80" rx="10" fill="#0f172a" stroke="#2496ED" stroke-width="1"/>
-    <!-- Docker whale logo -->
-    <g transform="translate(28, 252) scale(0.055)">
+    <!-- Docker whale logo (centered, bigger) -->
+    <g transform="translate(22, 255) scale(0.085)">
       <path d="M349 175c-10-1-21 0-30 4-3-20-17-37-33-49l-7-4-4 6c-9 13-12 35-3 50-5 2-14 5-26 5H7l-1 7c-3 25 3 51 18 71 14 18 35 28 63 28 60 0 104-27 125-86 8 0 25 0 34-17 0-1 0-1 0-1l3-6-6-3zm-284-36h29v27h-29v-27zm36 0h29v27h-29v-27zm0-33h29v27h-29v-27zm36 33h29v27h-29v-27zm0-33h29v27h-29v-27zm36 33h29v27h-29v-27zm0-33h29v27h-29v-27zm36 33h29v27h-29v-27zm36 0h29v27h-29v-27z" fill="#2496ED"/>
     </g>
     <text x="80" y="268" font-family="'Segoe UI', sans-serif" font-size="14" fill="white" font-weight="700">Docker</text>
