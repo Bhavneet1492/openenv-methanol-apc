@@ -27,6 +27,13 @@
 | **Training Notebook** | [train_grpo.ipynb](training/train_grpo.ipynb) |
 | **Blog Post** | [blog.md](blog.md) |
 | **Documentation** | [GitHub Pages](https://bhavneet1492.github.io/openenv-methanol-apc/) |
+| **Demo Video** | [See below](#demo-video) |
+
+---
+
+## Demo Video
+
+https://github.com/user-attachments/assets/https://github.com/user-attachments/assets/fe29665d-8a19-424a-b7a5-37ec0efbb6c1
 
 ---
 
