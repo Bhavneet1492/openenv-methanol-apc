@@ -38,12 +38,12 @@
   .data-row .value.danger{ color: #ff4444; }
   .data-row .value.good  { color: #00d4aa; }
 
-  #panel-reactor   { top: 70px; left: 260px; }
+  #panel-reactor   { top: 70px; left: 260px; transition: left 0.3s; }
   #panel-economics { top: 70px; right: 20px; }
-  #panel-catalyst  { bottom: 80px; left: 260px; }
+  #panel-catalyst  { bottom: 80px; left: 260px; transition: left 0.3s; }
   #panel-controls  { bottom: 80px; right: 20px; }
 
-  #panel-beds { top: 280px; left: 260px; min-width: 180px; }
+  #panel-beds { top: 280px; left: 260px; min-width: 180px; transition: left 0.3s; }
   .bed-bar { display: flex; align-items: center; gap: 6px; margin: 3px 0; cursor: pointer; padding: 2px 4px; border-radius: 4px; transition: background 0.2s; }
   .bed-bar:hover { background: rgba(0,212,170,0.12); }
   .bed-bar:hover .bed-label { color: #00d4aa; }
@@ -2200,7 +2200,13 @@ window.toggleCtrlPanel = function() {
   const p = document.getElementById('ctrl-panel');
   const t = document.getElementById('ctrl-toggle');
   p.classList.toggle('collapsed');
-  t.innerHTML = p.classList.contains('collapsed') ? '&#9664;' : '&#9654;';
+  const hidden = p.classList.contains('collapsed');
+  t.innerHTML = hidden ? '&#9654;' : '&#9664;';
+  // Shift left-side panels when control panel hides
+  const newLeft = hidden ? '20px' : '260px';
+  document.getElementById('panel-reactor').style.left = newLeft;
+  document.getElementById('panel-beds').style.left = newLeft;
+  document.getElementById('panel-catalyst').style.left = newLeft;
 };
 
 // Mode switch
