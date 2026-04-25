@@ -41,16 +41,23 @@ class MethanolRewardFunction:
 
         Each completion should be a JSON string with action fields.
         Returns a list of reward floats.
+
+        Each completion is scored independently — the environment is reset
+        before evaluating each one so rewards are not path-dependent.
         """
         import json
         from methanol_apc_env.models import MethanolAPCAction
 
+        env = self._get_env()
         rewards = []
         for completion in completions:
             try:
-                action_dict = json.loads(completion.strip())
+                env.reset(task_name=self.task, seed=self.seed)
+                text = completion.strip()
+                if "```" in text:
+                    text = text.split("```")[1].replace("json", "").strip()
+                action_dict = json.loads(text)
                 action = MethanolAPCAction(**action_dict)
-                env = self._get_env()
                 obs = env.step(action)
                 rewards.append(float(obs.reward))
             except Exception:

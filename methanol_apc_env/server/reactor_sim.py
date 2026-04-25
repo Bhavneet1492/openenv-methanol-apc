@@ -426,6 +426,16 @@ def simulate_step(
     cooling_water_temp = state.cooling_water_temp
     if disturbance:
         cooling_water_temp = disturbance.get("cooling_water_temp", cooling_water_temp)
+        # Feed composition upset: shift H2/CO ratio by adjusting feed rates
+        # Simulates upstream reformer fluctuation (e.g., S/C ratio change)
+        if "feed_h2_factor" in disturbance:
+            new_h2 *= disturbance["feed_h2_factor"]
+        if "feed_co_factor" in disturbance:
+            new_co *= disturbance["feed_co_factor"]
+        # Pressure loss: reduce compressor effectiveness
+        # Simulates mechanical failure (bearing wear, seal leak)
+        if "compressor_power_factor" in disturbance:
+            new_compressor *= disturbance["compressor_power_factor"]
 
     # ------------------------------------------------------------------
     # 1.  MASS BALANCE — 3 simultaneous reactions (Fogler Ch. 1, LeBlanc Ch.3.2)
