@@ -33,3 +33,6 @@ wandb/
 
 # Test artifacts
 training/test_*
+
+# Miscellaneous
+context/
