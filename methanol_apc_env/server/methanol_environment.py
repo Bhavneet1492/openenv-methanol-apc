@@ -218,7 +218,9 @@ class MethanolAPCEnvironment(_BaseClass):
             return self._make_observation(reward=0.01)
 
         if self._reactor is None or self._task is None:
-            raise RuntimeError("Must call reset() before step()")
+            # Auto-reset for stateless HTTP callers (OpenEnv REST API
+            # creates a fresh env per request — no prior reset call).
+            self.reset()
 
         self._state.step_count += 1
         prev = self._reactor
