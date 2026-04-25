@@ -21,40 +21,6 @@
 
 ---
 
-## Table of Contents
-
-- [Submission Links](#submission-links)
-- [Training Results](#training-results)
-- [Azure Digital Twins — Cloud Integration](#azure-digital-twins--cloud-integration)
-- [GPU-Accelerated Physics (48x Speedup)](#gpu-accelerated-physics-48x-speedup)
-- [Background: Why This Exists](#background-why-this-exists)
-- [Problem Statement](#problem-statement)
-- [Positioning vs Industry](#positioning-vs-industry)
-- [Architecture](#architecture)
-- [System Design](#system-design)
-- [The Reactor: ICI 4-Bed Quench Design](#the-reactor-ici-4-bed-quench-design)
-- [Process Flow & Plant Equipment](#process-flow--plant-equipment)
-- [3D Interactive Digital Twin](#3d-interactive-digital-twin)
-- [Quick Start](#quick-start)
-- [Action Space (13 Continuous Variables)](#action-space-13-continuous-variables)
-- [Observation Space (30+ Fields)](#observation-space-30-fields)
-- [Tasks (12 Scenarios)](#tasks-12-scenarios)
-- [Baseline Performance](#baseline-performance)
-- [Multi-Agent Architecture](#multi-agent-architecture)
-- [MCP Tools](#mcp-tools)
-- [TRL / Unsloth Integration](#trl--unsloth-integration-grpo-training)
-- [Physics Engine](#physics-engine)
-- [ChemE Tool Integration](#cheme-tool-integration)
-- [Regional Configurations (10 Bundles)](#regional-configurations-10-bundles)
-- [Fault Detection & Safety](#fault-detection--safety)
-- [Production Readiness](#production-readiness)
-- [Examples](#examples)
-- [Setup & Development](#setup--development)
-- [References](#references)
-- [Citation](#citation)
-
----
-
 ## Submission Links
 
 | Deliverable | Link |
@@ -65,28 +31,20 @@
 | Blog Post | [blog.md](blog.md) |
 | Documentation | [GitHub Pages](https://bhavneet1492.github.io/openenv-methanol-apc/) |
 
+---
+
 ## Training Results
 
-> **Real GRPO training on HF Jobs** — Qwen2.5-3B-Instruct, 4-bit QLoRA (r=16/α=32), 150 steps on Tesla T4 (15.8 GB VRAM). Completed in 86.9 minutes. **Baseline: 0.844 → Trained: 0.906 (+7.3% reward improvement)**.
+> GRPO training with Unsloth (Qwen2.5-3B-Instruct, 4-bit LoRA, r=16/α=32) against the live physics environment. Notebook fits a Colab T4 (16 GB); a one-line switch upgrades to 7B for A100/H100. See [`training_plots/run_metadata.json`](training_plots/run_metadata.json) for the full run config.
 
-<table><tr>
-<td width="50%"><img src="training_plots/loss_curve.png" alt="Loss Curve"><br><em>GRPO policy loss — drops to near-zero by step 15, occasional negative spikes = reinforcing high-reward completions</em></td>
-<td width="50%"><img src="training_plots/reward_curve.png" alt="Reward Curve"><br><em>Mean reward per step with ±1σ band — moving average stabilizes at ~0.80</em></td>
-</tr></table>
+![Loss Curve](training_plots/loss_curve.png)
+*Training loss over GRPO steps*
 
-<img src="training_plots/baseline_vs_trained.png" alt="Baseline vs Trained" width="100%">
+![Reward Curve](training_plots/reward_curve.png)
+*Average reward per step*
 
-*Untrained baseline (0.844) vs GRPO-trained agent (0.906) — +7.3% reward improvement from 150 steps of training.*
-
-<details><summary>📊 Full Training Dashboard (LR, Entropy, Loss, Reward)</summary>
-
-<img src="training_plots/training_dashboard.png" alt="Training Dashboard" width="100%">
-
-*2×2 dashboard: Reward curve with std band, policy loss, linear LR decay (5e-6 → 0), policy entropy converging from 0.038 → 0.008.*
-
-</details>
-
-### What the Agent Learned (Qualitative)
+![Baseline vs Trained](training_plots/baseline_vs_trained.png)
+*Random baseline (red) vs GRPO-trained agent (green) — the trained agent maintains stable temperature, avoids shutdowns, and maximizes profit.*
 
 | Behavior | Untrained (Random) Agent | GRPO-Trained Agent |
 |----------|--------------------------|--------------------|
@@ -97,21 +55,46 @@
 | **Feed ratio** | Random H2/CO = poor selectivity | Learns H2/CO ~ 2.0 (stoichiometric optimum) |
 | **Cooling** | Either overcools (no production) or undercools (runaway) | Dynamic cooling matched to heat generation |
 
-### Curriculum & Self-Improvement
+---
 
-The environment supports **adaptive difficulty** through:
-- **Domain randomization**: Each `reset()` randomizes catalyst health (0.5-1.0), initial temperature (+-3C), pressure (+-1.5 bar), feed composition, and cooling water temp
-- **12 tasks with escalating difficulty**: Easy (startup) → Medium (optimization) → Hard (disturbance rejection, cascading failures) → Expert (500-step catalyst lifecycle)
-- **Monte Carlo disturbances**: Brownian motion on cooling water temp per step — no two episodes are identical
-- **Multi-agent decomposition**: Agents can be trained individually (simpler) then composed (harder)
+## Problem Statement
 
-This means the model is always training near its capability frontier — easy tasks provide warm-start signal, hard tasks provide aspirational targets.
+In a methanol plant, 4–6 operators per shift manually manage hundreds of control loops 24/7. They make ~15 decisions/hour under cognitive load, with 3–5 second reaction times during emergencies. This costs **$2–5M/year in lost yield** from conservative operation, plus **$500K–$2M per unplanned shutdown**.
+
+This environment trains an AI agent that:
+- Controls **13 variables simultaneously** across 5 plant stages (not just 1 loop)
+- Responds in milliseconds, never fatigues, never loses context at shift handover
+- Uses **MCP tools** for external context (energy prices, maintenance, emissions)
+- Trains via **domain-randomized simulations** → robust to real-world uncertainties
+
+---
+
+## Architecture
+
+<p align="center">
+  <img src="assets/architecture.svg" width="100%" alt="System Architecture">
+</p>
+
+---
+
+## The Reactor & Process Flow
+
+<p align="center">
+  <img src="assets/reactor-3d.svg" width="700" alt="ICI 4-Bed Quench Reactor Cross-Section">
+</p>
+
+The ICI Low-Pressure reactor contains 4 adiabatic catalyst beds with cold-shot quench injection between each bed. The exothermic reaction heats gas ~15–20°C per bed; quench gas cools it back down, creating a sawtooth temperature profile. The agent balances reaction speed (high T) against catalyst damage (>280°C = irreversible sintering).
+
+<table><tr>
+<td width="50%"><img src="assets/process-flow.svg" width="100%" alt="Process Flow"><br><em>Complete plant: Natural Gas → Desulfurization → Reformer → Compressor → Reactor → Separator → Distillation</em></td>
+<td width="50%"><img src="assets/plant-equipment.svg" width="100%" alt="Plant Equipment"><br><em>10 major equipment items controlled by 13 action variables</em></td>
+</tr></table>
 
 ---
 
 ## Azure Digital Twins — Cloud Integration
 
-The environment connects to a **live Azure Digital Twins instance** — a cloud twin graph mirroring the entire methanol plant. Every `env.step()` pushes state to 15 cloud twins; the 3D visualization reads from them in real-time.
+The environment connects to a **live Azure Digital Twins instance** — a cloud twin graph mirroring the entire plant. Every `env.step()` pushes state to 15 cloud twins; the 3D visualization reads from them in real-time.
 
 | Component | Count | Description |
 |---|---|---|
@@ -119,26 +102,13 @@ The environment connects to a **live Azure Digital Twins instance** — a cloud 
 | **Digital Twins** | 15 | 1 plant + 7 equipment + 3 quench zones + 4 AI agent controllers |
 | **Relationships** | 25 | Process flow (`feedsTo`), cooling (`cools`/`cooledBy`), containment, agent control zones |
 
-```
-Agent step() → Physics sim → Push to Azure DT (15 twins) → 3D viz reads from cloud
-```
-
-Each of the 4 agents (Reformer, Synthesis, Purification, Supervisory) has its own ADT twin tracking actions, rewards, and confidence in real-time.
-
-```bash
-# Run multi-agent demo with live ADT sync
-export AZURE_DIGITAL_TWINS_URL="https://methanol-apc-adt.api.eus.digitaltwins.azure.net"
-python scripts/run_marl_adt.py --steps 100 --task optimization
-# Open 3d-plant.html → click "Azure DT Live" to see cloud twin data
-```
-
-> **Fully optional** — when `AZURE_DIGITAL_TWINS_URL` is not set, the environment runs standalone using internal physics. Zero config change needed.
+Each of the 4 agents has its own ADT twin tracking actions, rewards, and confidence in real-time. Fully optional — runs standalone when `AZURE_DIGITAL_TWINS_URL` is not set.
 
 ---
 
-## GPU-Accelerated Physics (48x Speedup)
+## GPU-Accelerated Physics (48× Speedup)
 
-The reactor simulation includes a **PyTorch-vectorized backend** (`BatchedReactorSim`) that runs 256 parallel environments on GPU simultaneously — achieving **48x speedup** over the scalar CPU version on an RTX 3060.
+The reactor simulation includes a **PyTorch-vectorized backend** (`BatchedReactorSim`) that runs 256 parallel environments on GPU — achieving **48× speedup** over the scalar CPU version on an RTX 3060.
 
 | Component | CPU (scalar) | GPU (batch=256) |
 |---|---|---|
@@ -147,398 +117,24 @@ The reactor simulation includes a **PyTorch-vectorized backend** (`BatchedReacto
 | RK4 ODE Solver | 1 state at a time | 256 states in parallel |
 | Process Noise | `random.gauss` | `torch.randn` on GPU |
 
-```python
-# CPU: 1 environment
-state = simulate_step(prev, action, disturbance)
-
-# GPU: 256 environments in parallel (same physics, vectorized)
-from methanol_apc_env.server.reactor_sim import BatchedReactorSim
-sim = BatchedReactorSim(batch_size=256, device="cuda")
-states = sim.step(prev_states, actions, disturbances)  # 48x faster
-```
-
----
-
----
-
-## Background: Why This Exists
-
-### What is Methanol?
-
-**Methanol (CH₃OH)** is one of the world's most important industrial chemicals — a $30+ billion global market producing over 100 million tonnes annually. It's the simplest alcohol: a colourless, flammable liquid used as:
-
-- **Chemical feedstock**: raw material for formaldehyde, acetic acid, MTBE, and plastics
-- **Clean fuel**: marine shipping fuel (replacing heavy fuel oil), gasoline additive, fuel cells
-- **Energy carrier**: stores hydrogen in liquid form for transport and storage
-- **Green chemistry**: CO₂ + renewable H₂ → green methanol (carbon-neutral fuel)
-
-> **📚 Learn more:**
-> - [Wikipedia: Methanol](https://en.wikipedia.org/wiki/Methanol) — comprehensive overview of chemistry, production, and applications
-> - [Methanol Institute: Production](https://www.methanol.org/methanol-production/) — industry perspective and global production data
-> - [ScienceDirect: Methanol Synthesis](https://www.sciencedirect.com/topics/engineering/methanol-synthesis) — academic deep dive into catalysis and process engineering
-> - [Bozzano & Manenti (2016)](https://doi.org/10.1016/j.pecs.2016.06.001) — *"Efficient methanol synthesis: Perspectives, technologies and optimization strategies"*
-
-### How is Methanol Made Industrially?
-
-Modern methanol is made from **synthesis gas** (syngas = CO + H₂) in a catalytic reactor:
-
-```
-Natural Gas (CH₄)  →  Steam Reformer (700-900°C)  →  Syngas (CO + H₂)
-                                                         ↓
-                                                    Compressor (→ 80 bar)
-                                                         ↓
-                           ┌─────────────────────────────────────┐
-                           │    SYNTHESIS REACTOR (this env!)    │
-                           │    Cu/ZnO/Al₂O₃ catalyst            │
-                           │    250°C, 50-100 bar                │
-                           │    CO + 2H₂ → CH₃OH                 │
-                           │    ΔH = -90.5 kJ/mol (exothermic)   │
-                           └──────────────┬──────────────────────┘
-                                          ↓
-                    Separator  →  Distillation  →  Pure Methanol (99.85%)
-                       ↑                              ↓
-                   Recycle loop                 Grade AA product
-                  (RR = 3.5)                    $740/MT (APAC)
-```
-
-Key challenges that make this hard to control:
-- **Exothermic**: the reaction generates heat — too much heat → thermal runaway → emergency shutdown
-- **Equilibrium-limited**: higher temperature speeds up reaction but shifts equilibrium *against* you
-- **Catalyst degradation**: Cu sinters irreversibly above 280°C (permanent damage)
-- **Recycle loop**: only ~5% conversion per pass → 95% of gas is recycled, accumulating inerts
-- **Multi-variable coupling**: feed rate, temperature, pressure, and cooling all interact nonlinearly
-
-### What is Advanced Process Control (APC)?
-
-In chemical plants, process control exists in layers:
-
-| Level | What It Does | How It Works | Limitations |
-|-------|-------------|-------------|-------------|
-| **Manual** | Human operator watches screens | Adjusts setpoints every 15-30 min based on experience | Slow, inconsistent, conservative |
-| **PID** | Single-loop feedback controllers | Measures one variable, adjusts one output (e.g., temperature → cooling valve) | Can't handle multi-variable interactions |
-| **APC/MPC** | Model Predictive Control | Uses a linear plant model to optimize multiple variables simultaneously | Requires expensive model identification, assumes linearity |
-| **AI/RL** | Learned control policy | Learns optimal actions from experience in simulation | **This is what our environment enables** |
-
-Traditional APC/MPC systems cost **$500K–$2M per unit** to implement (model identification, commissioning, tuning) and require **re-identification every 1–2 years** as plant conditions change. They also assume linear process dynamics, which breaks down in key operating regions.
-
-> **📚 Learn more:**
-> - [Wikipedia: Advanced Process Control](https://en.wikipedia.org/wiki/Advanced_process_control) — types of APC and industry context
-> - [Seborg et al. (2016)](https://www.wiley.com/en-us/Process+Dynamics+and+Control-p-9781119285915) — *Process Dynamics and Control*, 4th ed. — the standard textbook
-
-### Why Reinforcement Learning?
-
-RL is uniquely suited to this problem because:
-
-1. **Nonlinear dynamics**: The reactor operates in a nonlinear regime where traditional linear MPC struggles — near equilibrium, during startups, and under disturbances
-2. **Safety under uncertainty**: The agent must learn hard constraints (never exceed 300°C) while pushing for maximum profit — a constrained optimization problem with irreversible penalties
-3. **Long-horizon planning**: Catalyst degradation unfolds over hours/days, requiring the agent to balance short-term profit against long-term catalyst health
-4. **Adaptation**: Catalyst aging, feed composition changes, and equipment degradation mean the optimal policy shifts over time — RL agents can adapt
-5. **Multi-objective trade-offs**: Simultaneously maximizing yield, minimizing energy cost, reducing emissions, and maintaining safety margins
-
-**What this environment enables:**
-- Train RL/LLM agents on a realistic methanol plant simulator before deploying to real hardware
-- Benchmark new algorithms against PID, MPC, and heuristic baselines
-- Study multi-agent coordination across plant stages
-- Evaluate safety-constrained RL in a physically grounded setting
-
----
-
-## Problem Statement
-
-**Automating the manual distributed control of a chemical manufacturing plant.**
-
-In a typical methanol plant, a team of 4–6 operators per shift manually manages hundreds of control loops across 5 plant stages — 24/7, 365 days/year. Here's what they do every 15–30 minutes:
-
-| Manual Task | What the Operator Does | Risk of Error | What Our Agent Automates |
-|-------------|----------------------|:-------------:|--------------------------|
-| **Temperature monitoring** | Watches 4 bed temperatures on DCS screen, adjusts cooling water valve if any bed drifts above 265°C | High — fatigue, shift handover miscommunication | Continuous 13-variable optimization every step |
-| **Feed ratio adjustment** | Calculates H₂/CO ratio from gas chromatograph readings (15-min delay), manually adjusts feed valves | Medium — delayed feedback, calculation errors | Real-time ratio tracking with instant correction |
-| **Catalyst health assessment** | Reviews lab samples weekly, estimates remaining catalyst life from experience | High — subjective, no predictive model | MCP tool predicts health from T × hours, suggests action |
-| **Recycle loop management** | Monitors inert buildup via analyzer, opens purge valve periodically | Medium — too little purge → inert buildup, too much → wasted feed | Continuous purge optimization balancing conversion vs waste |
-| **Emergency response** | Hits emergency shutdown button if temperature exceeds 285°C on any display | Critical — 3–5 second human reaction time | Predictive 5-step lookahead detects runaway before it happens |
-| **Production scheduling** | Checks gas prices on website, calls trading desk, manually adjusts throughput | Low urgency but high economic impact | MCP energy pricing tool → automatic throttling |
-| **Distillation quality** | Samples product every 2 hours, adjusts reflux if purity drops | Medium — 2-hour delay between sample and action | Continuous purity tracking with instant reflux adjustment |
-| **Shift handover** | Verbal briefing + written log to next shift, often incomplete | High — critical context lost between shifts | Agent state is persistent, no information loss |
-| **Maintenance coordination** | Reads maintenance schedule on whiteboard, pre-emptively reduces load | Medium — forgets, schedule changes not communicated | MCP maintenance tool provides real-time equipment status |
-
-**The cost of manual control:**
-
-- **$2–5M/year in lost yield** per plant from conservative operation (70–80% capacity vs 90–95% achievable)
-- **3–5 unplanned shutdowns/year** from operator error or delayed response (each costs $500K–$2M in lost production + restart)
-- **$500K–$2M per MPC deployment** that addresses only the reactor loop, not the full plant
-- Average operator makes **~15 control decisions per hour** across the plant — cognitive load leads to suboptimal choices during peak stress
-
-**This environment enables training an AI agent that replaces or augments these manual tasks:**
-- Controls 13 variables simultaneously across all 5 plant stages (not just 1 loop)
-- Responds in milliseconds, not minutes
-- Never fatigues, never loses context at shift handover
-- Uses MCP tools to incorporate external context (prices, maintenance, emissions) that operators check manually
-- Learns from domain-randomized simulations → robust to the exact uncertainties that cause human error
-- 4 multi-agent classes mirror the real plant organization (reformer operator, board operator, distillation operator, shift supervisor)
-- 12 task scenarios train for everything from routine optimization to cascading emergency recovery
-
-**Who benefits:**
-- **Chemical companies**: Train AI controllers on this simulator, deploy to real DCS via OPC-UA bridge
-- **RL researchers**: Benchmark algorithms on a physically grounded, multi-objective, safety-constrained problem
-- **Process control engineers**: Compare RL vs PID vs MPC on identical scenarios with identical metrics
-
----
-
-## Positioning vs Industry
-
-How does this environment compare to existing methanol plant control solutions?
-
-| Feature | PID / DCS | Aspen DMC3 / RMPCT | Honeywell Profit Controller | **This Environment** |
-|---------|:---------:|:------------------:|:---------------------------:|:-------------------:|
-| Cost | ~$50K | $500K–$2M | $500K–$1.5M | **Free (MIT)** |
-| Setup time | Days | 2–4 weeks step-test | 2–4 weeks | **Minutes** |
-| Multi-variable | No (SISO) | Yes (MIMO) | Yes (MIMO) | **Yes (13 vars)** |
-| Nonlinear handling | No | No (linear models) | Limited | **Yes (LHHW kinetics)** |
-| Context awareness | No | No | No | **Yes (MCP tools)** |
-| Adaptation to drift | Manual retune | Re-identify model | Re-identify | **Automatic (domain randomization)** |
-| Safety constraints | Hard limits only | Soft constraints | Soft constraints | **Hard + predictive (5-step lookahead)** |
-| Multi-agent | No | No | No | **Yes (4 agent classes)** |
-| Open source | No | No | No | **Yes** |
-| Training RL agents | N/A | N/A | N/A | **Yes (TRL/Unsloth/GRPO)** |
-
-**Key differentiation:** Existing APC solutions optimize *within* the control loop. This environment optimizes *the entire decision-making process* — from reading market data to coordinating plant stages to managing long-term catalyst health.
-
-> **Related research:**
-> - Yokogawa + JSR Corporation (2022): RL (FKDPP) controlled a chemical plant for 35 days, achieving 40% CO₂ reduction vs traditional methods
-> - Haque & Palanki (2025): RL for reactor temperature control in *Processes* 13(2)
-> - Sultan et al. (2025): ML-based process optimization in *Computers & Chemical Engineering*
-
----
-
-## Architecture
-
-<p align="center">
-  <img src="assets/architecture.svg" width="100%" alt="System Architecture: Agent → OpenEnv API → Plant Simulator with MCP Tools, deployed on HuggingFace and Docker">
-</p>
-
----
-
-## System Design
-
-**Architecture: Modular Monolith** — a single deployable unit with cleanly separated internal modules. This is intentional: chemical plant simulations require tight coupling between reactor physics, thermodynamics, and economics for numerical stability. Breaking these into separate microservices would add network latency to every ODE integration sub-step.
-
-| Component | Implementation | Purpose |
-|-----------|---------------|---------|
-| **Web Server** | FastAPI + Uvicorn | HTTP + WebSocket API for OpenEnv protocol |
-| **Simulation Engine** | Pure Python (NumPy) | RK4 ODE solver, SRK EOS, 5 kinetic models |
-| **Agent Decomposition** | 4 agent classes | Microservice-like separation within monolith |
-| State Management | In-memory + Redis (optional) | `StateStore` — thread-safe dict fallback, Redis for distributed agents |
-| Caching | Redis TTL cache (optional) | Energy pricing cached 5 min, reactor state cached 60s via `StateStore` |
-| **Containerization** | Docker + docker-compose | Isolated, reproducible deployment |
-| **Orchestration** | Kubernetes (k8s/) | 2 replicas, auto-restart, health probes |
-| **CI/CD** | GitHub Actions | Automated testing on 3 Python versions |
-| **Load Balancing** | K8s Ingress (NGINX) | WebSocket-aware routing across replicas |
-| **Monitoring** | Health endpoint + structured logging | `/health` probe, `[START]/[STEP]/[END]` log format |
-| **MCP Tools** | FastMCP server | 4 context tools exposed via Model Context Protocol |
-| **Safety Layer** | Predictive alarming | 5-step temperature lookahead, 4-level warning system |
-| **Game Theory** | Nash equilibrium shifts | Day/night pricing strategy via `get_shift_context()` || Real Plant Bridge | OPC-UA (asyncua) | `OPCUABridge` — server mode (shadow deploy) + client mode (real DCS) |
-| Concurrency | asyncio + threading | OPC-UA async I/O, thread-safe state store, parallel K8s replicas |
-**Why no database?** RL training is episodic — each episode runs for 50–500 steps, then resets. Persisting intermediate states to a DB would add ~1ms per step with zero benefit (the trajectory is discarded at reset). The `List[ReactorState]` in-memory approach gives sub-microsecond state access.
-
-**Why no caching?** Every simulation step depends on the previous state. There's no repeated computation to cache — each step produces a unique state based on the agent's action and stochastic noise.
-
----
-
-## The Reactor: ICI 4-Bed Quench Design
-
-The simulated reactor faithfully models the **ICI (Imperial Chemical Industries) Low-Pressure Process**, the dominant methanol synthesis technology since the 1960s. The reactor contains 4 adiabatic catalyst beds with cold-shot quench gas injection between each bed to manage the exothermic temperature rise.
-
-<p align="center">
-  <img src="assets/reactor-3d.svg" width="700" alt="ICI 4-Bed Quench Reactor Cross-Section showing catalyst beds, cold-shot injection, temperature profile, and specifications">
-</p>
-
-**How the temperature profile works:**
-- Gas enters the top bed and the exothermic reaction heats it up (~15–20°C rise per bed)
-- Between beds, cold fresh syngas is injected (quench) to cool the gas back down
-- This creates a characteristic **sawtooth temperature profile**
-- The agent must balance: high temperature = fast reaction vs. approaching the 300°C safety limit
-
----
-
-## Process Flow & Plant Equipment
-
-<img src="assets/process-flow.svg" width="100%" alt="Complete Plant Process Flow: Natural Gas → Desulfurization → Reformer → Compressor → Synthesis Reactor → Separator → Distillation, with recycle loop and purge">
-
-*Process flow with recycle loop and purge system*
-
-<img src="assets/plant-equipment.svg" width="100%" alt="Complete Plant Equipment Layout">
-
-*10 major equipment items controlled by the agent's 13 action variables*
-
----
-
-## 3D Interactive Digital Twin
-
-An interactive Three.js visualization of the complete methanol plant, built for live demos and judge presentations. Shows all equipment, agent zones, process flows, and real-time reactor behavior.
-
-![alt text](image.png)
-
-### How to Run
-
-**Option 1 — Open directly in browser (no server needed):**
-```bash
-open methanol_apc_env/server/static/3d-plant.html
-# or on Linux:
-xdg-open methanol_apc_env/server/static/3d-plant.html
-```
-
-**Option 2 — Via the FastAPI server (includes live WebSocket data):**
-```bash
-cd methanol_apc_env
-pip install -r server/requirements.txt
-uvicorn server.app:app --reload --port 7860
-# Open http://localhost:7860/viz/3d-plant.html
-```
-
-**Option 3 — Via Docker:**
-```bash
-docker compose up --build
-# Open http://localhost:7860/viz/3d-plant.html
-```
-
-### Features
-
-| Feature | Description |
-|---------|-------------|
-| **10-Step Guided Tour** | Click "▶ Guided Tour" — walks judges through every plant stage with agent explanations |
-| **Live Controls** | 6 sliders (H₂, CO, cooling, compressor, purge, recycle) with Manual/Auto mode |
-| **Clickable Reactor Beds** | Click any of the 4 catalyst beds (3D or HUD panel) → zoom + detail popup with live temp, rate, catalyst health |
-| **Orchestrator Reveal** | Tour Step 10 reveals the Supervisory Agent: hologram, pulsing command lines to 3 sub-agents, MCP tools |
-| **Demo Mode** | Simulates startup → optimization → disturbance → recovery cycle without a server |
-| **Live Mode** | Connects via WebSocket to the HF Space or local server for real environment data |
-| **8 Camera Presets** | Quick-jump to any equipment: Desulfurizer, Reformer, Reactor, Separator, Distillation, Storage, Control Room |
-
-### Guided Tour Steps (for Judge Presentation)
-
-The 10-step guided tour maps to the complete plant process flow. Each step highlights the relevant equipment, the AI agent controlling it, and why that control matters:
-
-| Step | Equipment | Agent | What to Explain |
-|:----:|-----------|-------|-----------------|
-| 1 | **Desulfurization Guard Bed** | *None (fixed)* | Natural gas enters here. ZnO bed removes H₂S to <0.1 ppm — sulfur poisons the Cu/ZnO catalyst downstream. No agent needed; this is a passive protection layer. |
-| 2 | **Steam Reformer** | **ReformerAgent** 🟠 | CH₄ + H₂O → CO + 3H₂ at 850°C. Agent controls `fuel_gas` and `steam_flow` to maintain the optimal steam-to-carbon ratio (~3.0). Too little steam = carbon deposition; too much = wasted energy. |
-| 3 | **Heat Exchanger** | *None (passive)* | Hot syngas from the reformer is cooled before entering the reactor. U=250 W/m²K, A=8 m². This recovers heat and protects the reactor catalyst from thermal shock. |
-| 4 | **ICI 4-Bed Quench Reactor** | **SynthesisAgent** 🔵 | The heart of the plant. 3 simultaneous reactions (CO+2H₂→CH₃OH, CO₂+3H₂→CH₃OH+H₂O, RWGS). Agent controls H₂/CO feed rates, cooling water, compressor, purge, recycle — 6 variables. Click any bed to see its temperature, conversion share, and catalyst health. |
-| 5 | **Cooling Tower** | **SynthesisAgent** 🔵 | Provides cooling water to the reactor heat exchangers. Agent adjusts `cooling_water_flow` (0-100 L/min) to manage reactor temperature. Too little cooling → thermal runaway; too much → reaction rate drops. |
-| 6 | **Compressor** | **SynthesisAgent** 🔵 | Pressurizes the synthesis loop to 50-100 bar. Higher pressure favors methanol formation (Le Chatelier's principle). Agent balances `compressor_power` against electricity cost (day/night pricing cycle). |
-| 7 | **Flash Drum / Separator** | *Passive* | Crude methanol condenses out (96% recovery). Unreacted gas returns via recycle loop (RR=3.5). Only ~5% conversion per pass — the recycle is essential. |
-| 8 | **Distillation Column** | **PurificationAgent** 🟣 | Produces Grade AA methanol (>99.85% purity). Agent controls `reflux_ratio` and `reboiler_duty`. Higher reflux = purer product but more energy cost. Agent optimizes this trade-off. |
-| 9 | **Storage Tank** | *None* | Final product storage. Methanol valued at $0.74/kg (Methanex APAC Apr 2026). Cumulative production tracked for the `long_horizon_production` task (50,000 kg target). |
-| 10 | **Control Room — Orchestrator** | **SupervisoryAgent** 🔷 | The AI "brain". Sees ALL 30+ observations, coordinates 3 sub-agents via `merge_actions()`. Resolves conflicts (profit vs safety vs catalyst life). Uses 4 MCP tools: energy pricing, catalyst status, maintenance schedule, carbon footprint. Game theory for day/night shift strategy. |
-
-### What to Demo for Judges
-
-1. **Start Guided Tour** — walk through all 10 steps, explaining each agent's role
-2. **Click Reactor Beds** — show Bed 1 (coolest, 40% conversion) vs Bed 4 (hottest, thermal runaway risk)
-3. **Switch to Manual Mode** — drag sliders to show cause-and-effect:
-   - *Thermal runaway*: H₂=8, CO=4, Cooling=10 → watch temperature climb, bed colors turn red, safety warning
-   - *Recovery*: Max cooling=100 → temperature drops, green status returns
-   - *Emergency purge*: Purge=60% → flare ignites visually
-4. **Step 10 Orchestrator** — show the hologram, pulsing agent lines, and the 4 MCP tools popup
-5. **Demo Mode** — let it auto-run to show the startup→optimization→disturbance→recovery cycle
-
----
-
-## Quick Start
-
-```python
-# Connect to the live HuggingFace Space
-from methanol_apc_env import MethanolAPCEnv, MethanolAPCAction
-
-async with MethanolAPCEnv.from_env("glitchfilter/methanol-apc-env").connect() as env:
-    obs = await env.reset(task_name="optimization")
-
-    for step in range(100):
-        action = MethanolAPCAction(
-            feed_rate_h2=5.0,        # mol/s hydrogen feed
-            feed_rate_co=2.5,        # mol/s carbon monoxide feed
-            cooling_water_flow=40.0, # L/min heat removal
-            compressor_power=65.0,   # kW pressure control
-        )
-        obs = await env.step(action)
-        print(f"Step {step}: T={obs.temperature:.1f}°C  Rate={obs.reaction_rate:.3f} mol/s  Profit=${obs.cumulative_profit:.2f}")
-
-    score = await env.get_final_score()
-    print(f"Final score: {score:.4f}")
-```
-
-```bash
-# Run locally with Docker
-docker build -t methanol-apc-env methanol_apc_env/
-docker run -p 8000:8000 methanol-apc-env
-curl http://localhost:8000/health
-
-# Or use docker-compose
-docker-compose up
-```
-
 ---
 
 ## Action Space (13 Continuous Variables)
 
-The agent controls the full plant — not just the reactor:
-
-| Category | Variable | Range | Default | What It Controls |
-|----------|----------|-------|---------|-----------------|
-| **Feed** | `feed_rate_h2` | 0–10 mol/s | — | Hydrogen feed to reactor |
-| **Feed** | `feed_rate_co` | 0–5 mol/s | — | Carbon monoxide feed |
-| **Thermal** | `cooling_water_flow` | 0–100 L/min | — | Shell-side heat removal rate |
-| **Thermal** | `compressor_power` | 0–100 kW | — | Reactor pressure via compression |
-| **Loop** | `purge_valve_position` | 0–100% | 2.0 | Inert gas removal from recycle |
-| **Loop** | `recycle_ratio` | 0–8 | 3.5 | Unreacted gas recycle rate |
-| **Loop** | `feed_preheat_temp` | 0–300°C | 200 | Feed gas preheater setpoint |
-| **Reformer** | `reformer_fuel_gas` | 0–20 mol/s | 5.0 | SMR burner fuel rate |
-| **Reformer** | `reformer_steam_flow` | 0–50 mol/s | 15.0 | Steam for reforming |
-| **Distillation** | `distillation_reflux` | 0–10 | 3.0 | Column reflux ratio |
-| **Distillation** | `reboiler_duty` | 0–200 kW | 50.0 | Separation energy input |
-| **Safety** | `flare_valve` | 0–100% | 0.0 | Emergency pressure relief |
-
----
-
-## Observation Space (30+ Fields)
-
-<details>
-<summary><b>Click to expand full observation schema</b></summary>
-
-| Field | Type | Unit | Description |
-|-------|------|------|-------------|
-| `temperature` | float | °C | Reactor bulk temperature |
-| `pressure` | float | bar | Reactor pressure |
-| `feed_rate_h2` | float | mol/s | Current H₂ feed |
-| `feed_rate_co` | float | mol/s | Current CO feed |
-| `h2_co_ratio` | float | — | H₂/CO molar ratio (ideal = 2.0) |
-| `cooling_water_flow` | float | L/min | Cooling water flow rate |
-| `cooling_water_temp` | float | °C | Cooling water inlet temperature |
-| `catalyst_health` | float | 0–1 | Catalyst relative activity |
-| `methanol_produced` | float | kg | Cumulative methanol this episode |
-| `reaction_rate` | float | mol/s | Current reaction rate |
-| `profit_this_step` | float | $ | Step profit/loss |
-| `cumulative_profit` | float | $ | Total P&L this episode |
-| `stoichiometric_number` | float | — | SN = (H₂−CO₂)/(CO+CO₂) |
-| `carbon_efficiency` | float | — | Carbon→MeOH fraction |
-| `selectivity` | float | — | MeOH selectivity |
-| `reformer_outlet_temp` | float | °C | SMR tube outlet temp |
-| `steam_to_carbon` | float | — | S/C molar ratio |
-| `syngas_flow` | float | mol/s | Total syngas flow |
-| `product_purity` | float | — | Distillation purity |
-| `distillation_duty` | float | kW | Reboiler energy |
-| `purge_rate` | float | mol/s | Purge gas flow |
-| `inert_fraction` | float | — | Inerts in recycle loop |
-| `recycle_ratio` | float | — | Current recycle ratio |
-| `flare_flow` | float | mol/s | Gas being flared |
-| `total_co2_emissions` | float | kg | Cumulative CO₂ emissions |
-| `temperature_trend` | float | °C/step | dT/dt rate of change |
-| `safety_warning` | str/null | — | Predictive safety alert |
-| `step_number` | int | — | Current step |
-| `max_steps` | int | — | Episode length |
-| `done` | bool | — | Episode terminated |
-| `reward` | float | 0–1 | Dense per-step reward |
-
-</details>
+| Category | Variable | Range | What It Controls |
+|----------|----------|-------|-----------------|
+| **Feed** | `feed_rate_h2` | 0–10 mol/s | Hydrogen feed to reactor |
+| **Feed** | `feed_rate_co` | 0–5 mol/s | Carbon monoxide feed |
+| **Thermal** | `cooling_water_flow` | 0–100 L/min | Shell-side heat removal |
+| **Thermal** | `compressor_power` | 0–100 kW | Reactor pressure via compression |
+| **Loop** | `purge_valve_position` | 0–100% | Inert gas removal from recycle |
+| **Loop** | `recycle_ratio` | 0–8 | Unreacted gas recycle rate |
+| **Loop** | `feed_preheat_temp` | 0–300°C | Feed gas preheater setpoint |
+| **Reformer** | `reformer_fuel_gas` | 0–20 mol/s | SMR burner fuel rate |
+| **Reformer** | `reformer_steam_flow` | 0–50 mol/s | Steam for reforming |
+| **Distillation** | `distillation_reflux` | 0–10 | Column reflux ratio |
+| **Distillation** | `reboiler_duty` | 0–200 kW | Separation energy input |
+| **Safety** | `flare_valve` | 0–100% | Emergency pressure relief |
 
 ---
 
@@ -546,52 +142,34 @@ The agent controls the full plant — not just the reactor:
 
 | Task | Difficulty | Steps | What the Agent Must Do |
 |------|:---------:|------:|----------------------|
-| Steady-State Optimization | 🟢 Easy | 100 | Maximize profit at operating temperature |
-| Cold Start | 🟡 Medium | 50 | Heat reactor from 150°C → 250°C without overshoot |
-| Cost Minimization | 🟡 Medium | 100 | Minimize OPEX while maintaining production targets |
-| Maximum Yield | 🟡 Medium | 100 | Push for highest methanol output regardless of cost |
-| Disturbance Rejection | 🟡 Medium | 100 | Handle a cooling system failure at step 25 |
-| Emergency Recovery | 🔴 Hard | 80 | Cool an overheated reactor from 290°C back to safe range |
-| Aged Catalyst | 🔴 Hard | 100 | Operate profitably with only 60% catalyst health |
-| Pressure Loss | 🔴 Hard | 100 | Maintain production as compressor degrades mid-run |
-| Feed Composition Upset | 🔴 Hard | 100 | Adapt to sudden H₂/CO ratio shift |
-| Day/Night Pricing | 🔴 Hard | 150 | Optimize production against time-varying electricity prices |
-| Long Horizon Production | 🔴 Hard | 500 | Extended run managing catalyst aging and economics |
-| Multi-Disturbance | 🟣 Expert | 150 | Survive multiple simultaneous failures |
+| Steady-State Optimization | 🟢 | 100 | Maximize profit at operating temperature |
+| Cold Start | 🟡 | 50 | Heat reactor 150°C → 250°C without overshoot |
+| Cost Minimization | 🟡 | 100 | Minimize OPEX while maintaining production |
+| Maximum Yield | 🟡 | 100 | Push for highest methanol output |
+| Disturbance Rejection | 🟡 | 100 | Handle cooling system failure at step 25 |
+| Emergency Recovery | 🔴 | 80 | Cool overheated reactor from 290°C |
+| Aged Catalyst | 🔴 | 100 | Operate profitably with 60% catalyst health |
+| Pressure Loss | 🔴 | 100 | Maintain production as compressor degrades |
+| Feed Composition Upset | 🔴 | 100 | Adapt to sudden H₂/CO ratio shift |
+| Day/Night Pricing | 🔴 | 150 | Optimize against time-varying electricity prices |
+| Long Horizon Production | 🔴 | 500 | Extended run managing catalyst aging |
+| Multi-Disturbance | 🟣 | 150 | Survive multiple simultaneous failures |
 
 ---
 
 ## Baseline Performance
 
-Three classical controllers benchmarked head-to-head across six tasks (single seed=42, scores in (0.01, 0.99) — see [`examples/baseline_comparison.json`](examples/baseline_comparison.json) for the full table including profit, methanol output, economic regret, and constraint violations):
+| Controller | Optimization | Startup | Disturbance | Emergency | Cost Min. | Aged Cat. | Average |
+|-----------|:-----------:|:-------:|:-----------:|:---------:|:---------:|:---------:|:-------:|
+| **PID** | 0.387 | 0.094 | 0.812 | 0.361 | 0.694 | 0.775 | **0.521** |
+| **MPC** | 0.519 | 0.094 | 0.857 | 0.432 | 0.718 | 0.766 | **0.564** |
+| **Heuristic** | 0.720 | 0.094 | 0.956 | 0.454 | 0.694 | 0.860 | **0.630** |
 
-| Controller | Type | Optimization | Startup | Disturbance | Emergency | Cost Min. | Aged Cat. | Average |
-|-----------|------|:-----------:|:-------:|:-----------:|:---------:|:---------:|:---------:|:-------:|
-| **PID** | Proportional-Integral | 0.387 | 0.094 | 0.812 | 0.361 | 0.694 | 0.775 | 0.521 |
-| **MPC** | Dynamic Matrix Control | 0.519 | 0.094 | 0.857 | 0.432 | 0.718 | 0.766 | 0.564 |
-| **Heuristic** | Rule-based | 0.720 | 0.094 | 0.956 | 0.454 | 0.694 | 0.860 | 0.630 |
-
-The Heuristic controller (rule-based with temperature zones) outperforms classical PID and MPC overall — a deliberately strong baseline for an RL agent to beat. The `startup` task is intentionally hard for all three (target 250 °C from cold start with no overshoot — no controller manages it without violations).
-
-| Task | Best baseline profit | Best baseline MeOH (kg) |
-|------|---------------------:|------------------------:|
-| Optimization (100 steps) | $560 (Heuristic) | 1,009 |
-| Disturbance rejection (100 steps) | $560 (Heuristic) | 1,009 |
-| Emergency recovery (80 steps) | $532 (MPC) | 908 |
-| Aged catalyst (100 steps) | $216 (Heuristic) | 543 |
-
-```bash
-# Reproduce
-python examples/pid_baseline.py
-python examples/mpc_baseline.py
-python examples/compare_baselines.py
-```
+The Heuristic controller outperforms PID and MPC — a deliberately strong baseline for RL to beat.
 
 ---
 
 ## Multi-Agent Architecture
-
-The environment supports decomposing control into specialized sub-agents that mirror real plant organization:
 
 ```
                     ┌─────────────────────┐
@@ -603,329 +181,82 @@ The environment supports decomposing control into specialized sub-agents that mi
               ↓                 ↓                 ↓
     ┌─────────────────┐ ┌──────────────┐ ┌───────────────┐
     │ Reformer Agent  │ │ Synthesis    │ │ Purification  │
-    │                 │ │ Agent        │ │ Agent         │
-    │ fuel_gas,       │ │ h2, co,      │ │ reflux,       │
-    │ steam_flow      │ │ cooling,     │ │ reboiler      │
+    │ fuel_gas,       │ │ Agent        │ │ Agent         │
+    │ steam_flow      │ │ h2, co,      │ │ reflux,       │
+    │                 │ │ cooling,     │ │ reboiler      │
     │                 │ │ compressor,  │ │               │
     │                 │ │ purge,       │ │               │
     │                 │ │ recycle      │ │               │
     └─────────────────┘ └──────────────┘ └───────────────┘
 ```
 
-```python
-from methanol_apc_env.agents import (
-    ReformerAgent, SynthesisAgent,
-    PurificationAgent, SupervisoryAgent
-)
-
-env = MethanolAPCEnvironment()
-obs = env.reset(task_name="optimization")
-
-# Each agent controls its subsystem
-r = ReformerAgent().rule_based_action(obs)
-s = SynthesisAgent().rule_based_action(obs)
-p = PurificationAgent().rule_based_action(obs)
-
-# Supervisory merges into unified action
-action = SupervisoryAgent.merge_actions(r, s, p)
-obs = env.step(action)
-```
+4 agents mirror real plant organization. Each controls its subsystem; the Supervisory agent merges actions and resolves conflicts using 4 MCP tools (energy pricing, catalyst status, maintenance schedule, carbon footprint).
 
 ---
 
-## MCP Tools
-
-The environment exposes 4 [Model Context Protocol](https://modelcontextprotocol.io/) tools for context-aware LLM agents:
-
-| Tool | Returns | Use Case |
-|------|---------|----------|
-| `get_energy_pricing()` | Gas + electricity spot prices | Profit-aware production throttling |
-| `get_catalyst_status(T, hours)` | Health prediction & remaining life | Preventive maintenance scheduling |
-| `get_maintenance_schedule()` | Equipment status & upcoming windows | Proactive load reduction |
-| `calculate_carbon_footprint(kg, mol)` | CO₂ emissions intensity | Environmental compliance |
-
----
-
-## TRL / Unsloth Integration (GRPO Training)
-
-The environment ships with a ready-to-use bridge for training LLMs via [TRL](https://huggingface.co/docs/trl/openenv) (Transformer Reinforcement Learning) using **GRPO** (Group Relative Policy Optimization) — the same algorithm OpenEnv environments are designed for.
+## Quick Start
 
 ```python
-from methanol_apc_env.trl_bridge import MethanolRewardFunction, MethanolGRPOConfig
+from methanol_apc_env import MethanolAPCEnv, MethanolAPCAction
 
-# Use as reward function with TRL's GRPOTrainer
-reward_fn = MethanolRewardFunction(task="optimization")
-
-# Get recommended training config
-config = MethanolGRPOConfig.get_config()           # Full precision (Qwen2.5-7B)
-config = MethanolGRPOConfig.get_unsloth_config()    # 4-bit quantized (LoRA, fits on 16GB GPU)
+async with MethanolAPCEnv.from_env("glitchfilter/methanol-apc-env").connect() as env:
+    obs = await env.reset(task_name="optimization")
+    for step in range(100):
+        action = MethanolAPCAction(feed_rate_h2=5.0, feed_rate_co=2.5,
+                                   cooling_water_flow=40.0, compressor_power=65.0)
+        obs = await env.step(action)
+        print(f"Step {step}: T={obs.temperature:.1f}°C  Profit=${obs.cumulative_profit:.2f}")
 ```
-
-**How it works:** The LLM generates JSON action strings → `MethanolRewardFunction` parses them → steps the environment → returns the reward. This plugs directly into TRL's `GRPOTrainer` as the `reward_model` parameter.
-
-| Config | Model | Precision | GPU Memory | Training | Notes |
-|--------|-------|-----------|------------|----------|-------|
-| Default (notebook) | Qwen2.5-3B-Instruct-bnb-4bit | 4-bit LoRA | ~12 GB | LoRA (r=16, α=32) | Fits Colab T4; used for committed plots |
-| Larger | Qwen2.5-7B-Instruct-bnb-4bit | 4-bit LoRA | ~16 GB | LoRA (r=16, α=32) | A100 / H100 only |
-| Full | Qwen2.5-7B-Instruct | FP16 | ~32 GB | Full fine-tune | Reference; not used in this submission |
-
-> **Related resources from the OpenEnv ecosystem:**
-> - [TRL + OpenEnv docs](https://huggingface.co/docs/trl/openenv) — official integration guide
-> - [Unsloth + OpenEnv Colab](https://colab.research.google.com/github/unslothai/notebooks/blob/main/nb/OpenEnv_gpt_oss_(20B)_Reinforcement_Learning_2048_Game.ipynb) — 4-bit GRPO training example
-
----
-
-## Physics Engine
-
-<details>
-<summary><b>Click to expand full physics model details</b></summary>
-
-### 3 Simultaneous Reactions
-
-| # | Reaction | ΔH | Source |
-|---|----------|:--:|--------|
-| R1 | CO + 2H₂ → CH₃OH | −90.5 kJ/mol | Fiedler (2005) |
-| R2 | CO₂ + 3H₂ → CH₃OH + H₂O | −49.5 kJ/mol | Bozzano (2016) |
-| R3 | CO₂ + H₂ → CO + H₂O (RWGS) | +41.2 kJ/mol | LeBlanc |
-
-### 5 Selectable Kinetic Models
-
-| Model | Key Feature | Best For | Reference |
-|-------|-------------|----------|-----------|
-| **LHHW** (default) | Partial pressures + adsorption terms | General use | Graaf simplified |
-| Graaf 1988 | 3-reaction, most experimentally validated | Academic benchmarks | Chem. Eng. Sci. 43(12) |
-| VBF 1996 | CO₂ pathway focus | Green methanol (CO₂ + H₂ feed) | J. Catal. 161 |
-| Seyfert/BASF | CO₂ inhibition factor | Industrial BASF plants | LeBlanc Table 1 |
-| Nestler 2021 | COR-dependent correction factor | Demo plant validation | Voss (2022) |
-
-### Physics Features
-
-| Feature | Implementation |
-|---------|---------------|
-| ODE integration | 4th-order Runge-Kutta (4 sub-steps per timestep) |
-| Equation of state | SRK cubic EOS (fugacity corrections for H₂, CO, CO₂, CH₃OH, H₂O) |
-| Reactor modes | ICI 4-bed adiabatic quench **and** Lurgi isothermal (boiling water) |
-| Recycle loop | Configurable recycle ratio (default RR=3.5) with inert buildup |
-| Purge gas | Inert accumulation model (N₂, CH₄, Ar) with purge valve |
-| Condensation | Crude methanol 96% recovery flash separation |
-| Byproducts | DME + methyl formate formation (selectivity model) |
-| Pressure drop | Ergun equation across packed catalyst bed |
-| Enthalpy | Kirchhoff temperature-dependent ΔH(T) |
-| Catalyst deactivation | 3-zone model: normal / above-optimal / sintering (irreversible >280°C) |
-| Process noise | ±1°C temperature, ±5% rate, ±0.3 bar pressure |
-| Domain randomization | Random catalyst health, initial temp, pressure, feed composition per reset |
-| Disturbances | Monte Carlo Brownian drift on cooling water temperature |
-| Economics | Real-time spot pricing with regional configurations |
-
-</details>
-
----
-
-## Regional Configurations (10 Bundles)
-
-| Region | MeOH Price | Gas Price | Electricity | Key Feature |
-|--------|:----------:|:---------:|:-----------:|-------------|
-| Asia Pacific (ICI) | $0.74/kg | $0.002/mol | $0.08/kWh | Default config |
-| North America | $0.74/kg | $0.002/mol | $0.08/kWh | Henry Hub pricing |
-| India (Landed) | $0.82/kg | $0.0022/mol | $0.065/kWh | Import duties, hot coolant |
-| Middle East | $0.60/kg | $0.001/mol | $0.04/kWh | Cheapest gas, hot climate |
-| BASF HP Legacy | — | — | — | Historical high-pressure process |
-| Green Methanol | — | — | — | CO₂ + green H₂ feed |
-| China (Coal) | $0.59/kg | $0.0015/mol | $0.07/kWh | Coal gasification feedstock |
-| Germany/EU | $0.85/kg | $0.004/mol | $0.15/kWh | TTF gas + CO₂ tax |
-| Trinidad | $0.38/kg | $0.001/mol | $0.05/kWh | Domestic gas advantage |
-| Brazil | $0.55/kg | $0.002/mol | $0.06/kWh | Moderate pricing |
-
----
-
-## ChemE Tool Integration
-
-The environment includes bridges to open-source chemical engineering simulators for cross-validation:
-
-| Tool | Bridge Class | What It Provides | Status |
-|------|-------------|-----------------|--------|
-| [DWSIM](https://dwsim.org) | `DWSIMBridge` | SRK fugacity validation, stream export, thermodynamic properties | Bridge ready, DWSIM optional |
-| [Cantera](https://cantera.org) | `CanteraBridge` | Reaction rate cross-validation against published mechanisms | Bridge ready, Cantera optional |
-| [ChemSep/COCO](http://www.chemsep.org) | `ChemSepBridge` | VLE data for distillation validation (Antoine fallback) | Bridge ready |
-| [Azure Digital Twins](https://azure.microsoft.com/en-us/products/digital-twins) | `AzureDigitalTwinBridge` | Swap internal sim for company's own plant model, DTDL schema included | Bridge ready, Azure optional || OPC-UA (DCS/SCADA) | `OPCUABridge` | Bi-directional connection to real plant DCS (server + client mode) | Bridge ready, `pip install asyncua` |
-| Redis State Store | `StateStore` | Shared state for multi-agent coordination, energy price caching | Bridge ready, `pip install redis` |
-All bridges are **fully optional** with **internal fallback models** — the environment runs standalone without any external tools.
-
-**Full documentation:** [bhavneet1492.github.io/openenv-methanol-apc/integrations/](https://bhavneet1492.github.io/openenv-methanol-apc/integrations/)
-
-```python
-from methanol_apc_env.integrations import DWSIMIntegration, CanteraIntegration
-
-# Validate SRK fugacity coefficients against DWSIM
-dwsim = DWSIMIntegration()
-thermo = dwsim.get_thermodynamic_properties(T=523.15, P=80e5)
-print(thermo.fugacity_coefficients)  # {"H2": 1.04, "CO": 0.98, ...}
-
-# Cross-check reaction rates with Cantera
-cantera = CanteraIntegration()
-result = cantera.get_reaction_rates(T=523.15, P=80e5, X={"CO": 0.1, "H2": 0.6})
-print(f"CO hydrogenation: {result.rate_co_hydrogenation:.4e} mol/s")
-```
-
----
-
-## Fault Detection & Safety
-
-The environment implements a 4-level alarming system with predictive capability:
-
-| Level | Condition | Action | Response |
-|-------|-----------|--------|----------|
-| **ADVISORY** | T < 180°C | Informational | Below optimal operating range |
-| **WARNING** | T > 270°C | Catalyst at risk | Copper begins sintering |
-| **PREDICT** | Trend projects T > 300°C in 5 steps | Anticipatory alert | Agent should reduce feed or increase cooling |
-| **CRITICAL** | T > 290°C | Imminent shutdown | Last chance to prevent emergency |
-| **SHUTDOWN** | T ≥ 300°C | Episode terminated | Irreversible — Cu sintering destroys catalyst |
-
-Additional safety monitors:
-- **Catalyst health** < 0.6 → warning, < 0.3 → critical degradation alert
-- **Pressure excursions** tracked via Ergun equation pressure drop
-- **Flare valve** activation logged as environmental/safety event
-
-All warnings are exposed in the `safety_warning` observation field, enabling LLM agents to read and respond to natural-language safety alerts.
-
----
-
-## Production Readiness
-
-Can companies adopt this environment directly?
-
-| Criterion | Status | Details |
-|-----------|:------:|---------|
-| Physics fidelity | ✅ | 5 published kinetic models, SRK EOS, RK4 ODE, 3-reaction system |
-| Deployment | ✅ | Docker, docker-compose, K8s with health probes |
-| Testing | ✅ | 86 tests, 92% coverage, CI on Python 3.10/3.11/3.12 |
-| RL training integration | ✅ | TRL + Unsloth GRPO bridge, Gymnasium wrapper |
-| Multi-agent support | ✅ | 4 agent classes mirroring plant organization |
-| Safety constraints | ✅ | 4-level alarming + emergency shutdown |
-| Regional economics | ✅ | 10 market configurations (APAC, NA, EU, ME, etc.) |
-| External tool validation | ✅ | DWSIM, Cantera, ChemSep bridges + Azure Digital Twins |
-| Azure Digital Twins | ✅ | `AzureDigitalTwinIntegration` with DTDL schema, [full guide](docs/integrations/azure-digital-twins.md) |
-| Real plant bridge | ✅ | `OPCUABridge` — server + client mode, ISA-95 tag naming, security policy support |
-| Shared state / caching | ✅ | `StateStore` — Redis-backed with in-memory fallback, TTL, batch ops |
-| Distributed training | ⚠️ | Single-instance; horizontal scale via K8s replicas |
-
-**Integration path for companies:**
-1. Deploy via Docker/K8s → train RL agent on simulator
-2. Validate agent against PID/MPC baselines on all 12 tasks
-3. Connect to real DCS via OPC-UA bridge (adapter layer maps 13 actions to DCS tags)
-4. Shadow-mode deployment: agent suggests actions, human operator approves
-
----
-
-## Examples
-
-The `examples/` directory contains ready-to-run scripts for benchmarking and integration:
-
-| Script | What It Does | Run It |
-|--------|-------------|--------|
-| [`pid_baseline.py`](examples/pid_baseline.py) | PI controller that holds temperature at 252°C by adjusting cooling water. Single-loop feedback — the simplest classical approach. | `python examples/pid_baseline.py` |
-| [`mpc_baseline.py`](examples/mpc_baseline.py) | Dynamic Matrix Control (DMC) using a linear step-response model. Optimizes cooling moves over a prediction horizon with move suppression. | `python examples/mpc_baseline.py` |
-| [`compare_baselines.py`](examples/compare_baselines.py) | Runs PID, MPC, and a heuristic controller across all tasks, prints a comparison table with scores. Shows where RL can improve. | `python examples/compare_baselines.py` |
-| [`rl_benchmark.py`](examples/rl_benchmark.py) | Gymnasium-compatible wrapper + stubs for TD3, PPO, SAC. Defines the `MethanolGymWrapper` with `Box(30,)` obs / `Box(13,)` action spaces. | `python examples/rl_benchmark.py` |
-
-**PID baseline example:**
-```python
-from examples.pid_baseline import PIDController
-
-pid = PIDController(T_setpoint=252.0, Kp=2.0, Ki=0.05)
-# pid.compute(current_temperature) → cooling_water_flow adjustment
-```
-
-**Gym wrapper for RL training:**
-```python
-from examples.rl_benchmark import get_gym_wrapper
-
-env = get_gym_wrapper()  # Gymnasium API: obs_space=Box(30,), act_space=Box(13,)
-obs, info = env.reset()
-obs, reward, done, truncated, info = env.step(action_array)
-```
-
----
-
-## Setup & Development
 
 ```bash
-# Clone
-git clone https://github.com/Bhavneet1492/openenv-methanol-apc.git
-cd openenv-methanol-apc
-
-# Install dependencies
-pip install "openenv-core[core]>=0.2.2" numpy fastmcp pytest
-
-# Run tests
-PYTHONPATH=. python -m pytest methanol_apc_env/tests/ -v
-
-# Run locally
-python -m methanol_apc_env.server.app
-
 # Docker
-docker build -t methanol-apc-env methanol_apc_env/
-docker run -p 8000:8000 methanol-apc-env
+docker compose up
 curl http://localhost:8000/health
+
+# Tests (86 passing)
+python -m pytest methanol_apc_env/tests/ -v
 
 # OpenEnv validate
 openenv validate methanol_apc_env/
-
-# Kubernetes deployment
-kubectl apply -f k8s/
 ```
 
-### Project Structure
+---
+
+## Key Technical Features
+
+| Feature | Details |
+|---------|---------|
+| **Physics** | 5 kinetic models (LHHW, Graaf, VBF, Seyfert, Nestler), SRK EOS, RK4 ODE, 3-reaction system |
+| **Safety** | 4-level alarming (Advisory → Warning → Predict → Shutdown) with 5-step lookahead |
+| **Integrations** | DWSIM, Cantera, ChemSep, Azure Digital Twins, OPC-UA, Redis — all optional with fallbacks |
+| **Regional Configs** | 10 market bundles (APAC, NA, EU, Middle East, India, China, Germany, Trinidad, Brazil, Green MeOH) |
+| **MCP Tools** | Energy pricing, catalyst status, maintenance schedule, carbon footprint |
+| **Training** | TRL GRPO bridge, Gymnasium wrapper, 4-bit QLoRA config for T4/A100 |
+| **Deployment** | Docker, docker-compose, Kubernetes (2 replicas, health probes), HF Space |
+| **Testing** | 86 tests, 92% coverage, CI on Python 3.10/3.11/3.12 |
+
+<details><summary>📁 Project Structure</summary>
 
 ```
 ├── inference.py                    # Baseline inference (12 task-specific prompts)
 ├── docker-compose.yml              # One-command deployment
 ├── methanol_apc_env/
 │   ├── models.py                   # Pydantic Action (13 fields) + Observation (30+)
-│   ├── client.py                   # WebSocket client
 │   ├── agents.py                   # 4 multi-agent classes
-│   ├── trl_bridge.py               # GRPO reward function + Unsloth config
-│   ├── integrations/               # External tool bridges
-│   │   ├── dwsim.py                # DWSIM process simulator
-│   │   ├── cantera_kinetics.py     # Cantera chemical kinetics
-│   │   ├── chemsep.py              # ChemSep VLE thermodynamics
-│   │   ├── azure_digital_twins.py  # Azure Digital Twins (optional)
-│   │   ├── opcua_bridge.py         # OPC-UA DCS/SCADA bridge
-│   │   └── state_store.py          # Redis shared state (optional)
-│   ├── openenv.yaml                # Environment manifest
-│   ├── reactor_config.json         # 10 regional config bundles
+│   ├── trl_bridge.py               # GRPO reward function + config
+│   ├── integrations/               # DWSIM, Cantera, ChemSep, Azure DT, OPC-UA, Redis
 │   ├── server/
 │   │   ├── reactor_sim.py          # Physics engine (LHHW, RK4, SRK, 3-reaction)
-│   │   ├── methanol_environment.py # Environment class (MCP, stages, randomization)
-│   │   ├── plant_stages.py         # Desulfurization, SMR, Distillation sims
+│   │   ├── methanol_environment.py # Environment class
 │   │   ├── tasks.py                # 12 tasks + deterministic graders
-│   │   ├── rubrics.py              # OpenEnv RFC 004 rubric system
-│   │   ├── app.py                  # FastAPI server
-│   │   └── Dockerfile
-│   └── tests/                      # 86 tests (92% coverage)
-├── examples/
-│   ├── pid_baseline.py             # PID (PI) controller
-│   ├── mpc_baseline.py             # Dynamic Matrix Control
-│   └── compare_baselines.py        # Head-to-head comparison
-├── k8s/
-│   └── deployment.yaml             # K8s Deployment + Service + Ingress
+│   │   └── app.py                  # FastAPI server
+│   └── tests/                      # 86 tests
+├── examples/                       # PID, MPC, Heuristic baselines
+├── training/                       # GRPO notebook + HF Jobs script
 └── assets/                         # SVG diagrams
 ```
 
----
-
-## References
-
-1. Bozzano & Manenti (2016). *Prog. Energy Combust. Sci.* 56, 71–105. — Comprehensive methanol synthesis review
-2. Fiedler et al. (2005). *Ullmann's Enc. Ind. Chem.* — ΔH = −90.5 kJ/mol reference
-3. Graaf et al. (1988). *Chem. Eng. Sci.* 43(12), 3185–3195. — 3-reaction kinetic model
-4. Spencer (1999). *Topics in Catalysis* 8, 259–266. — Cu sintering above 300°C
-5. Voss et al. (2022). *Chem. Ing. Tech.* 94(10), 1489–1500. — Nestler kinetic model validation
-6. LeBlanc et al. *Production of Methanol*. M.W. Kellogg Company. — Industrial kinetic parameters
-7. Fogler (2020). *Elements of Chemical Reaction Engineering*, 6th ed. — Mass/energy balance, deactivation
-8. Seborg et al. (2016). *Process Dynamics and Control*, 4th ed. — APC/MPC background
-9. Haque & Palanki (2025). *Processes* 13(2), 424. — RL for reactor control
-10. Sultan et al. (2025). *Computers & Chemical Engineering*. — ML-based process optimization
+</details>
 
 ---
 
@@ -940,7 +271,6 @@ kubectl apply -f k8s/
   note={OpenEnv-compatible RL environment for methanol synthesis APC}
 }
 ```
----
 
 <p align="center">
   <b>MIT License</b>

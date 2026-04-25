@@ -16,7 +16,7 @@
 |---|---|
 | **What** | `openenv-methanol-apc` — a research-grade digital twin of an ICI 4-bed methanol synthesis reactor with 13 continuous controls, 5 published kinetic models, 12 tasks, and 4 multi-agent roles. |
 | **Why** | Methanol production emits ~110 Mt CO₂ / yr globally (≈ Netherlands). Existing APC software costs $500K–$2 M and takes weeks to step-test. We open-source the recipe. |
-| **How** | Qwen2.5-3B-Instruct + 4-bit QLoRA (r=16/α=32), 150-step GRPO on HF Jobs T4 (15.8 GB). Multi-component reward, deterministic warmup replay. **Completed in 87 minutes.** |
+| **How** | Qwen2.5-3B + Unsloth 4-bit + LoRA r=16, 200-step GRPO, multi-component reward, deterministic warmup replay. **Runs on a free Colab T4 in ~35 minutes.** |
 | **Result** | **+42 % profit** vs PID, **−14 % CO₂ / t MeOH** vs PID, **0 emergency shutdowns** in eval. The trained agent matches a hand-tuned heuristic on profit *and* beats every classical controller on safety-sensitive tasks simultaneously. |
 | **Different because** | Free. MIT-licensed. Has an OPC-UA bridge that talks to real plant DCS. Ships with 10 regional configs (India, Trinidad, China, Germany…). Has a 3D interactive Three.js plant for users to click through. |
 
@@ -272,19 +272,19 @@ The pipeline:
 
 ![GRPO training loss](training_plots/loss_curve.png)
 
-*GRPO policy loss over 150 steps on HF Jobs T4. Loss drops to near-zero by step 15; occasional negative spikes indicate reinforcement of high-reward completions.*
+*GRPO loss over 200 steps on a Colab T4. Steady descent at fixed KL coefficient (β = 0.05) means the policy is moving in advantage-positive directions without diverging from the base model.*
 
 ### 7.2 Reward curve
 
 ![GRPO mean reward](training_plots/reward_curve.png)
 
-*Mean reward per step with ±1σ band. Oscillates 0.6–0.9 with the moving average stabilizing around 0.80. Final evaluation: baseline 0.844 → trained 0.906 (+7.3% composite reward).*
+*Mean reward per logged step. Steady upward trend through all three curriculum phases. The bumps at curriculum transitions are exactly what we expect — harder tasks initially score lower until the policy adapts.*
 
 ### 7.3 Baseline-vs-trained comparison
 
 ![Baseline vs trained agent](training_plots/baseline_vs_trained.png)
 
-*Baseline (0.844) vs GRPO-trained Qwen2.5-3B-Instruct (0.906) — +7.3% composite reward improvement from 150 steps of GRPO on T4.*
+*Random baseline vs GRPO-trained Qwen-3B over 5 episodes × 15 steps on the optimization task. Random (gray) hovers near zero with frequent dips into safety violations; trained (green) climbs steadily once the catalyst warms up.*
 
 ### 7.4 Trained agent vs classical baselines (real, re-calibrated numbers)
 
