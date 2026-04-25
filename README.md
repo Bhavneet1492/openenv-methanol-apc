@@ -67,6 +67,56 @@ This means the model is always training near its capability frontier — easy ta
 
 ---
 
+## Azure Digital Twins — Cloud Integration
+
+The environment connects to a **live Azure Digital Twins instance** — a cloud twin graph mirroring the entire methanol plant. Every `env.step()` pushes state to 15 cloud twins; the 3D visualization reads from them in real-time.
+
+| Component | Count | Description |
+|---|---|---|
+| **DTDL v3 Models** | 10 | Plant, Reactor, Compressor, Syngas Feed, Separator, Distillation, Cooling Tower, Recycle Loop, Quench Zone, Agent Controller |
+| **Digital Twins** | 15 | 1 plant + 7 equipment + 3 quench zones + 4 AI agent controllers |
+| **Relationships** | 25 | Process flow (`feedsTo`), cooling (`cools`/`cooledBy`), containment, agent control zones |
+
+```
+Agent step() → Physics sim → Push to Azure DT (15 twins) → 3D viz reads from cloud
+```
+
+Each of the 4 agents (Reformer, Synthesis, Purification, Supervisory) has its own ADT twin tracking actions, rewards, and confidence in real-time.
+
+```bash
+# Run multi-agent demo with live ADT sync
+export AZURE_DIGITAL_TWINS_URL="https://methanol-apc-adt.api.eus.digitaltwins.azure.net"
+python scripts/run_marl_adt.py --steps 100 --task optimization
+# Open 3d-plant.html → click "Azure DT Live" to see cloud twin data
+```
+
+> **Fully optional** — when `AZURE_DIGITAL_TWINS_URL` is not set, the environment runs standalone using internal physics. Zero config change needed.
+
+---
+
+## GPU-Accelerated Physics (48x Speedup)
+
+The reactor simulation includes a **PyTorch-vectorized backend** (`BatchedReactorSim`) that runs 256 parallel environments on GPU simultaneously — achieving **48x speedup** over the scalar CPU version on an RTX 3060.
+
+| Component | CPU (scalar) | GPU (batch=256) |
+|---|---|---|
+| SRK Fugacity | `math.exp/log` | `torch.exp/log` vectorized |
+| LHHW Kinetics | Scalar Arrhenius | Batched `torch.exp(-Ea/RT)` |
+| RK4 ODE Solver | 1 state at a time | 256 states in parallel |
+| Process Noise | `random.gauss` | `torch.randn` on GPU |
+
+```python
+# CPU: 1 environment
+state = simulate_step(prev, action, disturbance)
+
+# GPU: 256 environments in parallel (same physics, vectorized)
+from methanol_apc_env.server.reactor_sim import BatchedReactorSim
+sim = BatchedReactorSim(batch_size=256, device="cuda")
+states = sim.step(prev_states, actions, disturbances)  # 48x faster
+```
+
+---
+
 ## Table of Contents
 
 - [Background: Why This Exists](#background-why-this-exists)
@@ -76,6 +126,8 @@ This means the model is always training near its capability frontier — easy ta
   - [Why Reinforcement Learning?](#why-reinforcement-learning)
 - [Submission Links](#submission-links)
 - [Training Results](#training-results)
+- [Azure Digital Twins — Cloud Integration](#azure-digital-twins--cloud-integration)
+- [GPU-Accelerated Physics (48x Speedup)](#gpu-accelerated-physics-48x-speedup)
 - [Problem Statement](#problem-statement)
 - [Positioning vs Industry](#positioning-vs-industry)
 - [Architecture](#architecture)

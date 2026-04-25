@@ -388,8 +388,9 @@
   <p style="color:#8892a4;margin-bottom:16px;">Enter your HuggingFace Space URL or run locally</p>
   <input id="ws-url" type="text" value="wss://glitchfilter-methanol-apc-env.hf.space/ws" placeholder="wss://..."><br>
   <button onclick="connectWS()">Connect Live</button>
+  <button onclick="connectADT()">Azure DT Live</button>
   <button class="secondary" onclick="startDemo()">Demo Mode</button>
-  <p class="hint">Demo mode simulates reactor data without a server</p>
+  <p class="hint">Azure DT mode reads live twin data from Azure Digital Twins cloud</p>
 </div>
 
 <!-- ── Three.js CDN ──────────────────────────────────────────── -->
@@ -2328,6 +2329,36 @@ window.startDemo = function() {
   const badge = document.getElementById('status-badge');
   badge.textContent = 'DEMO MODE'; badge.classList.add('connected');
   updateVisuals();
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   AZURE DIGITAL TWINS LIVE MODE
+   Polls the ADT proxy endpoint on the FastAPI server every 2s.
+   The server reads all twins and returns merged plant state.
+   ═══════════════════════════════════════════════════════════════ */
+let adtInterval = null;
+window.connectADT = function() {
+  document.getElementById('connect-dialog').classList.add('hidden');
+  const badge = document.getElementById('status-badge');
+  badge.textContent = 'ADT CONNECTING...';
+  const baseUrl = window.location.origin || 'http://localhost:7860';
+  // First test the endpoint
+  fetch(baseUrl + '/adt/state').then(r => r.json()).then(data => {
+    if (data.error) { badge.textContent = 'ADT UNAVAILABLE'; startDemo(); return; }
+    badge.textContent = 'AZURE DT LIVE'; badge.classList.add('connected');
+    badge.style.background = '#0078d4'; // Azure blue
+    Object.assign(S, data);
+    updateVisuals();
+    // Poll every 2 seconds
+    if (adtInterval) clearInterval(adtInterval);
+    adtInterval = setInterval(() => {
+      fetch(baseUrl + '/adt/state').then(r => r.json()).then(d => {
+        if (!d.error) { Object.assign(S, d); updateVisuals(); }
+      }).catch(() => {});
+    }, 2000);
+  }).catch(() => {
+    badge.textContent = 'ADT FAILED'; startDemo();
+  });
 };
 
 /* ═══════════════════════════════════════════════════════════════

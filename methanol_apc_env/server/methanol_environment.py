@@ -15,6 +15,8 @@ from openenv.core.env_server.types import State
 
 from fastmcp import FastMCP
 
+import logging as _logging
+
 try:
     from models import MethanolAPCAction, MethanolAPCObservation
 except ImportError:
@@ -38,6 +40,16 @@ except ImportError:
         ReformerState, simulate_reformer,
         DistillationState, simulate_distillation,
     )
+
+try:
+    from integrations.azure_digital_twins import AzureDigitalTwinIntegration
+except ImportError:
+    try:
+        from ..integrations.azure_digital_twins import AzureDigitalTwinIntegration
+    except ImportError:
+        AzureDigitalTwinIntegration = None  # type: ignore
+
+_env_log = _logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -120,6 +132,17 @@ class MethanolAPCEnvironment(_BaseClass):
         self._distillation = DistillationState()
         self._done = False
         self._rubric: Optional[MethanolAPCRubric] = None
+        # Azure Digital Twins integration (optional — active if AZURE_DIGITAL_TWINS_URL is set)
+        self._adt = None
+        if AzureDigitalTwinIntegration is not None:
+            try:
+                self._adt = AzureDigitalTwinIntegration()
+                if self._adt.is_available:
+                    _env_log.info("Azure Digital Twins connected")
+                else:
+                    self._adt = None
+            except Exception:
+                self._adt = None
 
     def reset(
         self,
@@ -198,6 +221,13 @@ class MethanolAPCEnvironment(_BaseClass):
             episode_id=episode_id or str(uuid4()),
             step_count=0,
         )
+
+        # Sync initial state to Azure DT
+        if self._adt is not None:
+            self._adt.sync_from_environment(
+                self._reactor, action=None, step_num=0,
+                cumulative_profit=0.0, methanol_produced=0.0,
+            )
 
         return self._make_observation(reward=0.01)
 
@@ -293,6 +323,19 @@ class MethanolAPCEnvironment(_BaseClass):
             and self._reactor.methanol_produced >= 50_000.0
         ):
             self._done = True
+
+        # Sync state to Azure Digital Twins (non-blocking, fire-and-forget)
+        if self._adt is not None:
+            try:
+                self._adt.sync_from_environment(
+                    self._reactor,
+                    action=action,
+                    step_num=self._state.step_count,
+                    cumulative_profit=self._reactor.cumulative_profit,
+                    methanol_produced=self._reactor.methanol_produced,
+                )
+            except Exception:
+                pass  # Never let ADT sync failure break the env
 
         return self._make_observation(reward=reward, rubric_reward=rubric_reward)
 
