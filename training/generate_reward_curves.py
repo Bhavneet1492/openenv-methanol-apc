@@ -7,6 +7,7 @@ and the LLM-based agent. Produces publication-ready plots for Round 2 submission
 Usage:
     python training/generate_reward_curves.py --env-url https://glitchfilter-methanol-apc-env.hf.space
     python training/generate_reward_curves.py --local  # uses localhost:8000
+    python training/generate_reward_curves.py --gpu    # GPU-accelerated, no network (fastest)
 """
 
 import argparse
@@ -168,6 +169,87 @@ def run_episode(agent_fn, env_url, task="optimization", max_steps=50, seed=None)
             break
 
     return steps_data
+
+
+# ── GPU Episode Runner ──────────────────────────────────────────────
+
+
+def run_all_agents_gpu(agents, n_episodes=5, max_steps=50, device="cuda"):
+    """Run ALL agents × ALL episodes simultaneously on GPU.
+
+    Instead of running 4 agents × 5 episodes × 50 steps sequentially over HTTP
+    (= 1000 API calls, ~20 min), this runs everything in parallel on GPU
+    (= 1 batched call, ~0.5 seconds).
+    """
+    try:
+        import torch
+        import sys, os
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "methanol_apc_env", "server"))
+        from reactor_sim import BatchedReactorSim
+    except ImportError:
+        print("ERROR: PyTorch or BatchedReactorSim not available. Use --env-url instead.")
+        sys.exit(1)
+
+    n_agents = len(agents)
+    total_envs = n_agents * n_episodes
+    print(f"GPU mode: {n_agents} agents × {n_episodes} episodes = {total_envs} parallel envs on {device}")
+
+    sim = BatchedReactorSim(n_envs=total_envs, device=device)
+    sim.reset()
+
+    # Agent policy functions mapped to env indices
+    agent_names = list(agents.keys())
+    agent_fns = list(agents.values())
+
+    all_results = {name: [[] for _ in range(n_episodes)] for name in agent_names}
+
+    for step in range(max_steps):
+        # Build actions tensor from agent policies
+        actions_list = []
+        for agent_idx, (name, agent_fn) in enumerate(agents.items()):
+            for ep_idx in range(n_episodes):
+                env_idx = agent_idx * n_episodes + ep_idx
+                obs_dict = sim.get_obs_dict(env_idx)
+                obs_wrapped = {"observation": obs_dict}
+                action = agent_fn(obs_wrapped)
+                actions_list.append([
+                    max(0, min(10, float(action.get("feed_rate_h2", 4)))),
+                    max(0, min(5, float(action.get("feed_rate_co", 2)))),
+                    max(0, min(100, float(action.get("cooling_water_flow", 50)))),
+                    max(0, min(100, float(action.get("compressor_power", 50)))),
+                    float(action.get("purge_valve_position", 2.0)),
+                    float(action.get("recycle_ratio", 3.5)),
+                ])
+
+        actions = torch.tensor(actions_list, device=sim.device, dtype=sim.dtype)
+        state, reward, done = sim.step(actions)
+
+        # Record per-env data
+        for agent_idx, name in enumerate(agent_names):
+            for ep_idx in range(n_episodes):
+                env_idx = agent_idx * n_episodes + ep_idx
+                s = state[env_idx]
+                all_results[name][ep_idx].append({
+                    "step": step,
+                    "reward": reward[env_idx].item(),
+                    "temperature": s[sim.IDX_TEMP].item(),
+                    "reaction_rate": s[sim.IDX_RATE].item(),
+                    "profit": s[sim.IDX_PROFIT_STEP].item(),
+                    "cumulative_profit": s[sim.IDX_CUM_PROFIT].item(),
+                    "catalyst_health": s[sim.IDX_CAT_HEALTH].item(),
+                    "methanol_produced": s[sim.IDX_MEOH_PRODUCED].item(),
+                })
+
+        # Reset done envs
+        if done.any():
+            sim.reset(mask=done)
+
+    # Print summary
+    for name in agent_names:
+        totals = [sum(s["reward"] for s in ep) for ep in all_results[name]]
+        print(f"  {name}: mean_reward={np.mean(totals):.3f} ± {np.std(totals):.3f}")
+
+    return all_results
 
 
 # ── Plotting ────────────────────────────────────────────────────────
@@ -333,6 +415,9 @@ def main():
     parser.add_argument("--env-url", default="https://glitchfilter-methanol-apc-env.hf.space",
                         help="Environment URL")
     parser.add_argument("--local", action="store_true", help="Use localhost:8000")
+    parser.add_argument("--gpu", action="store_true",
+                        help="GPU-accelerated mode: run BatchedReactorSim locally (fastest, no network)")
+    parser.add_argument("--device", default="cuda", help="GPU device (cuda or cpu)")
     parser.add_argument("--episodes", type=int, default=5, help="Episodes per agent")
     parser.add_argument("--max-steps", type=int, default=50, help="Max steps per episode")
     parser.add_argument("--task", default="optimization", help="Task name")
@@ -343,29 +428,41 @@ def main():
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Verify environment
-    print(f"Connecting to {env_url}...")
-    try:
-        health = requests.get(f"{env_url}/health", timeout=30)
-        print(f"Environment status: {health.json()}")
-    except Exception as e:
-        print(f"Cannot connect to environment: {e}")
-        sys.exit(1)
+    # ── GPU MODE: run everything locally on GPU ──
+    if args.gpu:
+        import time
+        t0 = time.perf_counter()
+        all_results = run_all_agents_gpu(
+            AGENTS, n_episodes=args.episodes, max_steps=args.max_steps, device=args.device
+        )
+        elapsed = time.perf_counter() - t0
+        total_steps = len(AGENTS) * args.episodes * args.max_steps
+        print(f"\nGPU completed {total_steps:,} env steps in {elapsed:.2f}s "
+              f"({total_steps / elapsed:,.0f} steps/sec)")
+    else:
+        # ── HTTP MODE: call remote/local server ──
+        print(f"Connecting to {env_url}...")
+        try:
+            health = requests.get(f"{env_url}/health", timeout=30)
+            print(f"Environment status: {health.json()}")
+        except Exception as e:
+            print(f"Cannot connect to environment: {e}")
+            sys.exit(1)
 
-    # Run all agents
-    all_results = {}
-    for agent_name, agent_fn in AGENTS.items():
-        print(f"\nRunning {agent_name} ({args.episodes} episodes, {args.max_steps} steps)...")
-        episodes = []
-        for ep in range(args.episodes):
-            data = run_episode(agent_fn, env_url, task=args.task,
-                               max_steps=args.max_steps, seed=ep * 100)
-            total_reward = sum(s["reward"] for s in data)
-            final_temp = data[-1]["temperature"] if data else 0
-            print(f"  Episode {ep+1}: steps={len(data)}, reward={total_reward:.3f}, "
-                  f"final_T={final_temp:.1f}°C")
-            episodes.append(data)
-        all_results[agent_name] = episodes
+        # Run all agents
+        all_results = {}
+        for agent_name, agent_fn in AGENTS.items():
+            print(f"\nRunning {agent_name} ({args.episodes} episodes, {args.max_steps} steps)...")
+            episodes = []
+            for ep in range(args.episodes):
+                data = run_episode(agent_fn, env_url, task=args.task,
+                                   max_steps=args.max_steps, seed=ep * 100)
+                total_reward = sum(s["reward"] for s in data)
+                final_temp = data[-1]["temperature"] if data else 0
+                print(f"  Episode {ep+1}: steps={len(data)}, reward={total_reward:.3f}, "
+                      f"final_T={final_temp:.1f}°C")
+                episodes.append(data)
+            all_results[agent_name] = episodes
 
     # Generate plots
     print("\nGenerating plots...")
