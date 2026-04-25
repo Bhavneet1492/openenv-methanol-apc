@@ -31,6 +31,14 @@ app = create_app(
     max_concurrent_envs=1,
 )
 
+# Mount 3D Digital Twin visualisation as static files
+from pathlib import Path as _Path
+from starlette.staticfiles import StaticFiles as _StaticFiles
+
+_static_dir = _Path(__file__).parent / "static"
+if _static_dir.is_dir():
+    app.mount("/viz", _StaticFiles(directory=str(_static_dir), html=True), name="viz")
+
 
 def main(host: str = "0.0.0.0", port: int = 8000) -> None:
     """Entry point for ``uv run server`` or ``python -m methanol_apc_env.server.app``."""

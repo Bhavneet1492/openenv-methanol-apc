@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Methanol APC — 3D Digital Twin</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0e17; overflow: hidden; font-family: 'Segoe UI', system-ui, sans-serif; color: #e0e0e0; }
+  #canvas3d { display: block; }
+
+  /* ── HUD overlay ─────────────────────────────────────────── */
+  #hud { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+  #title-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 24px;
+    background: linear-gradient(90deg, rgba(10,14,23,0.95), rgba(10,14,23,0.6));
+    border-bottom: 1px solid rgba(0,212,170,0.3);
+  }
+  #title-bar h1 { font-size: 18px; font-weight: 600; letter-spacing: 0.5px; }
+  #title-bar h1 span { color: #00d4aa; }
+  #status-badge {
+    padding: 4px 14px; border-radius: 12px; font-size: 12px; font-weight: 600;
+    background: rgba(255,60,60,0.2); color: #ff6b6b; border: 1px solid rgba(255,60,60,0.3);
+  }
+  #status-badge.connected { background: rgba(0,212,170,0.15); color: #00d4aa; border-color: rgba(0,212,170,0.3); }
+
+  .data-panel {
+    position: absolute; background: rgba(10,14,23,0.92); border: 1px solid rgba(0,212,170,0.25);
+    border-radius: 8px; padding: 14px 18px; min-width: 200px; pointer-events: auto;
+    backdrop-filter: blur(8px); box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+  .data-panel h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #00d4aa; margin-bottom: 10px; }
+  .data-row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 13px; }
+  .data-row .label { color: #8892a4; }
+  .data-row .value { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .data-row .value.warn  { color: #ffc107; }
+  .data-row .value.danger{ color: #ff4444; }
+  .data-row .value.good  { color: #00d4aa; }
+
+  #panel-reactor   { top: 70px; left: 20px; }
+  #panel-economics { top: 70px; right: 20px; }
+  #panel-catalyst  { bottom: 80px; left: 20px; }
+  #panel-controls  { bottom: 80px; right: 20px; }
+
+  #legend {
+    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 20px; background: rgba(10,14,23,0.9); padding: 10px 24px;
+    border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); pointer-events: auto; font-size: 12px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  /* ── Connect dialog ──────────────────────────────────────── */
+  #connect-dialog {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    background: rgba(10,14,23,0.96); border: 1px solid rgba(0,212,170,0.3);
+    border-radius: 12px; padding: 30px; text-align: center; pointer-events: auto;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.6); z-index: 200;
+  }
+  #connect-dialog.hidden { display: none; }
+  #connect-dialog input {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2);
+    color: #fff; padding: 10px 16px; border-radius: 6px; width: 320px; font-size: 14px; margin: 12px 0;
+  }
+  #connect-dialog button {
+    background: #00d4aa; color: #0a0e17; border: none; padding: 10px 28px;
+    border-radius: 6px; font-weight: 600; font-size: 14px; cursor: pointer; margin: 4px;
+  }
+  #connect-dialog button:hover { background: #00f0c0; }
+  #connect-dialog button.secondary { background: transparent; color: #00d4aa; border: 1px solid #00d4aa; }
+  #connect-dialog button.secondary:hover { background: rgba(0,212,170,0.1); }
+  #connect-dialog p.hint { font-size: 12px; color: #666; margin-top: 8px; }
+
+  #tooltip {
+    position: absolute; display: none; background: rgba(10,14,23,0.95); border: 1px solid #00d4aa;
+    padding: 8px 14px; border-radius: 6px; font-size: 12px; pointer-events: none; z-index: 100;
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="canvas3d"></canvas>
+
+<!-- ── HUD panels ────────────────────────────────────────────── -->
+<div id="hud">
+  <div id="title-bar">
+    <h1><span>&#9670;</span> Methanol APC &mdash; 3D Digital Twin</h1>
+    <div id="status-badge">OFFLINE</div>
+  </div>
+
+  <div class="data-panel" id="panel-reactor">
+    <h3>&#9670; Reactor State</h3>
+    <div class="data-row"><span class="label">Temperature</span><span class="value" id="v-temp">-- &deg;C</span></div>
+    <div class="data-row"><span class="label">Pressure</span><span class="value" id="v-pressure">-- bar</span></div>
+    <div class="data-row"><span class="label">Reaction Rate</span><span class="value" id="v-rate">-- mol/s</span></div>
+    <div class="data-row"><span class="label">H2/CO Ratio</span><span class="value" id="v-ratio">--</span></div>
+    <div class="data-row"><span class="label">Feed H2</span><span class="value" id="v-h2">-- mol/s</span></div>
+    <div class="data-row"><span class="label">Feed CO</span><span class="value" id="v-co">-- mol/s</span></div>
+  </div>
+
+  <div class="data-panel" id="panel-economics">
+    <h3>&#9670; Economics</h3>
+    <div class="data-row"><span class="label">Step Profit</span><span class="value" id="v-profit">$--</span></div>
+    <div class="data-row"><span class="label">Cumulative</span><span class="value" id="v-cum-profit">$--</span></div>
+    <div class="data-row"><span class="label">MeOH Produced</span><span class="value" id="v-meoh">-- kg</span></div>
+    <div class="data-row"><span class="label">CO2 Emissions</span><span class="value" id="v-co2">-- kg</span></div>
+    <div class="data-row"><span class="label">Step / Max</span><span class="value" id="v-step">-- / --</span></div>
+  </div>
+
+  <div class="data-panel" id="panel-catalyst">
+    <h3>&#9670; Catalyst &amp; Safety</h3>
+    <div class="data-row"><span class="label">Catalyst Health</span><span class="value" id="v-cat">--%</span></div>
+    <div class="data-row"><span class="label">Selectivity</span><span class="value" id="v-sel">--%</span></div>
+    <div class="data-row"><span class="label">Purity</span><span class="value" id="v-purity">--%</span></div>
+    <div class="data-row"><span class="label">Safety</span><span class="value good" id="v-safety">OK</span></div>
+    <div class="data-row"><span class="label">Task</span><span class="value" id="v-task">--</span></div>
+  </div>
+
+  <div class="data-panel" id="panel-controls">
+    <h3>&#9670; Synthesis Loop</h3>
+    <div class="data-row"><span class="label">Cooling Flow</span><span class="value" id="v-cool">-- L/min</span></div>
+    <div class="data-row"><span class="label">Compressor</span><span class="value" id="v-comp">-- kW</span></div>
+    <div class="data-row"><span class="label">Recycle Ratio</span><span class="value" id="v-recycle">--</span></div>
+    <div class="data-row"><span class="label">Purge Rate</span><span class="value" id="v-purge">-- mol/s</span></div>
+    <div class="data-row"><span class="label">Reformer T</span><span class="value" id="v-reform-t">-- &deg;C</span></div>
+  </div>
+
+  <div id="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#2196F3"></div> Cool (&lt;220&deg;C)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#4CAF50"></div> Optimal (240-260&deg;C)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#FFC107"></div> Hot (260-280&deg;C)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#F44336"></div> Critical (&gt;280&deg;C)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#9C27B0"></div> Shutdown (&gt;300&deg;C)</div>
+  </div>
+</div>
+
+<div id="tooltip"></div>
+
+<div id="connect-dialog">
+  <h2 style="margin-bottom:6px;">Connect to Methanol APC</h2>
+  <p style="color:#8892a4;margin-bottom:16px;">Enter your HuggingFace Space URL or run locally</p>
+  <input id="ws-url" type="text" value="wss://glitchfilter-methanol-apc-env.hf.space/ws" placeholder="wss://..."><br>
+  <button onclick="connectWS()">Connect Live</button>
+  <button class="secondary" onclick="startDemo()">Demo Mode</button>
+  <p class="hint">Demo mode simulates reactor data without a server</p>
+</div>
+
+<!-- ── Three.js CDN ──────────────────────────────────────────── -->
+<script type="importmap">
+{ "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"
+}}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+/* ═══════════════════════════════════════════════════════════════
+   GLOBAL STATE
+   ═══════════════════════════════════════════════════════════════ */
+let S = {
+  temperature: 250, pressure: 50, feed_rate_h2: 4, feed_rate_co: 2,
+  h2_co_ratio: 2.0, cooling_water_flow: 50, catalyst_health: 1.0,
+  methanol_produced: 0, reaction_rate: 0, profit_this_step: 0,
+  cumulative_profit: 0, step_number: 0, max_steps: 100, task_name: 'startup',
+  safety_warning: null, selectivity: 0.995, product_purity: 0.995,
+  purge_rate: 0, recycle_ratio: 3.5, reformer_outlet_temp: 850,
+  total_co2_emissions: 0, compressor_power: 40, flare_valve: 0,
+};
+let ws = null, demoMode = false, demoStep = 0;
+
+/* ═══════════════════════════════════════════════════════════════
+   RENDERER / SCENE / CAMERA
+   ═══════════════════════════════════════════════════════════════ */
+const canvas = document.getElementById('canvas3d');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x0a0e17, 0.006);
+
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 500);
+camera.position.set(38, 25, 40);
+
+const ctrl = new OrbitControls(camera, canvas);
+ctrl.enableDamping = true; ctrl.dampingFactor = 0.05;
+ctrl.target.set(0, 6, 0);
+ctrl.minDistance = 8; ctrl.maxDistance = 100;
+ctrl.maxPolarAngle = Math.PI / 2.05;
+
+/* ═══════════════════════════════════════════════════════════════
+   SKY DOME — gradient background with stars
+   ═══════════════════════════════════════════════════════════════ */
+(function buildSky() {
+  const skyCanvas = document.createElement('canvas');
+  skyCanvas.width = 512; skyCanvas.height = 512;
+  const ctx = skyCanvas.getContext('2d');
+  const g = ctx.createLinearGradient(0, 0, 0, 512);
+  g.addColorStop(0.0, '#020510');
+  g.addColorStop(0.35, '#0a0e17');
+  g.addColorStop(0.65, '#0f1a2e');
+  g.addColorStop(1.0,  '#162040');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, 512, 512);
+  // Stars
+  ctx.fillStyle = '#ffffff';
+  for (let i = 0; i < 200; i++) {
+    const x = Math.random() * 512, y = Math.random() * 350;
+    const r = Math.random() * 1.2 + 0.3;
+    ctx.globalAlpha = Math.random() * 0.6 + 0.2;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  const tex = new THREE.CanvasTexture(skyCanvas);
+  tex.mapping = THREE.EquirectangularReflectionMapping;
+  scene.background = tex;
+  scene.environment = tex;
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   LIGHTS
+   ═══════════════════════════════════════════════════════════════ */
+scene.add(new THREE.AmbientLight(0x1a2333, 1.8));
+
+const sun = new THREE.DirectionalLight(0xffeedd, 1.8);
+sun.position.set(25, 35, 20);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+const sc = sun.shadow.camera;
+sc.near = 1; sc.far = 100; sc.left = -50; sc.right = 50; sc.top = 50; sc.bottom = -50;
+scene.add(sun);
+
+scene.add(new THREE.DirectionalLight(0x4488ff, 0.3).translateX(-15).translateY(10));
+scene.add(new THREE.HemisphereLight(0x2244aa, 0x111111, 0.4));
+
+const reactorGlow = new THREE.PointLight(0x00d4aa, 1.5, 25);
+reactorGlow.position.set(0, 8, 0); scene.add(reactorGlow);
+const reformerGlow = new THREE.PointLight(0xff6633, 1.2, 18);
+reformerGlow.position.set(-18, 4, 0); scene.add(reformerGlow);
+
+/* ═══════════════════════════════════════════════════════════════
+   MATERIALS
+   ═══════════════════════════════════════════════════════════════ */
+const M = {};
+M.floor     = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.95, metalness: 0.05 });
+M.concrete  = new THREE.MeshStandardMaterial({ color: 0x3a3a3a, roughness: 0.9, metalness: 0.05 });
+M.steel     = new THREE.MeshStandardMaterial({ color: 0x8899aa, roughness: 0.32, metalness: 0.88 });
+M.steelDark = new THREE.MeshStandardMaterial({ color: 0x556677, roughness: 0.4, metalness: 0.82 });
+M.copper    = new THREE.MeshStandardMaterial({ color: 0xdd8844, roughness: 0.28, metalness: 0.92 });
+M.pipe      = new THREE.MeshStandardMaterial({ color: 0x667788, roughness: 0.38, metalness: 0.75 });
+M.pipeBlue  = new THREE.MeshStandardMaterial({ color: 0x4477aa, roughness: 0.35, metalness: 0.7 });
+M.pipeGreen = new THREE.MeshStandardMaterial({ color: 0x44aa55, roughness: 0.35, metalness: 0.7 });
+M.brick     = new THREE.MeshStandardMaterial({ color: 0x994433, roughness: 0.88, metalness: 0.08 });
+M.glass     = new THREE.MeshStandardMaterial({ color: 0x88ccff, roughness: 0.05, metalness: 0.0, transparent: true, opacity: 0.25 });
+M.yellow    = new THREE.MeshStandardMaterial({ color: 0xddcc22, roughness: 0.5, metalness: 0.3 });
+M.red       = new THREE.MeshStandardMaterial({ color: 0xcc2222, roughness: 0.5, metalness: 0.3 });
+M.insulation= new THREE.MeshStandardMaterial({ color: 0xaaaaaa, roughness: 0.95, metalness: 0.05 });
+M.grating   = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.6, metalness: 0.7, wireframe: false });
+M.flameCore = new THREE.MeshBasicMaterial({ color: 0xff6600, transparent: true, opacity: 0.9 });
+M.flameOuter= new THREE.MeshBasicMaterial({ color: 0xff2200, transparent: true, opacity: 0.4 });
+// Dynamic
+M.reactorBody = new THREE.MeshStandardMaterial({ color: 0x4488aa, roughness: 0.32, metalness: 0.85 });
+M.catBed = [];
+for (let i = 0; i < 4; i++) M.catBed.push(new THREE.MeshStandardMaterial({ color: 0x44aa66, roughness: 0.6, metalness: 0.25, emissive: 0x002211, emissiveIntensity: 0.3 }));
+M.reformerTube = new THREE.MeshStandardMaterial({ color: 0xcc6633, roughness: 0.35, metalness: 0.75, emissive: 0x331100, emissiveIntensity: 0.2 });
+
+/* ═══════════════════════════════════════════════════════════════
+   GEOMETRY HELPERS
+   ═══════════════════════════════════════════════════════════════ */
+
+// Pipe segment between two 3D points
+function mkPipe(a, b, r = 0.15, mat = M.pipe) {
+  const d = new THREE.Vector3().subVectors(b, a);
+  const L = d.length();
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, L, 12), mat);
+  m.position.lerpVectors(a, b, 0.5);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.normalize());
+  m.castShadow = true;
+  return m;
+}
+
+// Pipe elbow (torus quarter) at a corner position
+function mkElbow(pos, r = 0.15, bendR = 0.5, mat = M.pipe, rotX = 0, rotY = 0, rotZ = 0) {
+  const g = new THREE.TorusGeometry(bendR, r, 12, 12, Math.PI / 2);
+  const m = new THREE.Mesh(g, mat);
+  m.position.copy(pos);
+  m.rotation.set(rotX, rotY, rotZ);
+  m.castShadow = true;
+  return m;
+}
+
+// Flange ring
+function mkFlange(pos, outerR = 0.35, innerR = 0.15, thickness = 0.08, mat = M.steelDark, rotX = 0, rotY = 0, rotZ = 0) {
+  const shape = new THREE.Shape();
+  shape.absarc(0, 0, outerR, 0, Math.PI * 2, false);
+  const hole = new THREE.Path();
+  hole.absarc(0, 0, innerR, 0, Math.PI * 2, true);
+  shape.holes.push(hole);
+  const g = new THREE.ExtrudeGeometry(shape, { depth: thickness, bevelEnabled: false });
+  const m = new THREE.Mesh(g, mat);
+  m.position.copy(pos);
+  m.rotation.set(rotX, rotY, rotZ);
+  // Add bolt circles
+  const bolts = 8;
+  const boltR = (outerR + innerR) / 2;
+  for (let i = 0; i < bolts; i++) {
+    const a = (i / bolts) * Math.PI * 2;
+    const bGeo = new THREE.CylinderGeometry(0.025, 0.025, thickness + 0.04, 6);
+    const b = new THREE.Mesh(bGeo, M.steelDark);
+    b.position.set(Math.cos(a) * boltR, Math.sin(a) * boltR, thickness / 2);
+    m.add(b);
+  }
+  return m;
+}
+
+// Nozzle (short pipe stub + flange)
+function mkNozzle(parent, pos, dir = 'x', len = 1.2, r = 0.2) {
+  const g = new THREE.Group();
+  const pipeG = new THREE.CylinderGeometry(r, r, len, 12);
+  const pipe = new THREE.Mesh(pipeG, M.steel);
+  if (dir === 'x') { pipe.rotation.z = Math.PI / 2; pipe.position.x = len / 2; }
+  else if (dir === '-x') { pipe.rotation.z = -Math.PI / 2; pipe.position.x = -len / 2; }
+  else if (dir === 'y') { pipe.position.y = len / 2; }
+  else if (dir === '-y') { pipe.position.y = -len / 2; }
+  else if (dir === 'z') { pipe.rotation.x = Math.PI / 2; pipe.position.z = len / 2; }
+  pipe.castShadow = true;
+  g.add(pipe);
+  // Flange at tip
+  const flangeG = new THREE.TorusGeometry(r + 0.1, 0.04, 8, 16);
+  const flange = new THREE.Mesh(flangeG, M.steelDark);
+  if (dir === 'x') { flange.rotation.y = Math.PI / 2; flange.position.x = len; }
+  else if (dir === '-x') { flange.rotation.y = Math.PI / 2; flange.position.x = -len; }
+  else if (dir === 'y') { flange.rotation.x = Math.PI / 2; flange.position.y = len; }
+  else if (dir === '-y') { flange.rotation.x = Math.PI / 2; flange.position.y = -len; }
+  else if (dir === 'z') { flange.position.z = len; }
+  g.add(flange);
+  g.position.copy(pos);
+  parent.add(g);
+  return g;
+}
+
+// Platform with grating and handrails
+function mkPlatform(parent, y, radius, segments = 32) {
+  const g = new THREE.Group();
+  // Grating floor
+  const floor = new THREE.Mesh(new THREE.RingGeometry(radius - 0.1, radius + 1.2, segments, 1), M.grating);
+  floor.rotation.x = -Math.PI / 2; floor.position.y = y;
+  floor.receiveShadow = true;
+  g.add(floor);
+  // Railing posts
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2;
+    const rOut = radius + 1.1;
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.1, 6), M.yellow);
+    post.position.set(Math.cos(a) * rOut, y + 0.55, Math.sin(a) * rOut);
+    g.add(post);
+  }
+  // Top rail ring
+  const rail = new THREE.Mesh(new THREE.TorusGeometry(radius + 1.1, 0.035, 6, segments), M.yellow);
+  rail.rotation.x = Math.PI / 2; rail.position.y = y + 1.1;
+  g.add(rail);
+  // Mid rail ring
+  const midRail = new THREE.Mesh(new THREE.TorusGeometry(radius + 1.1, 0.025, 6, segments), M.yellow);
+  midRail.rotation.x = Math.PI / 2; midRail.position.y = y + 0.55;
+  g.add(midRail);
+  parent.add(g);
+  return g;
+}
+
+// Ladder
+function mkLadder(parent, x, z, yBottom, yTop) {
+  const g = new THREE.Group();
+  const h = yTop - yBottom;
+  // Side rails
+  for (const dx of [-0.15, 0.15]) {
+    const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, h, 6), M.yellow);
+    rail.position.set(x + dx, yBottom + h / 2, z);
+    g.add(rail);
+  }
+  // Rungs
+  const rungCount = Math.floor(h / 0.35);
+  for (let i = 0; i < rungCount; i++) {
+    const rung = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.3, 6), M.yellow);
+    rung.rotation.z = Math.PI / 2;
+    rung.position.set(x, yBottom + (i + 0.5) * (h / rungCount), z);
+    g.add(rung);
+  }
+  parent.add(g);
+  return g;
+}
+
+// Valve body (gate valve)
+function mkValve(parent, pos, pipeR = 0.15, dir = 'x') {
+  const g = new THREE.Group();
+  // Body (box)
+  const body = new THREE.Mesh(new THREE.BoxGeometry(pipeR * 3, pipeR * 4, pipeR * 3), M.steelDark);
+  g.add(body);
+  // Handwheel stem
+  const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, pipeR * 3, 6), M.steel);
+  stem.position.y = pipeR * 3.5;
+  g.add(stem);
+  // Handwheel
+  const wheel = new THREE.Mesh(new THREE.TorusGeometry(pipeR * 1.5, 0.03, 6, 12), M.red);
+  wheel.position.y = pipeR * 5;
+  g.add(wheel);
+  g.position.copy(pos);
+  if (dir === 'z') g.rotation.y = Math.PI / 2;
+  parent.add(g);
+  return g;
+}
+
+// Instrument tap (small cylinder + small box "transmitter")
+function mkInstrument(parent, pos, label = 'TI', dir = 'x') {
+  const g = new THREE.Group();
+  const probe = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.6, 8), M.steel);
+  if (dir === 'x') { probe.rotation.z = Math.PI / 2; probe.position.x = 0.3; }
+  else { probe.rotation.x = Math.PI / 2; probe.position.z = 0.3; }
+  g.add(probe);
+  const box = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.15), M.steelDark);
+  if (dir === 'x') box.position.x = 0.7;
+  else box.position.z = 0.7;
+  g.add(box);
+  g.position.copy(pos);
+  parent.add(g);
+  return g;
+}
+
+// Concrete pad
+function mkPad(parent, x, z, w, d, h = 0.3) {
+  const pad = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), M.concrete);
+  pad.position.set(x, h / 2, z);
+  pad.receiveShadow = true;
+  parent.add(pad);
+  return pad;
+}
+
+// Sprite label
+function mkLabel(text, pos, size = 0.7) {
+  const c = document.createElement('canvas');
+  c.width = 512; c.height = 80;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.roundRect(10, 5, 492, 70, 12); ctx.fill();
+  ctx.fillStyle = '#00d4aa';
+  ctx.font = 'bold 40px Segoe UI, system-ui, sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(text, 256, 42);
+  const tex = new THREE.CanvasTexture(c);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
+  sp.position.copy(pos);
+  sp.scale.set(size * 5, size * 0.8, 1);
+  return sp;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GROUND & GRID
+   ═══════════════════════════════════════════════════════════════ */
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(150, 150), M.floor);
+ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true;
+scene.add(ground);
+const grid = new THREE.GridHelper(150, 75, 0x1a2640, 0x141c30);
+grid.position.y = 0.01; scene.add(grid);
+
+const plant = new THREE.Group();
+scene.add(plant);
+
+/* ═══════════════════════════════════════════════════════════════
+   1. ICI 4-BED QUENCH REACTOR  (center, 0,0,0)
+   ═══════════════════════════════════════════════════════════════ */
+const reactor = new THREE.Group();
+mkPad(reactor, 0, 0, 7, 7);
+
+// Main shell (tall cylinder)
+const rShell = new THREE.Mesh(new THREE.CylinderGeometry(2.3, 2.3, 16, 48), M.reactorBody);
+rShell.position.y = 8.3; rShell.castShadow = true; rShell.receiveShadow = true;
+rShell.userData = { type: 'reactor', label: 'ICI 4-Bed Quench Reactor (T-101)' };
+reactor.add(rShell);
+
+// Top & bottom torispherical heads (ellipsoid approximation)
+const headGeo = new THREE.SphereGeometry(2.3, 48, 24, 0, Math.PI * 2, 0, Math.PI / 3);
+const topHead = new THREE.Mesh(headGeo, M.reactorBody);
+topHead.position.y = 16.3; topHead.castShadow = true; reactor.add(topHead);
+const botHead = new THREE.Mesh(headGeo, M.reactorBody);
+botHead.position.y = 0.3; botHead.rotation.x = Math.PI; botHead.castShadow = true; reactor.add(botHead);
+
+// Insulation band (slightly larger semi-transparent cylinder)
+const insul = new THREE.Mesh(new THREE.CylinderGeometry(2.55, 2.55, 16.5, 48, 1, true), M.insulation);
+insul.position.y = 8.3; insul.material.transparent = true; insul.material.opacity = 0.12;
+reactor.add(insul);
+
+// 4 Catalyst beds with perforated support plates
+const bedY = [14.0, 11.0, 8.0, 5.0];
+const catBeds = [];
+for (let i = 0; i < 4; i++) {
+  // Catalyst bed
+  const bed = new THREE.Mesh(new THREE.CylinderGeometry(1.9, 1.9, 2.0, 32), M.catBed[i]);
+  bed.position.y = bedY[i]; bed.userData = { type: 'catalyst_bed', label: `Catalyst Bed ${i+1} — Cu/ZnO/Al₂O₃` };
+  catBeds.push(bed);
+  reactor.add(bed);
+  // Support plate (thin disk below bed)
+  const plate = new THREE.Mesh(new THREE.CylinderGeometry(2.1, 2.1, 0.08, 32), M.steelDark);
+  plate.position.y = bedY[i] - 1.04;
+  reactor.add(plate);
+}
+
+// Quench gas distributor rings (between beds)
+for (let i = 0; i < 3; i++) {
+  const qy = bedY[i] - 1.5;
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.08, 8, 24), M.copper);
+  ring.rotation.x = Math.PI / 2; ring.position.y = qy; reactor.add(ring);
+  // Quench nozzle from shell
+  mkNozzle(reactor, new THREE.Vector3(2.3, qy, 0), 'x', 1.0, 0.12);
+}
+
+// Inlet nozzle (top)
+mkNozzle(reactor, new THREE.Vector3(0, 17.2, 0), 'y', 1.5, 0.35);
+// Outlet nozzle (bottom)
+mkNozzle(reactor, new THREE.Vector3(0, -0.8, 0), '-y', 1.2, 0.35);
+
+// Instrument taps on reactor shell
+mkInstrument(reactor, new THREE.Vector3(2.35, 14, 0.8), 'TE-101', 'x');
+mkInstrument(reactor, new THREE.Vector3(2.35, 11, 0.8), 'TE-102', 'x');
+mkInstrument(reactor, new THREE.Vector3(2.35, 8, -0.8), 'PI-101', 'x');
+mkInstrument(reactor, new THREE.Vector3(2.35, 5, -0.8), 'TE-103', 'x');
+
+// Pressure relief valve on top dome
+const prv = new THREE.Group();
+const prvBody = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.8, 8), M.red);
+prvBody.position.y = 0.4; prv.add(prvBody);
+const prvBonnet = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.15, 0.3, 8), M.red);
+prvBonnet.position.y = 0.85; prv.add(prvBonnet);
+prv.position.set(1.0, 17.5, 0);
+reactor.add(prv);
+
+// Manway (access hatch)
+const manway = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.15, 16), M.steelDark);
+manway.rotation.z = Math.PI / 2; manway.position.set(2.35, 9.5, 0);
+reactor.add(manway);
+// Manway hinge
+const hinge = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.3, 0.08), M.steel);
+hinge.position.set(2.43, 9.85, 0);
+reactor.add(hinge);
+
+// Support skirt
+const skirt = new THREE.Mesh(new THREE.CylinderGeometry(2.5, 2.8, 1.8, 32, 1, true), M.steelDark);
+skirt.position.y = -0.9; reactor.add(skirt);
+
+// Platform at top
+mkPlatform(reactor, 16.0, 2.3, 32);
+// Platform at mid-height
+mkPlatform(reactor, 10.0, 2.3, 32);
+// Ladder
+mkLadder(reactor, 3.6, 0, 0.3, 16.0);
+
+plant.add(reactor);
+plant.add(mkLabel('REACTOR T-101', new THREE.Vector3(0, 20, 0), 0.8));
+
+/* ═══════════════════════════════════════════════════════════════
+   2. STEAM METHANE REFORMER  (left, -18, 0, 0)
+   ═══════════════════════════════════════════════════════════════ */
+const reformer = new THREE.Group();
+reformer.position.set(-18, 0, 0);
+mkPad(reformer, 0, 0, 8, 6);
+
+// Radiant section (firebox)
+const firebox = new THREE.Mesh(new THREE.BoxGeometry(6, 10, 4.5), M.brick);
+firebox.position.y = 5.3; firebox.castShadow = true; firebox.receiveShadow = true;
+firebox.userData = { type: 'reformer', label: 'Steam Methane Reformer (H-101)' };
+reformer.add(firebox);
+
+// Inner refractory lining hint (slightly smaller glowing box)
+const refractory = new THREE.Mesh(new THREE.BoxGeometry(5.6, 9.6, 4.1), 
+  new THREE.MeshBasicMaterial({ color: 0x331100, transparent: true, opacity: 0.3 }));
+refractory.position.y = 5.3; reformer.add(refractory);
+
+// 8 catalyst-filled tubes
+for (let i = 0; i < 8; i++) {
+  const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 9.5, 12), M.reformerTube);
+  tube.position.set(-2.1 + i * 0.6, 5.3, 0); tube.castShadow = true;
+  reformer.add(tube);
+}
+
+// Pigtails at bottom (curved pipe connections)
+for (let i = 0; i < 8; i++) {
+  const pigtail = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.06, 8, 8, Math.PI / 2), M.copper);
+  pigtail.position.set(-2.1 + i * 0.6, 0.5, 1.5);
+  reformer.add(pigtail);
+}
+
+// Inlet header (horizontal pipe connecting all tubes at top)
+const header = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 5.5, 12), M.steel);
+header.rotation.z = Math.PI / 2; header.position.y = 10.3; header.castShadow = true;
+reformer.add(header);
+
+// Outlet header at bottom
+const outHeader = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 5.5, 12), M.steel);
+outHeader.rotation.z = Math.PI / 2; outHeader.position.set(0, 0.5, 2);
+reformer.add(outHeader);
+
+// Convection section (box on top)
+const convection = new THREE.Mesh(new THREE.BoxGeometry(6, 3, 4.5), M.steelDark);
+convection.position.y = 11.8; convection.castShadow = true; reformer.add(convection);
+
+// Stack / chimney
+const stack = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 1.1, 6, 16), M.steelDark);
+stack.position.y = 16.3; stack.castShadow = true; reformer.add(stack);
+
+// Stack cap
+const stackCap = new THREE.Mesh(new THREE.ConeGeometry(1.2, 1, 16, 1, true), M.steel);
+stackCap.position.y = 19.5; reformer.add(stackCap);
+
+// Burners at bottom (6 circles)
+for (let i = 0; i < 6; i++) {
+  const burner = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.1, 12), M.copper);
+  burner.position.set(-1.5 + i * 0.6, 0.4, -1.5);
+  reformer.add(burner);
+}
+
+// Peephole / observation port
+const peep = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.2, 12), M.glass);
+peep.rotation.x = Math.PI / 2; peep.position.set(0, 3, 2.35);
+reformer.add(peep);
+
+// Burner lights
+for (let i = 0; i < 3; i++) {
+  const bl = new THREE.PointLight(0xff4400, 0.5, 4);
+  bl.position.set(-1.5 + i * 1.5, 1.5, 0);
+  reformer.add(bl);
+}
+
+// Platform
+mkPlatform(reformer, 10.3, 3.5, 8);
+mkLadder(reformer, 4.5, 0, 0.3, 10.3);
+
+// Instruments
+mkInstrument(reformer, new THREE.Vector3(3.1, 5, 0), 'TE-201');
+mkInstrument(reformer, new THREE.Vector3(3.1, 8, 0), 'TE-202');
+
+plant.add(reformer);
+plant.add(mkLabel('REFORMER H-101', new THREE.Vector3(-18, 21, 0), 0.7));
+
+/* ═══════════════════════════════════════════════════════════════
+   3. FEED / EFFLUENT HEAT EXCHANGER  (-9, 0, 0)
+   ═══════════════════════════════════════════════════════════════ */
+const hx = new THREE.Group();
+hx.position.set(-9, 0, 0);
+mkPad(hx, 0, 0, 5, 3.5);
+
+// Shell
+const hxShell = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 7, 32), M.steel);
+hxShell.rotation.z = Math.PI / 8; hxShell.position.y = 4.5;
+hxShell.castShadow = true;
+hxShell.userData = { type: 'hx', label: 'Feed/Effluent Heat Exchanger (E-101)' };
+hx.add(hxShell);
+
+// Tube sheets (visible disks at ends)
+for (const side of [-1, 1]) {
+  const ts = new THREE.Mesh(new THREE.CylinderGeometry(1.35, 1.35, 0.1, 32), M.steelDark);
+  ts.rotation.z = Math.PI / 8;
+  const offset = 3.5 * side;
+  ts.position.set(-offset * Math.sin(Math.PI/8), 4.5 + offset * Math.cos(Math.PI/8), 0);
+  hx.add(ts);
+}
+
+// Internal baffles hint
+for (let i = 0; i < 4; i++) {
+  const baffle = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 0.05, 32), M.copper);
+  baffle.rotation.z = Math.PI / 8;
+  const t = -1.5 + i * 1.0;
+  baffle.position.set(-t * Math.sin(Math.PI/8), 4.5 + t * Math.cos(Math.PI/8), 0);
+  baffle.material = new THREE.MeshStandardMaterial({ color: 0xbb7744, roughness: 0.4, metalness: 0.7, transparent: true, opacity: 0.4 });
+  hx.add(baffle);
+}
+
+// Tube bundle hint (several small tubes)
+for (let i = 0; i < 12; i++) {
+  const a = (i / 12) * Math.PI * 2;
+  const r = 0.6;
+  const t = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 6.5, 6), M.copper);
+  t.rotation.z = Math.PI / 8;
+  t.position.set(Math.cos(a)*r - 0, 4.5 + Math.sin(a)*r, 0);
+  hx.add(t);
+}
+
+// Saddle supports
+for (const zOff of [-1.5, 1.5]) {
+  const saddle = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.12, 8, 12, Math.PI), M.steelDark);
+  saddle.rotation.y = Math.PI / 2;
+  saddle.position.set(0, 1.5, zOff);
+  hx.add(saddle);
+}
+
+// Nozzles
+mkNozzle(hx, new THREE.Vector3(0, 7.5, 0), 'y', 0.8, 0.2);
+mkNozzle(hx, new THREE.Vector3(0, 1.2, 0), '-y', 0.6, 0.2);
+mkNozzle(hx, new THREE.Vector3(1.4, 5.5, 0), 'x', 0.6, 0.15);
+mkNozzle(hx, new THREE.Vector3(-1.4, 3.5, 0), '-x', 0.6, 0.15);
+
+plant.add(hx);
+plant.add(mkLabel('HEAT EXCH E-101', new THREE.Vector3(-9, 9.5, 0), 0.5));
+
+/* ═══════════════════════════════════════════════════════════════
+   4. DISTILLATION COLUMN  (14, 0, 0)
+   ═══════════════════════════════════════════════════════════════ */
+const distCol = new THREE.Group();
+distCol.position.set(14, 0, 0);
+mkPad(distCol, 0, 0, 6, 6);
+
+// Column shell
+const colShell = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 20, 36), M.steel);
+colShell.position.y = 10.3; colShell.castShadow = true;
+colShell.userData = { type: 'distillation', label: 'Methanol Distillation Column (C-101)' };
+distCol.add(colShell);
+
+// Top head
+const colTopHead = new THREE.Mesh(new THREE.SphereGeometry(1.6, 36, 18, 0, Math.PI*2, 0, Math.PI/3), M.steel);
+colTopHead.position.y = 20.3; distCol.add(colTopHead);
+// Bottom head
+const colBotHead = new THREE.Mesh(new THREE.SphereGeometry(1.6, 36, 18, 0, Math.PI*2, 0, Math.PI/3), M.steel);
+colBotHead.position.y = 0.3; colBotHead.rotation.x = Math.PI; distCol.add(colBotHead);
+
+// Sieve trays (10 internal disks, visible through column)
+for (let i = 0; i < 10; i++) {
+  const tray = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 0.05, 24), M.copper);
+  tray.position.y = 2 + i * 1.8;
+  tray.material = new THREE.MeshStandardMaterial({ color: 0xbb8844, roughness: 0.4, metalness: 0.7, transparent: true, opacity: 0.3 });
+  distCol.add(tray);
+  // Tray ring visible on shell exterior
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(1.65, 0.04, 6, 36), M.steelDark);
+  ring.rotation.x = Math.PI / 2; ring.position.y = 2 + i * 1.8;
+  distCol.add(ring);
+}
+
+// Feed nozzle (mid-height)
+mkNozzle(distCol, new THREE.Vector3(1.65, 10, 0), 'x', 1.0, 0.2);
+
+// Overhead condenser (horizontal drum + fin fan)
+const condenser = new THREE.Group();
+const condDrum = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 3, 16), M.steel);
+condDrum.rotation.z = Math.PI / 2; condDrum.position.set(4, 19, 0);
+condDrum.castShadow = true;
+condDrum.userData = { type: 'condenser', label: 'Overhead Condenser (E-102)' };
+condenser.add(condDrum);
+// Fin fan (flat box array)
+for (let i = 0; i < 3; i++) {
+  const fin = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.05, 2.0), M.copper);
+  fin.position.set(3 + i * 0.5, 20, 0);
+  condenser.add(fin);
+}
+distCol.add(condenser);
+
+// Reflux drum
+const refluxDrum = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 2.5, 16), M.steel);
+refluxDrum.rotation.z = Math.PI / 2; refluxDrum.position.set(4, 17, 0);
+refluxDrum.castShadow = true; distCol.add(refluxDrum);
+
+// Reboiler (shell & tube, horizontal)
+const reboiler = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 3.5, 20), M.copper);
+reboiler.rotation.z = Math.PI / 2; reboiler.position.set(4, 1.5, 0);
+reboiler.castShadow = true;
+reboiler.userData = { type: 'reboiler', label: 'Reboiler (E-103) — Thermosiphon' };
+distCol.add(reboiler);
+
+// Reboiler tube sheets
+for (const s of [-1, 1]) {
+  const ts = new THREE.Mesh(new THREE.CylinderGeometry(1.05, 1.05, 0.08, 20), M.steelDark);
+  ts.rotation.z = Math.PI / 2; ts.position.set(4 + s * 1.8, 1.5, 0);
+  distCol.add(ts);
+}
+
+// Level gauge glass
+const gauge = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 3, 8), M.glass);
+gauge.position.set(1.75, 5, 0.8); distCol.add(gauge);
+const gaugeTop = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.12), M.steelDark);
+gaugeTop.position.set(1.75, 6.5, 0.8); distCol.add(gaugeTop);
+const gaugeBot = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.12), M.steelDark);
+gaugeBot.position.set(1.75, 3.5, 0.8); distCol.add(gaugeBot);
+
+// Nozzles
+mkNozzle(distCol, new THREE.Vector3(0, 20.8, 0), 'y', 0.8, 0.25);  // overhead vapor
+mkNozzle(distCol, new THREE.Vector3(0, -0.5, 0), '-y', 0.8, 0.25); // bottoms
+
+// Platforms at 3 heights
+mkPlatform(distCol, 6.0, 1.6, 24);
+mkPlatform(distCol, 12.0, 1.6, 24);
+mkPlatform(distCol, 18.0, 1.6, 24);
+mkLadder(distCol, 3.2, 0, 0.3, 18.0);
+
+// Column support skirt
+const colSkirt = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 2.0, 1.2, 32, 1, true), M.steelDark);
+colSkirt.position.y = -0.3; distCol.add(colSkirt);
+
+plant.add(distCol);
+plant.add(mkLabel('DISTILLATION C-101', new THREE.Vector3(14, 23, 0), 0.7));
+
+/* ═══════════════════════════════════════════════════════════════
+   5. SYNGAS COMPRESSOR  (7, 0, -9)
+   ═══════════════════════════════════════════════════════════════ */
+const comp = new THREE.Group();
+comp.position.set(7, 0, -9);
+mkPad(comp, 0, 0, 6, 4);
+
+const compBody = new THREE.Mesh(new THREE.BoxGeometry(3.5, 2.8, 2.8), M.steelDark);
+compBody.position.y = 1.7; compBody.castShadow = true;
+compBody.userData = { type: 'compressor', label: 'Syngas Compressor (K-101) — 3-Stage Centrifugal' };
+comp.add(compBody);
+
+// Intake volute (cylinder on side)
+const volute = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 1.5, 16), M.steel);
+volute.rotation.z = Math.PI / 2; volute.position.set(-2.8, 1.7, 0);
+volute.castShadow = true; comp.add(volute);
+
+// Motor
+const motor = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 3, 16), M.steel);
+motor.rotation.z = Math.PI / 2; motor.position.set(3.2, 1.7, 0);
+comp.add(motor);
+
+// Flywheel
+const flywheel = new THREE.Mesh(new THREE.TorusGeometry(1.0, 0.1, 8, 24), M.copper);
+flywheel.position.set(1.5, 1.7, 0); flywheel.rotation.y = Math.PI / 2;
+comp.add(flywheel);
+
+// Discharge nozzle
+mkNozzle(comp, new THREE.Vector3(0, 3.2, 0), 'y', 0.8, 0.2);
+
+// Intercoolers (two small drums beside compressor)
+for (let i = 0; i < 2; i++) {
+  const ic = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 1.8, 12), M.copper);
+  ic.position.set(-0.5 + i * 1.5, 1.7, -2);
+  ic.userData = { label: `Intercooler ${i+1}` };
+  comp.add(ic);
+}
+
+plant.add(comp);
+plant.add(mkLabel('COMPRESSOR K-101', new THREE.Vector3(7, 5, -9), 0.5));
+
+/* ═══════════════════════════════════════════════════════════════
+   6. COOLING WATER SYSTEM  (0, 0, -12)
+   ═══════════════════════════════════════════════════════════════ */
+const cooling = new THREE.Group();
+cooling.position.set(0, 0, -12);
+mkPad(cooling, 0, 0, 6, 6);
+
+// Cooling tower (hyperboloid approximation)
+const ctGeo = new THREE.LatheGeometry([
+  new THREE.Vector2(2.5, 0), new THREE.Vector2(2.0, 1.5), new THREE.Vector2(1.6, 3),
+  new THREE.Vector2(1.5, 4), new THREE.Vector2(1.55, 5), new THREE.Vector2(1.7, 6),
+  new THREE.Vector2(1.9, 7),
+], 24);
+const ct = new THREE.Mesh(ctGeo, M.concrete);
+ct.castShadow = true; ct.userData = { type: 'cooling', label: 'Cooling Tower (CT-101)' };
+cooling.add(ct);
+
+// Fill media hint (internal slats)
+for (let y = 1; y < 4; y++) {
+  const fill = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 0.05, 16), 
+    new THREE.MeshStandardMaterial({ color: 0x445566, roughness: 0.8, transparent: true, opacity: 0.3 }));
+  fill.position.y = y;
+  cooling.add(fill);
+}
+
+// Fan on top
+const fanHub = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.3, 12), M.steelDark);
+fanHub.position.y = 7.3; cooling.add(fanHub);
+// Fan blades
+for (let i = 0; i < 5; i++) {
+  const blade = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.05, 0.3), M.steel);
+  blade.position.y = 7.3;
+  blade.rotation.y = (i / 5) * Math.PI * 2;
+  blade.position.x = Math.cos((i / 5) * Math.PI * 2) * 0.6;
+  blade.position.z = Math.sin((i / 5) * Math.PI * 2) * 0.6;
+  cooling.add(blade);
+}
+
+// CW pump
+const cwPump = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.8, 12), M.steelDark);
+cwPump.position.set(3, 0.5, 0); cwPump.userData = { label: 'CW Pump (P-101)' };
+cooling.add(cwPump);
+const pumpMotor = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 1.2, 12), M.steel);
+pumpMotor.rotation.z = Math.PI / 2; pumpMotor.position.set(4, 0.5, 0);
+cooling.add(pumpMotor);
+
+plant.add(cooling);
+plant.add(mkLabel('COOLING CT-101', new THREE.Vector3(0, 9, -12), 0.5));
+
+/* ═══════════════════════════════════════════════════════════════
+   7. PRODUCT STORAGE TANK  (24, 0, 6)
+   ═══════════════════════════════════════════════════════════════ */
+const storage = new THREE.Group();
+storage.position.set(24, 0, 6);
+mkPad(storage, 0, 0, 8, 8);
+
+const tankShell = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 6, 32), M.steel);
+tankShell.position.y = 3; tankShell.castShadow = true;
+tankShell.userData = { type: 'storage', label: 'MeOH Storage Tank (TK-101) — 500 m³' };
+storage.add(tankShell);
+
+// Floating roof
+const floatRoof = new THREE.Mesh(new THREE.CylinderGeometry(2.9, 2.9, 0.15, 32), M.steelDark);
+floatRoof.position.y = 5; storage.add(floatRoof);
+
+// Wind girder (top ring)
+const windGirder = new THREE.Mesh(new THREE.TorusGeometry(3.05, 0.06, 6, 32), M.steelDark);
+windGirder.rotation.x = Math.PI / 2; windGirder.position.y = 6;
+storage.add(windGirder);
+
+// Staircase (spiral)
+for (let i = 0; i < 20; i++) {
+  const a = (i / 20) * Math.PI * 2;
+  const step = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.05, 0.3), M.grating);
+  step.position.set(Math.cos(a) * 3.3, 0.3 + i * 0.3, Math.sin(a) * 3.3);
+  step.rotation.y = -a;
+  storage.add(step);
+}
+
+// Nozzles
+mkNozzle(storage, new THREE.Vector3(3, 1, 0), 'x', 0.8, 0.25);
+mkNozzle(storage, new THREE.Vector3(3, 4, 0), 'x', 0.8, 0.15);
+
+plant.add(storage);
+plant.add(mkLabel('MeOH STORAGE TK-101', new THREE.Vector3(24, 8, 6), 0.6));
+
+/* ═══════════════════════════════════════════════════════════════
+   8. FLARE STACK  (28, 0, -10)
+   ═══════════════════════════════════════════════════════════════ */
+const flare = new THREE.Group();
+flare.position.set(28, 0, -10);
+
+const flarePole = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 22, 12), M.steelDark);
+flarePole.position.y = 11; flarePole.castShadow = true; flare.add(flarePole);
+
+// Guy wires (3 cables)
+for (let i = 0; i < 3; i++) {
+  const a = (i / 3) * Math.PI * 2;
+  const wire = mkPipe(
+    new THREE.Vector3(Math.cos(a) * 8, 0.5, Math.sin(a) * 8),
+    new THREE.Vector3(0, 18, 0), 0.02, M.steelDark
+  );
+  flare.add(wire);
+}
+
+// Flare tip
+const flareTip = new THREE.Mesh(new THREE.ConeGeometry(0.4, 0.8, 12, 1, true), M.steelDark);
+flareTip.position.y = 22.5; flare.add(flareTip);
+
+// Flame (visible when flare_valve > 0, animated)
+const flameGroup = new THREE.Group();
+flameGroup.position.y = 23;
+const flameCore = new THREE.Mesh(new THREE.ConeGeometry(0.3, 2, 8), M.flameCore);
+flameCore.position.y = 1; flameGroup.add(flameCore);
+const flameOuter = new THREE.Mesh(new THREE.ConeGeometry(0.6, 3, 8), M.flameOuter);
+flameOuter.position.y = 1.2; flameGroup.add(flameOuter);
+flameGroup.visible = false;
+flare.add(flameGroup);
+
+// Pilot burner (small light)
+const pilotLight = new THREE.PointLight(0xff6600, 0.3, 5);
+pilotLight.position.y = 22.5;
+flare.add(pilotLight);
+
+plant.add(flare);
+plant.add(mkLabel('FLARE', new THREE.Vector3(28, 25, -10), 0.5));
+
+/* ═══════════════════════════════════════════════════════════════
+   9. CONTROL ROOM  (-8, 0, -12)
+   ═══════════════════════════════════════════════════════════════ */
+const ctrlRoom = new THREE.Group();
+ctrlRoom.position.set(-8, 0, -12);
+
+const building = new THREE.Mesh(new THREE.BoxGeometry(5, 3, 4), M.concrete);
+building.position.y = 1.5; building.castShadow = true;
+building.userData = { type: 'control_room', label: 'Control Room — DCS / APC Operator Station' };
+ctrlRoom.add(building);
+
+// Roof
+const roof = new THREE.Mesh(new THREE.BoxGeometry(5.4, 0.2, 4.4), M.steelDark);
+roof.position.y = 3.1; ctrlRoom.add(roof);
+
+// Window
+const window1 = new THREE.Mesh(new THREE.PlaneGeometry(2.5, 1.2), M.glass);
+window1.position.set(0, 2, 2.01); ctrlRoom.add(window1);
+
+// Door
+const door = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 2.2),
+  new THREE.MeshStandardMaterial({ color: 0x334455, roughness: 0.6 }));
+door.position.set(-1.5, 1.1, 2.01); ctrlRoom.add(door);
+
+// Satellite dish
+const dish = new THREE.Mesh(new THREE.SphereGeometry(0.4, 12, 8, 0, Math.PI*2, 0, Math.PI/2), M.steel);
+dish.position.set(1.5, 3.5, 0); dish.rotation.x = -0.3;
+ctrlRoom.add(dish);
+
+plant.add(ctrlRoom);
+plant.add(mkLabel('CONTROL ROOM', new THREE.Vector3(-8, 5, -12), 0.5));
+
+/* ═══════════════════════════════════════════════════════════════
+   10. PIPE RACK (structural steel frame)
+   ═══════════════════════════════════════════════════════════════ */
+const pipeRack = new THREE.Group();
+const rackY = 5.5, rackW = 2.5;
+
+// Vertical columns every 5 units from reformer to distillation
+for (let x = -14; x <= 10; x += 5) {
+  for (const z of [-rackW/2, rackW/2]) {
+    const col = new THREE.Mesh(new THREE.BoxGeometry(0.2, rackY, 0.2), M.steelDark);
+    col.position.set(x, rackY / 2, -4 + z);
+    col.castShadow = true;
+    pipeRack.add(col);
+  }
+  // Cross beams
+  const beam = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, rackW + 0.4), M.steelDark);
+  beam.position.set(x, rackY, -4);
+  pipeRack.add(beam);
+}
+// Longitudinal stringers (top)
+for (const z of [-rackW/2, rackW/2]) {
+  const stringer = mkPipe(
+    new THREE.Vector3(-14, rackY, -4 + z),
+    new THREE.Vector3(10, rackY, -4 + z), 0.07, M.steelDark
+  );
+  pipeRack.add(stringer);
+}
+
+plant.add(pipeRack);
+
+/* ═══════════════════════════════════════════════════════════════
+   11. INTERCONNECT PIPING with valves
+   ═══════════════════════════════════════════════════════════════ */
+const pipes = new THREE.Group();
+
+// --- Reformer outlet → HX inlet ---
+pipes.add(mkPipe(new THREE.Vector3(-15, 5.5, 2), new THREE.Vector3(-15, 5.5, -4), 0.18, M.pipeBlue));
+pipes.add(mkPipe(new THREE.Vector3(-15, 5.5, -4), new THREE.Vector3(-10.5, 5.5, -4), 0.18, M.pipeBlue));
+mkValve(pipes, new THREE.Vector3(-12.5, 5.5, -4), 0.18, 'x');
+
+// --- HX outlet → Reactor inlet ---
+pipes.add(mkPipe(new THREE.Vector3(-7.5, 5.5, -4), new THREE.Vector3(-3, 5.5, -4), 0.18, M.pipeBlue));
+pipes.add(mkPipe(new THREE.Vector3(-3, 5.5, -4), new THREE.Vector3(-3, 5.5, 0), 0.18, M.pipeBlue));
+pipes.add(mkPipe(new THREE.Vector3(-3, 5.5, 0), new THREE.Vector3(-3, 18, 0), 0.18, M.pipeBlue));
+pipes.add(mkPipe(new THREE.Vector3(-3, 18, 0), new THREE.Vector3(0, 18, 0), 0.18, M.pipeBlue));
+mkValve(pipes, new THREE.Vector3(-3, 12, 0), 0.18);
+
+// --- Reactor outlet → Distillation feed ---
+pipes.add(mkPipe(new THREE.Vector3(0, -2, 0), new THREE.Vector3(0, -2.5, 0), 0.2, M.pipeGreen));
+pipes.add(mkPipe(new THREE.Vector3(0, -2.5, 0), new THREE.Vector3(0, -2.5, -4), 0.2, M.pipeGreen));
+pipes.add(mkPipe(new THREE.Vector3(0, -2.5, -4), new THREE.Vector3(9, -2.5, -4), 0.2, M.pipeGreen));
+pipes.add(mkPipe(new THREE.Vector3(9, -2.5, -4), new THREE.Vector3(9, -2.5, 0), 0.2, M.pipeGreen));
+pipes.add(mkPipe(new THREE.Vector3(9, -2.5, 0), new THREE.Vector3(9, 10, 0), 0.2, M.pipeGreen));
+pipes.add(mkPipe(new THREE.Vector3(9, 10, 0), new THREE.Vector3(14, 10, 0), 0.2, M.pipeGreen));
+mkValve(pipes, new THREE.Vector3(5, -2.5, -4), 0.2, 'x');
+
+// --- Distillation product → Storage ---
+pipes.add(mkPipe(new THREE.Vector3(14, -0.5, 0), new THREE.Vector3(14, -1.5, 0), 0.15, M.pipeGreen));
+pipes.add(mkPipe(new THREE.Vector3(14, -1.5, 0), new THREE.Vector3(14, -1.5, 3), 0.15, M.pipeGreen));
+pipes.add(mkPipe(new THREE.Vector3(14, -1.5, 3), new THREE.Vector3(21, -1.5, 3), 0.15, M.pipeGreen));
+pipes.add(mkPipe(new THREE.Vector3(21, -1.5, 3), new THREE.Vector3(21, 1, 6), 0.15, M.pipeGreen));
+mkValve(pipes, new THREE.Vector3(17.5, -1.5, 3), 0.15, 'x');
+
+// --- Recycle: Compressor → Reactor ---
+pipes.add(mkPipe(new THREE.Vector3(7, 4, -9), new THREE.Vector3(7, 5.5, -9), 0.15, M.pipe));
+pipes.add(mkPipe(new THREE.Vector3(7, 5.5, -9), new THREE.Vector3(2, 5.5, -9), 0.15, M.pipe));
+pipes.add(mkPipe(new THREE.Vector3(2, 5.5, -9), new THREE.Vector3(2, 5.5, -4), 0.15, M.pipe));
+pipes.add(mkPipe(new THREE.Vector3(2, 5.5, -4), new THREE.Vector3(2, 8, -4), 0.15, M.pipe));
+pipes.add(mkPipe(new THREE.Vector3(2, 8, -4), new THREE.Vector3(2, 8, 0), 0.15, M.pipe));
+
+// --- Cooling water → Reactor ---
+pipes.add(mkPipe(new THREE.Vector3(0, 3, -9.5), new THREE.Vector3(0, 3, -3), 0.12, M.pipeBlue));
+pipes.add(mkPipe(new THREE.Vector3(0, 3, -3), new THREE.Vector3(2.5, 3, -3), 0.12, M.pipeBlue));
+mkValve(pipes, new THREE.Vector3(0, 3, -6), 0.12, 'z');
+
+// --- Flare header ---
+pipes.add(mkPipe(new THREE.Vector3(3, 5.5, -4), new THREE.Vector3(20, 5.5, -4), 0.1, M.pipe));
+pipes.add(mkPipe(new THREE.Vector3(20, 5.5, -4), new THREE.Vector3(28, 5.5, -10), 0.1, M.pipe));
+pipes.add(mkPipe(new THREE.Vector3(28, 5.5, -10), new THREE.Vector3(28, 11, -10), 0.1, M.pipe));
+
+plant.add(pipes);
+
+/* ═══════════════════════════════════════════════════════════════
+   12. SAFETY SHOWER  (-3, 0, -6)
+   ═══════════════════════════════════════════════════════════════ */
+const shower = new THREE.Group();
+shower.position.set(-3, 0, -7);
+const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.5, 8), M.yellow);
+pole.position.y = 1.25; shower.add(pole);
+const head = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.15, 0.1, 12), M.yellow);
+head.position.y = 2.5; shower.add(head);
+const eyeWash = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.8, 0.3), M.yellow);
+eyeWash.position.set(0, 0.6, 0.2); shower.add(eyeWash);
+plant.add(shower);
+
+/* ═══════════════════════════════════════════════════════════════
+   13. STEAM PARTICLES (reformer stack) & FLOW PARTICLES
+   ═══════════════════════════════════════════════════════════════ */
+
+// Steam particles from reformer stack
+const steamCount = 80;
+const steamGeo = new THREE.BufferGeometry();
+const steamPos = new Float32Array(steamCount * 3);
+const steamVel = new Float32Array(steamCount * 3);
+const steamLife = new Float32Array(steamCount);
+for (let i = 0; i < steamCount; i++) {
+  resetSteam(i);
+}
+steamGeo.setAttribute('position', new THREE.BufferAttribute(steamPos, 3));
+const steamMat = new THREE.PointsMaterial({ color: 0xaabbcc, size: 0.4, transparent: true, opacity: 0.4, sizeAttenuation: true });
+const steamParticles = new THREE.Points(steamGeo, steamMat);
+scene.add(steamParticles);
+
+function resetSteam(i) {
+  steamPos[i*3]   = -18 + (Math.random()-0.5)*0.5;
+  steamPos[i*3+1] = 19.5 + Math.random()*2;
+  steamPos[i*3+2] = (Math.random()-0.5)*0.5;
+  steamVel[i*3]   = (Math.random()-0.5)*0.3;
+  steamVel[i*3+1] = 0.5 + Math.random()*1.0;
+  steamVel[i*3+2] = (Math.random()-0.5)*0.3;
+  steamLife[i] = Math.random() * 3;
+}
+
+// Process flow particles
+const flowCount = 250;
+const flowGeo = new THREE.BufferGeometry();
+const flowPos = new Float32Array(flowCount * 3);
+const flowCol = new Float32Array(flowCount * 3);
+const flowT   = new Float32Array(flowCount);  // parametric position along path
+const flowPath= new Uint8Array(flowCount);    // which path
+const flowSpd = new Float32Array(flowCount);
+
+const PATHS = [
+  // 0: Syngas (reformer→reactor) BLUE
+  [[-15,5.5,2],[-15,5.5,-4],[-10.5,5.5,-4],[-7.5,5.5,-4],[-3,5.5,-4],[-3,5.5,0],[-3,18,0],[0,18,0]],
+  // 1: Crude methanol (reactor→distillation) GREEN
+  [[0,-2,0],[0,-2.5,-4],[9,-2.5,-4],[9,-2.5,0],[9,10,0],[14,10,0]],
+  // 2: Product (distillation→storage) CYAN
+  [[14,-1.5,0],[14,-1.5,3],[21,-1.5,3],[21,1,6]],
+  // 3: Recycle (compressor→reactor) GREY
+  [[7,4,-9],[7,5.5,-9],[2,5.5,-9],[2,5.5,-4],[2,8,-4],[2,8,0]],
+];
+const PATH_COLORS = [[0.2,0.5,1],[0.2,0.9,0.4],[0,0.8,0.8],[0.6,0.6,0.7]];
+
+for (let i = 0; i < flowCount; i++) {
+  const p = Math.floor(Math.random()*PATHS.length);
+  flowPath[i] = p;
+  flowT[i] = Math.random();
+  flowSpd[i] = 0.1 + Math.random()*0.3;
+  const c = PATH_COLORS[p];
+  flowCol[i*3] = c[0]; flowCol[i*3+1] = c[1]; flowCol[i*3+2] = c[2];
+  setFlowPos(i);
+}
+flowGeo.setAttribute('position', new THREE.BufferAttribute(flowPos, 3));
+flowGeo.setAttribute('color', new THREE.BufferAttribute(flowCol, 3));
+const flowMat = new THREE.PointsMaterial({ size: 0.12, vertexColors: true, transparent: true, opacity: 0.7, sizeAttenuation: true });
+const flowParticles = new THREE.Points(flowGeo, flowMat);
+scene.add(flowParticles);
+
+function setFlowPos(i) {
+  const path = PATHS[flowPath[i]];
+  const totalSegs = path.length - 1;
+  const globalT = flowT[i] * totalSegs;
+  const segIdx = Math.min(Math.floor(globalT), totalSegs - 1);
+  const localT = globalT - segIdx;
+  const a = path[segIdx], b = path[segIdx + 1];
+  flowPos[i*3]   = a[0] + (b[0]-a[0])*localT + (Math.random()-0.5)*0.1;
+  flowPos[i*3+1] = a[1] + (b[1]-a[1])*localT + (Math.random()-0.5)*0.1;
+  flowPos[i*3+2] = a[2] + (b[2]-a[2])*localT + (Math.random()-0.5)*0.1;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RAYCASTING FOR TOOLTIPS
+   ═══════════════════════════════════════════════════════════════ */
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+const tooltip = document.getElementById('tooltip');
+canvas.addEventListener('mousemove', (e) => {
+  mouse.x = (e.clientX/window.innerWidth)*2-1;
+  mouse.y = -(e.clientY/window.innerHeight)*2+1;
+  raycaster.setFromCamera(mouse, camera);
+  const hits = raycaster.intersectObjects(plant.children, true);
+  let found = false;
+  for (const h of hits) {
+    let obj = h.object;
+    while (obj && !obj.userData?.label) obj = obj.parent;
+    if (obj?.userData?.label) {
+      tooltip.style.display = 'block';
+      tooltip.style.left = e.clientX+15+'px';
+      tooltip.style.top = e.clientY-10+'px';
+      tooltip.textContent = obj.userData.label;
+      found = true; break;
+    }
+  }
+  if (!found) tooltip.style.display = 'none';
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   RESIZE
+   ═══════════════════════════════════════════════════════════════ */
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   STATE → VISUALS MAPPING
+   ═══════════════════════════════════════════════════════════════ */
+function tempColor(t) {
+  if (t < 220) return new THREE.Color(0x2196F3);
+  if (t < 240) return new THREE.Color(0x2196F3).lerp(new THREE.Color(0x4CAF50),(t-220)/20);
+  if (t < 260) return new THREE.Color(0x4CAF50);
+  if (t < 280) return new THREE.Color(0x4CAF50).lerp(new THREE.Color(0xFFC107),(t-260)/20);
+  if (t < 300) return new THREE.Color(0xFFC107).lerp(new THREE.Color(0xF44336),(t-280)/20);
+  return new THREE.Color(0x9C27B0);
+}
+function catColor(h) {
+  if (h > 0.8) return new THREE.Color(0x44aa66);
+  if (h > 0.5) return new THREE.Color(0xaaaa33);
+  if (h > 0.2) return new THREE.Color(0xcc6633);
+  return new THREE.Color(0x884444);
+}
+
+function updateVisuals() {
+  const T = S.temperature, c = tempColor(T), cc = catColor(S.catalyst_health);
+
+  M.reactorBody.color.copy(c); M.reactorBody.emissive.copy(c).multiplyScalar(0.12);
+  for (let i = 0; i < 4; i++) { M.catBed[i].color.copy(cc); M.catBed[i].emissive.copy(cc).multiplyScalar(0.15); }
+  reactorGlow.intensity = 0.5 + Math.max(0, T-200)/80*2; reactorGlow.color.copy(c);
+
+  const fuelF = Math.min(1, (S.reformer_outlet_temp||850)/1000);
+  reformerGlow.intensity = fuelF * 2.5;
+  M.reformerTube.emissive.setHex(0x331100); M.reformerTube.emissiveIntensity = fuelF * 0.4;
+
+  // Flare
+  const flareOn = (S.flare_valve || 0) > 2;
+  flameGroup.visible = flareOn;
+  pilotLight.intensity = flareOn ? 2 : 0.3;
+
+  // HUD
+  const el = id => document.getElementById(id);
+  const f = (v,d=1) => Number(v).toFixed(d);
+  const cls = (id, v, lo, hi) => {
+    const e = el(id); e.classList.remove('warn','danger','good');
+    if (v < lo || v > hi) e.classList.add('danger');
+    else if (v > hi*0.9 || v < lo*1.1) e.classList.add('warn');
+    else e.classList.add('good');
+  };
+  el('v-temp').textContent = `${f(T)} °C`; cls('v-temp',T,220,280);
+  el('v-pressure').textContent = `${f(S.pressure)} bar`;
+  el('v-rate').textContent = `${f(S.reaction_rate,2)} mol/s`;
+  el('v-ratio').textContent = f(S.h2_co_ratio,2); cls('v-ratio',S.h2_co_ratio,1.8,2.2);
+  el('v-h2').textContent = `${f(S.feed_rate_h2)} mol/s`;
+  el('v-co').textContent = `${f(S.feed_rate_co)} mol/s`;
+  el('v-profit').textContent = `$${f(S.profit_this_step,2)}`; cls('v-profit',S.profit_this_step,0,999);
+  el('v-cum-profit').textContent = `$${f(S.cumulative_profit,2)}`;
+  el('v-meoh').textContent = `${f(S.methanol_produced,1)} kg`;
+  el('v-co2').textContent = `${f(S.total_co2_emissions||0,1)} kg`;
+  el('v-step').textContent = `${S.step_number} / ${S.max_steps}`;
+  el('v-cat').textContent = `${f(S.catalyst_health*100,1)}%`; cls('v-cat',S.catalyst_health,0.5,1.1);
+  el('v-sel').textContent = `${f((S.selectivity||0.995)*100,2)}%`;
+  el('v-purity').textContent = `${f((S.product_purity||0.995)*100,2)}%`;
+  const se = el('v-safety');
+  if (S.safety_warning) { se.textContent = S.safety_warning; se.className = 'value '+(T>290?'danger':'warn'); }
+  else { se.textContent = 'OK'; se.className = 'value good'; }
+  el('v-task').textContent = S.task_name||'--';
+  el('v-cool').textContent = `${f(S.cooling_water_flow)} L/min`;
+  el('v-comp').textContent = `${f(S.compressor_power||40)} kW`;
+  el('v-recycle').textContent = f(S.recycle_ratio||3.5,1);
+  el('v-purge').textContent = `${f(S.purge_rate||0,2)} mol/s`;
+  el('v-reform-t').textContent = `${f(S.reformer_outlet_temp||850)} °C`;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ANIMATION LOOP
+   ═══════════════════════════════════════════════════════════════ */
+const clock = new THREE.Clock();
+
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = clock.getDelta(), t = clock.elapsedTime;
+  ctrl.update();
+
+  // Reactor vibration
+  const vib = Math.max(0, (S.temperature-240)/200)*0.015;
+  reactor.position.x = Math.sin(t*4)*vib;
+
+  // Flywheel spin
+  flywheel.rotation.x += dt * 4 * (S.compressor_power||40)/40;
+
+  // Steam particles
+  for (let i = 0; i < steamCount; i++) {
+    steamLife[i] -= dt;
+    if (steamLife[i] <= 0) { resetSteam(i); continue; }
+    steamPos[i*3]   += steamVel[i*3]*dt;
+    steamPos[i*3+1] += steamVel[i*3+1]*dt;
+    steamPos[i*3+2] += steamVel[i*3+2]*dt;
+    steamVel[i*3]   += (Math.random()-0.5)*dt*0.5;  // wind drift
+    steamVel[i*3+2] += (Math.random()-0.5)*dt*0.5;
+  }
+  steamGeo.attributes.position.needsUpdate = true;
+
+  // Flow particles
+  const rate = Math.max(0.3, S.reaction_rate||1);
+  for (let i = 0; i < flowCount; i++) {
+    flowT[i] += flowSpd[i] * dt * rate * 0.5;
+    if (flowT[i] > 1) flowT[i] -= 1;
+    setFlowPos(i);
+  }
+  flowGeo.attributes.position.needsUpdate = true;
+
+  // Flare flame animation
+  if (flameGroup.visible) {
+    flameCore.scale.set(1+Math.sin(t*12)*0.15, 1+Math.sin(t*8)*0.2, 1+Math.cos(t*10)*0.15);
+    flameOuter.scale.set(1+Math.sin(t*7)*0.2, 1+Math.cos(t*6)*0.25, 1+Math.sin(t*9)*0.2);
+    flameGroup.rotation.y = t*2;
+  }
+
+  // Demo tick
+  if (demoMode && t % 1.5 < dt) simulateDemo();
+
+  renderer.render(scene, camera);
+}
+animate();
+
+/* ═══════════════════════════════════════════════════════════════
+   DEMO MODE SIMULATION
+   ═══════════════════════════════════════════════════════════════ */
+function simulateDemo() {
+  demoStep++;
+  const s = S, t = demoStep;
+  if (t < 20) {
+    s.temperature = 150 + t*5 + (Math.random()-0.5)*2;
+    s.task_name = 'startup'; s.feed_rate_h2 = Math.min(5,t*0.3); s.feed_rate_co = Math.min(2.5,t*0.15);
+    s.reaction_rate = Math.max(0,(s.temperature-200)/50*3); s.catalyst_health = 1.0;
+    s.safety_warning = null; s.flare_valve = 0;
+  } else if (t < 60) {
+    s.temperature = 248 + Math.sin(t*0.3)*4 + (Math.random()-0.5)*2;
+    s.task_name = 'optimization'; s.feed_rate_h2 = 4.5+Math.sin(t*0.2)*0.5;
+    s.feed_rate_co = 2.2+Math.sin(t*0.15)*0.3; s.reaction_rate = 3.5+Math.sin(t*0.25)*0.5;
+    s.catalyst_health = Math.max(0.85, 1.0-(t-20)*0.002);
+    s.safety_warning = null; s.flare_valve = 0;
+  } else if (t < 80) {
+    s.temperature = Math.min(295, s.temperature+1.5+Math.random());
+    s.task_name = 'disturbance'; s.cooling_water_flow = 15;
+    s.safety_warning = s.temperature > 270 ? 'HIGH TEMPERATURE' : null;
+    s.reaction_rate = 4.5-(s.temperature-260)*0.05;
+    s.catalyst_health = Math.max(0.4, s.catalyst_health-0.008);
+    s.flare_valve = s.temperature > 285 ? 30 : 0;
+  } else if (t < 100) {
+    s.temperature = Math.max(250, s.temperature-2);
+    s.task_name = 'recovery'; s.cooling_water_flow = 80;
+    s.safety_warning = s.temperature > 270 ? 'RECOVERING' : null;
+    s.catalyst_health = Math.max(0.35, s.catalyst_health-0.001);
+    s.flare_valve = Math.max(0, s.flare_valve-2);
+  } else {
+    demoStep = 0; s.temperature = 150; s.methanol_produced = 0;
+    s.cumulative_profit = 0; s.total_co2_emissions = 0;
+    s.catalyst_health = 1.0; s.safety_warning = null; s.flare_valve = 0;
+  }
+  s.pressure = 50+(s.compressor_power||40)*0.5+(Math.random()-0.5)*2;
+  s.h2_co_ratio = s.feed_rate_co > 0 ? s.feed_rate_h2/s.feed_rate_co : 2.0;
+  s.methanol_produced += s.reaction_rate*0.032*60;
+  s.profit_this_step = s.reaction_rate*0.032*60*0.74 - (s.feed_rate_h2+s.feed_rate_co)*0.002*60;
+  s.cumulative_profit += s.profit_this_step;
+  s.total_co2_emissions += s.methanol_produced*0.0006;
+  s.step_number = t; s.max_steps = 100;
+  updateVisuals();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   WEBSOCKET CONNECTION
+   ═══════════════════════════════════════════════════════════════ */
+window.connectWS = function() {
+  const url = document.getElementById('ws-url').value.trim();
+  document.getElementById('connect-dialog').classList.add('hidden');
+  const badge = document.getElementById('status-badge');
+  badge.textContent = 'CONNECTING...';
+  try {
+    ws = new WebSocket(url);
+    ws.onopen = () => { badge.textContent = 'CONNECTED'; badge.classList.add('connected');
+      ws.send(JSON.stringify({ type: 'reset', task_name: 'optimization' })); };
+    ws.onmessage = (ev) => { try { const d = JSON.parse(ev.data);
+      if (d.observation) Object.assign(S, d.observation);
+      else if (d.temperature !== undefined) Object.assign(S, d);
+      updateVisuals(); } catch(e){} };
+    ws.onclose = () => { badge.textContent = 'DISCONNECTED'; badge.classList.remove('connected'); };
+    ws.onerror = () => { badge.textContent = 'ERROR'; badge.classList.remove('connected'); };
+  } catch(e) { badge.textContent = 'FAILED'; startDemo(); }
+};
+
+window.startDemo = function() {
+  demoMode = true;
+  document.getElementById('connect-dialog').classList.add('hidden');
+  const badge = document.getElementById('status-badge');
+  badge.textContent = 'DEMO MODE'; badge.classList.add('connected');
+  updateVisuals();
+};
+
+updateVisuals();
+</script>
+</body>
+</html>
