@@ -5,6 +5,8 @@ Exposes the MethanolAPCEnvironment over HTTP and WebSocket endpoints,
 compatible with the OpenEnv EnvClient.
 """
 
+import os
+
 try:
     from openenv.core.env_server.http_server import create_app
 except Exception as e:
@@ -23,12 +25,14 @@ try:
 except ImportError:
     from .methanol_environment import MethanolAPCEnvironment
 
+MAX_CONCURRENT_ENVS = int(os.environ.get("MAX_CONCURRENT_ENVS", "1"))
+
 app = create_app(
     MethanolAPCEnvironment,
     MethanolAPCAction,
     MethanolAPCObservation,
     env_name="methanol_apc",
-    max_concurrent_envs=1,
+    max_concurrent_envs=MAX_CONCURRENT_ENVS,
 )
 
 # Mount 3D Digital Twin visualisation as static files
