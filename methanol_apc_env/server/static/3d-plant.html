@@ -38,10 +38,77 @@
   .data-row .value.danger{ color: #ff4444; }
   .data-row .value.good  { color: #00d4aa; }
 
-  #panel-reactor   { top: 70px; left: 20px; }
+  #panel-reactor   { top: 70px; left: 260px; }
   #panel-economics { top: 70px; right: 20px; }
-  #panel-catalyst  { bottom: 80px; left: 20px; }
+  #panel-catalyst  { bottom: 80px; left: 260px; }
   #panel-controls  { bottom: 80px; right: 20px; }
+
+  #panel-beds { top: 280px; left: 260px; min-width: 180px; }
+  .bed-bar { display: flex; align-items: center; gap: 6px; margin: 3px 0; cursor: pointer; padding: 2px 4px; border-radius: 4px; transition: background 0.2s; }
+  .bed-bar:hover { background: rgba(0,212,170,0.12); }
+  .bed-bar:hover .bed-label { color: #00d4aa; }
+  .bed-bar .bar { height: 10px; border-radius: 3px; flex: 1; background: #333; position: relative; }
+  .bed-bar .bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s, background 0.3s; }
+  .bed-bar .bed-label { font-size: 11px; color: #8892a4; width: 44px; transition: color 0.2s; }
+  .bed-bar .bed-val { font-size: 11px; color: #e0e0e0; width: 50px; text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* ── Live Control Panel (right side) ────────────────────── */
+  #ctrl-panel {
+    position: absolute; top: 70px; left: 20px; width: 220px;
+    background: rgba(10,14,23,0.94); border: 1px solid rgba(255,160,0,0.35);
+    border-radius: 10px; padding: 14px 16px; pointer-events: auto;
+    backdrop-filter: blur(8px); box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+    z-index: 60; transition: transform 0.3s;
+  }
+  #ctrl-panel.collapsed { transform: translateX(-240px); }
+  #ctrl-panel h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #ffa000; margin-bottom: 8px; }
+  #ctrl-toggle {
+    position: absolute; top: 8px; right: -32px; width: 28px; height: 28px;
+    background: rgba(10,14,23,0.92); border: 1px solid rgba(255,160,0,0.4);
+    border-radius: 0 6px 6px 0; cursor: pointer; display: flex; align-items: center;
+    justify-content: center; font-size: 14px; color: #ffa000; transition: all 0.2s;
+  }
+  #ctrl-toggle:hover { background: rgba(255,160,0,0.15); }
+  .ctrl-row { margin: 8px 0; }
+  .ctrl-row label { display: flex; justify-content: space-between; font-size: 11px; color: #8892a4; margin-bottom: 3px; }
+  .ctrl-row label .ctrl-val { color: #e0e0e0; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .ctrl-row input[type=range] {
+    width: 100%; height: 6px; -webkit-appearance: none; appearance: none;
+    background: #222; border-radius: 3px; outline: none;
+  }
+  .ctrl-row input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
+    background: #ffa000; cursor: pointer; border: 2px solid #0a0e17;
+  }
+  .ctrl-row input[type=range]::-moz-range-thumb {
+    width: 14px; height: 14px; border-radius: 50%;
+    background: #ffa000; cursor: pointer; border: 2px solid #0a0e17;
+  }
+  .ctrl-mode-bar { display: flex; gap: 6px; margin: 10px 0 6px; }
+  .ctrl-mode-bar button {
+    flex: 1; padding: 5px 0; border-radius: 5px; font-size: 11px; font-weight: 600;
+    cursor: pointer; border: 1px solid rgba(255,160,0,0.3); background: transparent; color: #8892a4; transition: all 0.2s;
+  }
+  .ctrl-mode-bar button:hover { border-color: #ffa000; color: #ffa000; }
+  .ctrl-mode-bar button.active { background: rgba(255,160,0,0.2); color: #ffa000; border-color: #ffa000; }
+  #btn-step { background: rgba(255,160,0,0.15); color: #ffa000; border: 1px solid rgba(255,160,0,0.4); padding: 6px; border-radius: 5px; font-size: 11px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 4px; transition: all 0.2s; }
+  #btn-step:hover { background: rgba(255,160,0,0.3); }
+  #btn-step:disabled { opacity: 0.3; cursor: default; }
+  .ctrl-divider { border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 8px 0; }
+
+  #panel-chemistry { top: 280px; right: 20px; min-width: 260px; }
+  .rxn-row { font-size: 12px; margin: 4px 0; padding: 4px 6px; border-radius: 4px; background: rgba(255,255,255,0.04); }
+  .rxn-eq { color: #b0bec5; font-family: 'Courier New', monospace; font-size: 11px; }
+  .rxn-info { display: flex; justify-content: space-between; margin-top: 2px; }
+  .rxn-dh { font-size: 10px; }
+  .exo { color: #ff8a65; }
+  .endo { color: #64b5f6; }
+
+  #panel-agents { bottom: 80px; left: 50%; transform: translateX(-50%); min-width: 420px; }
+  .agent-row { display: flex; align-items: center; gap: 8px; margin: 3px 0; font-size: 12px; }
+  .agent-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .agent-name { width: 90px; font-weight: 600; }
+  .agent-controls { color: #8892a4; font-size: 11px; }
 
   #legend {
     position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
@@ -75,8 +142,21 @@
   #tooltip {
     position: absolute; display: none; background: rgba(10,14,23,0.95); border: 1px solid #00d4aa;
     padding: 8px 14px; border-radius: 6px; font-size: 12px; pointer-events: none; z-index: 100;
-    white-space: nowrap;
+    white-space: pre-line; max-width: 320px; line-height: 1.5;
   }
+
+  /* Camera preset buttons */
+  #cam-presets {
+    position: absolute; top: 55px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 6px; pointer-events: auto; z-index: 50;
+  }
+  #cam-presets button {
+    background: rgba(10,14,23,0.85); border: 1px solid rgba(0,212,170,0.3);
+    color: #8892a4; padding: 5px 12px; border-radius: 5px; font-size: 11px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  #cam-presets button:hover { background: rgba(0,212,170,0.15); color: #00d4aa; border-color: #00d4aa; }
+  #cam-presets button.active { background: rgba(0,212,170,0.2); color: #00d4aa; border-color: #00d4aa; }
 </style>
 </head>
 <body>
@@ -88,6 +168,59 @@
   <div id="title-bar">
     <h1><span>&#9670;</span> Methanol APC &mdash; 3D Digital Twin</h1>
     <div id="status-badge">OFFLINE</div>
+  </div>
+
+  <div id="cam-presets">
+    <button onclick="showTourStep(1)" style="background:rgba(0,212,170,0.2);color:#00d4aa;border-color:#00d4aa;font-weight:600;">&#9654; Guided Tour</button>
+    <span style="color:#333;pointer-events:none;">|</span>
+    <button onclick="setCam('overview')">&#127758; Overview</button>
+    <button onclick="setCam('desulf')">&#128293; Desulfurizer</button>
+    <button onclick="setCam('reformer')">&#128293; Reformer</button>
+    <button onclick="setCam('reactor')">&#9881; Reactor</button>
+    <button onclick="setCam('separator')">&#128296; Separator</button>
+    <button onclick="setCam('distillation')">&#127981; Distillation</button>
+    <button onclick="setCam('storage')">&#128230; Storage</button>
+    <button onclick="setCam('control')">&#128187; Control Room</button>
+  </div>
+
+  <!-- ── Live Control Panel ──────────────────────────────────── -->
+  <div id="ctrl-panel">
+    <div id="ctrl-toggle" onclick="toggleCtrlPanel()">&#9654;</div>
+    <h3>&#9881; Live Controls</h3>
+    <div class="ctrl-mode-bar">
+      <button id="btn-auto" class="active" onclick="setCtrlMode('auto')">Auto</button>
+      <button id="btn-manual" onclick="setCtrlMode('manual')">Manual</button>
+    </div>
+    <button id="btn-step" onclick="manualStep()" disabled>&#9654; Step Forward</button>
+    <hr class="ctrl-divider">
+    <div class="ctrl-row">
+      <label>H&#8322; Feed <span class="ctrl-val" id="cv-h2">4.0 mol/s</span></label>
+      <input type="range" id="cr-h2" min="0" max="10" step="0.1" value="4" oninput="onCtrl()">
+    </div>
+    <div class="ctrl-row">
+      <label>CO Feed <span class="ctrl-val" id="cv-co">2.0 mol/s</span></label>
+      <input type="range" id="cr-co" min="0" max="5" step="0.1" value="2" oninput="onCtrl()">
+    </div>
+    <div class="ctrl-row">
+      <label>Cooling <span class="ctrl-val" id="cv-cool">50 L/min</span></label>
+      <input type="range" id="cr-cool" min="0" max="100" step="1" value="50" oninput="onCtrl()">
+    </div>
+    <div class="ctrl-row">
+      <label>Compressor <span class="ctrl-val" id="cv-comp">40 kW</span></label>
+      <input type="range" id="cr-comp" min="0" max="100" step="1" value="40" oninput="onCtrl()">
+    </div>
+    <div class="ctrl-row">
+      <label>Purge Valve <span class="ctrl-val" id="cv-purge">2%</span></label>
+      <input type="range" id="cr-purge" min="0" max="100" step="1" value="2" oninput="onCtrl()">
+    </div>
+    <div class="ctrl-row">
+      <label>Recycle <span class="ctrl-val" id="cv-recycle">3.5</span></label>
+      <input type="range" id="cr-recycle" min="0" max="8" step="0.1" value="3.5" oninput="onCtrl()">
+    </div>
+    <hr class="ctrl-divider">
+    <div style="font-size:10px;color:#555;text-align:center;">
+      <span id="ctrl-status-text">Auto mode — demo drives controls</span>
+    </div>
   </div>
 
   <div class="data-panel" id="panel-reactor">
@@ -127,6 +260,43 @@
     <div class="data-row"><span class="label">Reformer T</span><span class="value" id="v-reform-t">-- &deg;C</span></div>
   </div>
 
+  <!-- Bed temperature bars -->
+  <div class="data-panel" id="panel-beds">
+    <h3>&#9670; Reactor Beds (4-Bed ICI Quench)</h3>
+    <div class="bed-bar" onclick="clickBedFromPanel(0)" title="Click to zoom into Bed 1"><span class="bed-label">Bed 1</span><div class="bar"><div class="bar-fill" id="bed1-fill" style="width:50%;background:#4CAF50"></div></div><span class="bed-val" id="bed1-val">250&deg;C</span></div>
+    <div class="bed-bar" onclick="clickBedFromPanel(1)" title="Click to zoom into Bed 2"><span class="bed-label">Bed 2</span><div class="bar"><div class="bar-fill" id="bed2-fill" style="width:50%;background:#4CAF50"></div></div><span class="bed-val" id="bed2-val">252&deg;C</span></div>
+    <div class="bed-bar" onclick="clickBedFromPanel(2)" title="Click to zoom into Bed 3"><span class="bed-label">Bed 3</span><div class="bar"><div class="bar-fill" id="bed3-fill" style="width:50%;background:#4CAF50"></div></div><span class="bed-val" id="bed3-val">254&deg;C</span></div>
+    <div class="bed-bar" onclick="clickBedFromPanel(3)" title="Click to zoom into Bed 4"><span class="bed-label">Bed 4</span><div class="bar"><div class="bar-fill" id="bed4-fill" style="width:50%;background:#FFC107"></div></div><span class="bed-val" id="bed4-val">256&deg;C</span></div>
+    <div style="margin-top:6px;font-size:10px;color:#666;">Quench gas injected between beds</div>
+  </div>
+
+  <!-- Chemistry panel -->
+  <div class="data-panel" id="panel-chemistry">
+    <h3>&#9670; Active Reactions (LHHW Kinetics)</h3>
+    <div class="rxn-row">
+      <div class="rxn-eq">R1: CO + 2H2 &rarr; CH3OH</div>
+      <div class="rxn-info"><span class="exo">&#916;H = -90.5 kJ/mol</span><span class="value" id="v-r1">-- mol/s</span></div>
+    </div>
+    <div class="rxn-row">
+      <div class="rxn-eq">R2: CO2 + 3H2 &rarr; CH3OH + H2O</div>
+      <div class="rxn-info"><span class="exo">&#916;H = -49.5 kJ/mol</span><span class="value" id="v-r2">-- mol/s</span></div>
+    </div>
+    <div class="rxn-row">
+      <div class="rxn-eq">R3: CO2 + H2 &rarr; CO + H2O</div>
+      <div class="rxn-info"><span class="endo">&#916;H = +41.2 kJ/mol (endo)</span><span class="value" id="v-r3">-- mol/s</span></div>
+    </div>
+    <div style="margin-top:6px;font-size:10px;color:#666;">Catalyst: Cu/ZnO/Al2O3 | SRK fugacity-corrected</div>
+  </div>
+
+  <!-- Multi-agent panel -->
+  <div class="data-panel" id="panel-agents">
+    <h3>&#9670; Multi-Agent Control (4 Agents)</h3>
+    <div class="agent-row"><div class="agent-dot" style="background:#FF9800"></div><span class="agent-name">Reformer</span><span class="agent-controls">fuel_gas, steam_flow</span></div>
+    <div class="agent-row"><div class="agent-dot" style="background:#2196F3"></div><span class="agent-name">Synthesis</span><span class="agent-controls">H2, CO, cooling, compressor, purge, recycle</span></div>
+    <div class="agent-row"><div class="agent-dot" style="background:#9C27B0"></div><span class="agent-name">Purification</span><span class="agent-controls">reflux, reboiler_duty</span></div>
+    <div class="agent-row"><div class="agent-dot" style="background:#00BCD4"></div><span class="agent-name">Supervisory</span><span class="agent-controls">orchestrates all &mdash; sees full state</span></div>
+  </div>
+
   <div id="legend">
     <div class="legend-item"><div class="legend-dot" style="background:#2196F3"></div> Cool (&lt;220&deg;C)</div>
     <div class="legend-item"><div class="legend-dot" style="background:#4CAF50"></div> Optimal (240-260&deg;C)</div>
@@ -134,6 +304,19 @@
     <div class="legend-item"><div class="legend-dot" style="background:#F44336"></div> Critical (&gt;280&deg;C)</div>
     <div class="legend-item"><div class="legend-dot" style="background:#9C27B0"></div> Shutdown (&gt;300&deg;C)</div>
   </div>
+</div>
+
+<div id="tour-panel" class="data-panel" style="display:none;position:absolute;bottom:100px;left:50%;transform:translateX(-50%);min-width:380px;max-width:440px;z-index:150;pointer-events:auto;"></div>
+
+<div id="bed-popup" style="display:none;position:absolute;top:50%;right:30px;transform:translateY(-50%);
+  background:rgba(10,14,23,0.96);border:1px solid rgba(0,212,170,0.4);border-radius:10px;
+  padding:20px 24px;min-width:340px;max-width:400px;z-index:160;pointer-events:auto;
+  box-shadow:0 8px 40px rgba(0,0,0,0.6);backdrop-filter:blur(8px);">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <h3 id="bed-popup-title" style="color:#00d4aa;font-size:13px;text-transform:uppercase;letter-spacing:1.2px;margin:0;">Bed 1</h3>
+    <button onclick="closeBedPopup()" style="background:none;border:none;color:#666;font-size:18px;cursor:pointer;padding:0 4px;">&times;</button>
+  </div>
+  <div id="bed-popup-content"></div>
 </div>
 
 <div id="tooltip"></div>
@@ -159,6 +342,24 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
+// Polyfill for roundRect (Safari <15.4)
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+    if (typeof r === 'number') r = [r, r, r, r];
+    this.beginPath();
+    this.moveTo(x + r[0], y);
+    this.lineTo(x + w - r[1], y);
+    this.quadraticCurveTo(x + w, y, x + w, y + r[1]);
+    this.lineTo(x + w, y + h - r[2]);
+    this.quadraticCurveTo(x + w, y + h, x + w - r[2], y + h);
+    this.lineTo(x + r[3], y + h);
+    this.quadraticCurveTo(x, y + h, x, y + h - r[3]);
+    this.lineTo(x, y + r[0]);
+    this.quadraticCurveTo(x, y, x + r[0], y);
+    this.closePath();
+  };
+}
+
 /* ═══════════════════════════════════════════════════════════════
    GLOBAL STATE
    ═══════════════════════════════════════════════════════════════ */
@@ -170,6 +371,12 @@ let S = {
   safety_warning: null, selectivity: 0.995, product_purity: 0.995,
   purge_rate: 0, recycle_ratio: 3.5, reformer_outlet_temp: 850,
   total_co2_emissions: 0, compressor_power: 40, flare_valve: 0,
+  // New: per-bed temps, individual reaction rates, plant stages
+  bed_temps: [250, 252, 254, 256],
+  rate_R1: 0, rate_R2: 0, rate_R3: 0,
+  desulf_h2s_ppm: 0.5, desulf_bed_life: 0.95,
+  reformer_steam_carbon: 3.0, reformer_efficiency: 0.85,
+  distillation_reflux: 3.0, reboiler_duty: 50,
 };
 let ws = null, demoMode = false, demoStep = 0;
 
@@ -481,7 +688,7 @@ mkPad(reactor, 0, 0, 7, 7);
 // Main shell (tall cylinder)
 const rShell = new THREE.Mesh(new THREE.CylinderGeometry(2.3, 2.3, 16, 48), M.reactorBody);
 rShell.position.y = 8.3; rShell.castShadow = true; rShell.receiveShadow = true;
-rShell.userData = { type: 'reactor', label: 'ICI 4-Bed Quench Reactor (T-101)' };
+rShell.userData = { type: 'reactor', label: 'ICI 4-Bed Quench Reactor (T-101)\n3 simultaneous reactions (LHHW kinetics)\nR1: CO + 2H₂ → CH₃OH (-90.5 kJ/mol)\nR2: CO₂ + 3H₂ → CH₃OH + H₂O (-49.5 kJ/mol)\nR3: CO₂ + H₂ → CO + H₂O (+41.2 kJ/mol)\nCatalyst: Cu/ZnO/Al₂O₃\nAgent: SynthesisAgent (6 controls)' };
 reactor.add(rShell);
 
 // Top & bottom torispherical heads (ellipsoid approximation)
@@ -498,11 +705,20 @@ reactor.add(insul);
 
 // 4 Catalyst beds with perforated support plates
 const bedY = [14.0, 11.0, 8.0, 5.0];
+const bedNames = ['Top (inlet)', 'Upper-mid', 'Lower-mid', 'Bottom (outlet)'];
+const bedRoles = [
+  'First contact with fresh syngas.\nLowest temp, highest driving force.\nMost conversion happens here.',
+  'Partially reacted gas after 1st quench.\nModerate temp, good selectivity.',
+  'Higher temp, equilibrium limits conversion.\nByproduct formation starts here.',
+  'Hottest bed — thermal runaway risk!\nIf >300°C → emergency shutdown.\nCatalyst sintering onset >270°C.',
+];
 const catBeds = [];
 for (let i = 0; i < 4; i++) {
   // Catalyst bed
   const bed = new THREE.Mesh(new THREE.CylinderGeometry(1.9, 1.9, 2.0, 32), M.catBed[i]);
-  bed.position.y = bedY[i]; bed.userData = { type: 'catalyst_bed', label: `Catalyst Bed ${i+1} — Cu/ZnO/Al₂O₃` };
+  bed.position.y = bedY[i];
+  bed.userData = { type: 'catalyst_bed', bedIndex: i,
+    label: `Bed ${i+1} — ${bedNames[i]}\nCu/ZnO/Al₂O₃ catalyst\n${bedRoles[i]}` };
   catBeds.push(bed);
   reactor.add(bed);
   // Support plate (thin disk below bed)
@@ -512,10 +728,15 @@ for (let i = 0; i < 4; i++) {
 }
 
 // Quench gas distributor rings (between beds)
+const quenchRings = [];
 for (let i = 0; i < 3; i++) {
   const qy = bedY[i] - 1.5;
   const ring = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.08, 8, 24), M.copper);
-  ring.rotation.x = Math.PI / 2; ring.position.y = qy; reactor.add(ring);
+  ring.rotation.x = Math.PI / 2; ring.position.y = qy;
+  ring.userData = { type: 'quench', quenchIndex: i,
+    label: `Quench Injector ${i+1} (between Bed ${i+1} & ${i+2})\nCold syngas at feed_preheat_temp (200-300°C)\nCools gas by ~5% approach per injection\nPrevents thermal runaway in downstream bed` };
+  quenchRings.push(ring);
+  reactor.add(ring);
   // Quench nozzle from shell
   mkNozzle(reactor, new THREE.Vector3(2.3, qy, 0), 'x', 1.0, 0.12);
 }
@@ -573,7 +794,7 @@ mkPad(reformer, 0, 0, 8, 6);
 // Radiant section (firebox)
 const firebox = new THREE.Mesh(new THREE.BoxGeometry(6, 10, 4.5), M.brick);
 firebox.position.y = 5.3; firebox.castShadow = true; firebox.receiveShadow = true;
-firebox.userData = { type: 'reformer', label: 'Steam Methane Reformer (H-101)' };
+firebox.userData = { type: 'reformer', label: 'Steam Methane Reformer (H-101)\nCH4 + H2O → CO + 3H2 (800-950°C)\nEndothermic: ΔH = +206 kJ/mol\nNickel catalyst on alumina tubes\nAgent: ReformerAgent controls fuel & steam' };
 reformer.add(firebox);
 
 // Inner refractory lining hint (slightly smaller glowing box)
@@ -658,7 +879,7 @@ mkPad(hx, 0, 0, 5, 3.5);
 const hxShell = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 7, 32), M.steel);
 hxShell.rotation.z = Math.PI / 8; hxShell.position.y = 4.5;
 hxShell.castShadow = true;
-hxShell.userData = { type: 'hx', label: 'Feed/Effluent Heat Exchanger (E-101)' };
+hxShell.userData = { type: 'hx', label: 'Feed/Effluent Heat Exchanger (E-101)\nShell & tube, U=250 W/(m²·K)\nA=8 m² heat transfer area\nCools reactor effluent / preheats feed\nBaffles for turbulent shell-side flow' };
 hx.add(hxShell);
 
 // Tube sheets (visible disks at ends)
@@ -717,7 +938,7 @@ mkPad(distCol, 0, 0, 6, 6);
 // Column shell
 const colShell = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 20, 36), M.steel);
 colShell.position.y = 10.3; colShell.castShadow = true;
-colShell.userData = { type: 'distillation', label: 'Methanol Distillation Column (C-101)' };
+colShell.userData = { type: 'distillation', label: 'Methanol Distillation Column (C-101)\nCrude MeOH → Grade AA (>99.85%)\nSieve trays, reflux ratio 1-10\nAgent: PurificationAgent controls reflux & reboiler\nOverhead: methanol + lights → condenser\nBottoms: water + heavies' };
 distCol.add(colShell);
 
 // Top head
@@ -810,7 +1031,7 @@ mkPad(comp, 0, 0, 6, 4);
 
 const compBody = new THREE.Mesh(new THREE.BoxGeometry(3.5, 2.8, 2.8), M.steelDark);
 compBody.position.y = 1.7; compBody.castShadow = true;
-compBody.userData = { type: 'compressor', label: 'Syngas Compressor (K-101) — 3-Stage Centrifugal' };
+compBody.userData = { type: 'compressor', label: 'Syngas Compressor (K-101)\n3-Stage Centrifugal, 0-100 kW\nPressurizes syngas to 50-100 bar\nRecycles unreacted gas (RR=3.5)\nAgent: SynthesisAgent controls power' };
 comp.add(compBody);
 
 // Intake volute (cylinder on side)
@@ -856,7 +1077,7 @@ const ctGeo = new THREE.LatheGeometry([
   new THREE.Vector2(1.9, 7),
 ], 24);
 const ct = new THREE.Mesh(ctGeo, M.concrete);
-ct.castShadow = true; ct.userData = { type: 'cooling', label: 'Cooling Tower (CT-101)' };
+ct.castShadow = true; ct.userData = { type: 'cooling', label: 'Cooling Tower (CT-101)\nRemoves reaction heat from reactor\n0-100 L/min cooling water flow\nU=250 W/(m²·K), A=8 m² heat transfer\nDay/night cycle affects CW temp' };
 cooling.add(ct);
 
 // Fill media hint (internal slats)
@@ -900,7 +1121,7 @@ mkPad(storage, 0, 0, 8, 8);
 
 const tankShell = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 6, 32), M.steel);
 tankShell.position.y = 3; tankShell.castShadow = true;
-tankShell.userData = { type: 'storage', label: 'MeOH Storage Tank (TK-101) — 500 m³' };
+tankShell.userData = { type: 'storage', label: 'MeOH Storage Tank (TK-101)\n500 m³ capacity\nProduct: Grade AA Methanol >99.85%\nPrice: $0.74/kg (Methanex APAC Apr 2026)\nByproducts: DME, methyl formate (<0.5%)' };
 storage.add(tankShell);
 
 // Floating roof
@@ -1097,8 +1318,485 @@ eyeWash.position.set(0, 0.6, 0.2); shower.add(eyeWash);
 plant.add(shower);
 
 /* ═══════════════════════════════════════════════════════════════
-   13. STEAM PARTICLES (reformer stack) & FLOW PARTICLES
+   12b. DESULFURIZATION GUARD BED (Stage 0)  (-25, 0, 0)
+   ZnO bed removes H2S from natural gas feed before reforming.
+   ZnO + H2S → ZnS + H2O  (breakthrough at ~350°C, 6-month bed life)
    ═══════════════════════════════════════════════════════════════ */
+const desulf = new THREE.Group();
+desulf.position.set(-28, 0, 0);
+mkPad(desulf, 0, 0, 4, 4);
+
+// Vertical vessel (smaller than reactor)
+const desulfShell = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 6, 24), M.steel);
+desulfShell.position.y = 3.5; desulfShell.castShadow = true;
+desulfShell.userData = { type: 'desulfurizer', label: 'Desulfurization Guard Bed (V-100)\nZnO + H2S → ZnS + H2O\nRemoves sulfur to <0.1 ppm\nProtects Cu/ZnO/Al2O3 catalyst' };
+desulf.add(desulfShell);
+// Top/bottom heads
+const dsHead = new THREE.SphereGeometry(1.2, 24, 12, 0, Math.PI*2, 0, Math.PI/3);
+const dsTop = new THREE.Mesh(dsHead, M.steel);
+dsTop.position.y = 6.5; desulf.add(dsTop);
+const dsBot = new THREE.Mesh(dsHead, M.steel);
+dsBot.position.y = 0.5; dsBot.rotation.x = Math.PI; desulf.add(dsBot);
+// ZnO bed (orange/white granules)
+const znoBedMat = new THREE.MeshStandardMaterial({ color: 0xddaa55, roughness: 0.8, metalness: 0.1 });
+const znoBed = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 4, 20), znoBedMat);
+znoBed.position.y = 3.5; desulf.add(znoBed);
+// Inlet/outlet nozzles
+mkNozzle(desulf, new THREE.Vector3(0, 6.8, 0), 'y', 0.8, 0.2);
+mkNozzle(desulf, new THREE.Vector3(0, -0.3, 0), '-y', 0.6, 0.2);
+// Instrument tap
+mkInstrument(desulf, new THREE.Vector3(1.25, 4.5, 0), 'AT-100', 'x');
+// Support skirt
+const dsSkirt = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.5, 1.0, 20, 1, true), M.steelDark);
+dsSkirt.position.y = -0.1; desulf.add(dsSkirt);
+
+plant.add(desulf);
+plant.add(mkLabel('DESULFURIZER V-100', new THREE.Vector3(-28, 9, 0), 0.5));
+
+/* ═══════════════════════════════════════════════════════════════
+   12c. SEPARATOR / FLASH DRUM (between reactor & distillation) (5, 0, 5)
+   Crude methanol + unreacted syngas separates here.
+   Liquid (MeOH+H2O) → distillation; Vapor → recycle compressor
+   96% condensation efficiency, T~40°C at separator
+   ═══════════════════════════════════════════════════════════════ */
+const separator = new THREE.Group();
+separator.position.set(5, 0, 4);
+mkPad(separator, 0, 0, 5, 3);
+
+// Horizontal drum
+const sepShell = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.5, 5, 24), M.steel);
+sepShell.rotation.z = Math.PI / 2; sepShell.position.y = 2.5; sepShell.castShadow = true;
+sepShell.userData = { type: 'separator', label: 'Flash Drum / Separator (V-102)\nCrude MeOH liquid settles, vapor recycles\n96% condensation efficiency\nOperates at ~40°C, 50 bar' };
+separator.add(sepShell);
+// End caps (hemispheres)
+for (const sx of [-2.5, 2.5]) {
+  const cap = new THREE.Mesh(new THREE.SphereGeometry(1.5, 24, 12), M.steel);
+  cap.position.set(sx, 2.5, 0); cap.scale.x = 0.3; separator.add(cap);
+}
+// Liquid level indicator (glass gauge)
+const sepGauge = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.0, 8), M.glass);
+sepGauge.position.set(0, 2.5, 1.55); separator.add(sepGauge);
+const liquidLevel = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.0, 8),
+  new THREE.MeshStandardMaterial({ color: 0x44aaff, roughness: 0.2, metalness: 0.1 }));
+liquidLevel.position.set(0, 2.0, 1.55); separator.add(liquidLevel);
+// Inlet nozzle (from reactor — top)
+mkNozzle(separator, new THREE.Vector3(0, 4.0, 0), 'y', 0.8, 0.25);
+// Liquid outlet (bottom — to distillation)
+mkNozzle(separator, new THREE.Vector3(0, 0.8, 0), '-y', 0.6, 0.2);
+// Vapor outlet (top side — to recycle compressor)
+mkNozzle(separator, new THREE.Vector3(2.8, 3.5, 0), 'x', 0.8, 0.2);
+// Demister pad (wire mesh inside — shown as translucent disk)
+const demister = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 0.15, 20),
+  new THREE.MeshStandardMaterial({ color: 0x999999, roughness: 0.5, metalness: 0.5, transparent: true, opacity: 0.4 }));
+demister.rotation.z = Math.PI / 2; demister.position.set(1.0, 3.5, 0); separator.add(demister);
+// Saddle supports
+for (const sx of [-1.2, 1.2]) {
+  const saddle = new THREE.Mesh(new THREE.TorusGeometry(1.6, 0.12, 8, 12, Math.PI), M.concrete);
+  saddle.position.set(sx, 1.0, 0); saddle.rotation.y = Math.PI / 2; separator.add(saddle);
+}
+mkInstrument(separator, new THREE.Vector3(0.5, 4.2, 1.2), 'LI-102', 'z');
+
+plant.add(separator);
+plant.add(mkLabel('SEPARATOR V-102', new THREE.Vector3(5, 6, 4), 0.5));
+
+/* ═══════════════════════════════════════════════════════════════
+   12d. FEED PREHEATER (economizer) (-12, 0, 5)
+   Uses reactor effluent heat to preheat incoming syngas (200-300°C)
+   ═══════════════════════════════════════════════════════════════ */
+const preheater = new THREE.Group();
+preheater.position.set(-12, 0, 6);
+mkPad(preheater, 0, 0, 3, 2);
+const phShell = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 3, 16), M.steel);
+phShell.rotation.z = Math.PI / 2; phShell.position.y = 1.5; phShell.castShadow = true;
+phShell.userData = { type: 'preheater', label: 'Feed Preheater (E-102)\nHeats syngas 200→300°C\nUses reactor effluent as hot stream\nCounterflow shell & tube' };
+preheater.add(phShell);
+// Tube sheets
+for (const dx of [-1.5, 1.5]) {
+  const ts = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, 0.08, 16), M.steelDark);
+  ts.rotation.z = Math.PI / 2; ts.position.set(dx, 1.5, 0); preheater.add(ts);
+}
+mkNozzle(preheater, new THREE.Vector3(-1.8, 2.0, 0), '-x', 0.5, 0.12);
+mkNozzle(preheater, new THREE.Vector3(1.8, 2.0, 0), 'x', 0.5, 0.12);
+plant.add(preheater);
+plant.add(mkLabel('PREHEATER E-102', new THREE.Vector3(-12, 4, 6), 0.4));
+
+/* ═══════════════════════════════════════════════════════════════
+   12e. ADDITIONAL PIPING — Desulf→Reformer, Reactor→Sep→Distill
+   ═══════════════════════════════════════════════════════════════ */
+// Natural gas feed → Desulfurizer
+pipes.add(mkPipe(new THREE.Vector3(-35, 2, 0), new THREE.Vector3(-28, 2, 0), 0.15, M.pipe));
+pipes.add(mkPipe(new THREE.Vector3(-28, 2, 0), new THREE.Vector3(-28, 7.5, 0), 0.15, M.pipe));
+mkValve(pipes, new THREE.Vector3(-31, 2, 0), 0.15, 'x');
+
+// Desulfurizer outlet → Reformer inlet
+pipes.add(mkPipe(new THREE.Vector3(-28, -0.5, 0), new THREE.Vector3(-28, -1.5, 0), 0.15, M.pipe));
+pipes.add(mkPipe(new THREE.Vector3(-28, -1.5, 0), new THREE.Vector3(-18, -1.5, 0), 0.15, M.pipe));
+pipes.add(mkPipe(new THREE.Vector3(-18, -1.5, 0), new THREE.Vector3(-18, 1, 0), 0.15, M.pipe));
+
+// Reactor outlet → Separator inlet
+pipes.add(mkPipe(new THREE.Vector3(0, -2.0, 0), new THREE.Vector3(0, -2.5, 2), 0.18, M.pipeGreen));
+pipes.add(mkPipe(new THREE.Vector3(0, -2.5, 2), new THREE.Vector3(5, -2.5, 4), 0.18, M.pipeGreen));
+pipes.add(mkPipe(new THREE.Vector3(5, -2.5, 4), new THREE.Vector3(5, 4.8, 4), 0.18, M.pipeGreen));
+
+// Separator liquid → Distillation
+pipes.add(mkPipe(new THREE.Vector3(5, 0.2, 4), new THREE.Vector3(5, -1, 4), 0.15, M.pipeGreen));
+pipes.add(mkPipe(new THREE.Vector3(5, -1, 4), new THREE.Vector3(14, -1, 4), 0.15, M.pipeGreen));
+pipes.add(mkPipe(new THREE.Vector3(14, -1, 4), new THREE.Vector3(14, 10, 0), 0.15, M.pipeGreen));
+
+// Separator vapor → Recycle compressor
+pipes.add(mkPipe(new THREE.Vector3(8.3, 3.5, 4), new THREE.Vector3(10, 3.5, 4), 0.12, M.pipe));
+pipes.add(mkPipe(new THREE.Vector3(10, 3.5, 4), new THREE.Vector3(10, 3.5, -9), 0.12, M.pipe));
+pipes.add(mkPipe(new THREE.Vector3(10, 3.5, -9), new THREE.Vector3(7, 3.5, -9), 0.12, M.pipe));
+
+// Purge valve tee (off recycle line → flare)
+const purgeMat = new THREE.MeshStandardMaterial({ color: 0xaa4444, roughness: 0.35, metalness: 0.7 });
+pipes.add(mkPipe(new THREE.Vector3(8.5, 3.5, -4), new THREE.Vector3(8.5, 5.5, -4), 0.08, purgeMat));
+mkValve(pipes, new THREE.Vector3(8.5, 4.5, -4), 0.08);
+
+/* ═══════════════════════════════════════════════════════════════
+   12f. PROCESS FLOW LABELS (3D sprites on pipes showing what flows)
+   ═══════════════════════════════════════════════════════════════ */
+const flowLabels = [
+  { text: 'Natural Gas\n(CH4 + H2S)', pos: [-33, 3.5, 0], color: '#FFA726' },
+  { text: 'Clean Gas\n(H2S < 0.1 ppm)', pos: [-23, -0.5, 0], color: '#66BB6A' },
+  { text: 'Syngas\n(H2 + CO + CO2)', pos: [-15, 7, -4], color: '#42A5F5' },
+  { text: 'Preheated Feed\n(200-300°C)', pos: [-3, 7, -2], color: '#42A5F5' },
+  { text: 'Crude MeOH\n(+ H2O + gas)', pos: [2, -3.5, 3], color: '#66BB6A' },
+  { text: 'Recycle Gas\n(RR=3.5)', pos: [9, 4.5, -5], color: '#BDBDBD' },
+  { text: 'Purge\n(CH4+N2 inerts)', pos: [10, 6, -4], color: '#EF5350' },
+  { text: 'Product MeOH\n(> 99.85%)', pos: [18, 0, 3], color: '#66BB6A' },
+  { text: 'Cooling Water', pos: [0, 4, -7], color: '#29B6F6' },
+];
+for (const fl of flowLabels) {
+  const c = document.createElement('canvas');
+  c.width = 256; c.height = 80;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = 'rgba(10,14,23,0.75)';
+  ctx.roundRect(0, 0, 256, 80, 8); ctx.fill();
+  ctx.strokeStyle = fl.color; ctx.lineWidth = 2;
+  ctx.roundRect(2, 2, 252, 76, 7); ctx.stroke();
+  ctx.fillStyle = fl.color; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'center';
+  const lines = fl.text.split('\n');
+  lines.forEach((l, i) => ctx.fillText(l, 128, 28 + i * 22));
+  const tex = new THREE.CanvasTexture(c);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
+  sp.position.set(fl.pos[0], fl.pos[1], fl.pos[2]);
+  sp.scale.set(3.5, 1.1, 1);
+  plant.add(sp);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   12g. NUMBERED STEP MARKERS — Interactive Guided Tour
+   Judges can click numbers or use Next/Prev to walk through the process.
+   Each step shows equipment, agent, and what happens there.
+   ═══════════════════════════════════════════════════════════════ */
+const TOUR_STEPS = [
+  { num: 1, pos: [-33, 5, 3],   cam: 'desulf',
+    title: 'Natural Gas Feed',
+    desc: 'Raw natural gas (CH4) enters the plant with H2S impurities.\nFeed rate: 5-20 mol/s depending on demand.',
+    agent: null },
+  { num: 2, pos: [-28, 11, 3],  cam: 'desulf',
+    title: 'Desulfurization (V-100)',
+    desc: 'ZnO guard bed removes H2S to < 0.1 ppm.\nProtects Cu/ZnO/Al2O3 catalyst downstream.\nBed life ~6 months, then replace.',
+    agent: null },
+  { num: 3, pos: [-18, 15, 3],  cam: 'reformer',
+    title: 'Steam Methane Reformer (H-101)',
+    desc: 'CH4 + H2O -> CO + 3H2 at 800-950 C\nEndothermic (+206 kJ/mol), needs fuel gas.\nNickel catalyst on alumina tubes.',
+    agent: 'ReformerAgent: fuel_gas, steam_flow' },
+  { num: 4, pos: [-9, 8, -2],   cam: 'reformer',
+    title: 'Heat Exchanger (E-101)',
+    desc: 'Feed/effluent shell & tube exchanger.\nU=250 W/(m2.K), A=8 m2.\nPreheats syngas using reactor outlet heat.',
+    agent: null },
+  { num: 5, pos: [0, 22, 3],    cam: 'reactor',
+    title: 'ICI 4-Bed Quench Reactor (T-101)',
+    desc: 'CORE: 3 simultaneous reactions (LHHW kinetics)\nR1: CO+2H2->CH3OH (-90.5 kJ/mol)\nR2: CO2+3H2->CH3OH+H2O (-49.5 kJ/mol)\nR3: CO2+H2->CO+H2O (+41.2 kJ/mol, endo)\nQuench gas between beds prevents runaway.\nEmergency shutdown at 300 C!',
+    agent: 'SynthesisAgent: H2, CO, cooling, compressor, purge, recycle' },
+  { num: 6, pos: [5, 8, 7],     cam: 'separator',
+    title: 'Flash Drum / Separator (V-102)',
+    desc: 'Only ~5% converts per pass!\nLiquid MeOH settles, vapor recycles.\n96% condensation efficiency at ~40 C.\nRecycle ratio = 3.5 (key control variable).',
+    agent: null },
+  { num: 7, pos: [7, 7, -12],   cam: 'overview',
+    title: 'Recycle Compressor (K-101)',
+    desc: '3-stage centrifugal, 0-100 kW.\nPressurizes unreacted gas back to 50-100 bar.\nPurge valve bleeds inerts (CH4, N2) to flare.',
+    agent: 'SynthesisAgent: compressor_power, purge_valve' },
+  { num: 8, pos: [14, 22, 3],   cam: 'distillation',
+    title: 'Distillation Column (C-101)',
+    desc: 'Crude MeOH -> Grade AA (>99.85% pure).\nSieve trays, reflux ratio 1-10.\nHigher reflux = purer but costs more energy.',
+    agent: 'PurificationAgent: reflux, reboiler_duty' },
+  { num: 9, pos: [21, 8, 9],    cam: 'storage',
+    title: 'Product Storage (TK-101)',
+    desc: 'Grade AA Methanol, 500 m3 tank.\nPrice: $0.74/kg (Methanex APAC Apr 2026).\nByproducts: DME, methyl formate (<0.5%).',
+    agent: null },
+  { num: 10, pos: [-8, 7, -15], cam: 'control',
+    title: 'Control Room — Supervisory Agent',
+    desc: 'Sees ALL plant state, orchestrates 3 sub-agents.\nResolves conflicts (profit vs safety vs catalyst).\nGame theory: day/night cooperative shifts.\n4 MCP tools: pricing, catalyst, maintenance, carbon.',
+    agent: 'SupervisoryAgent: orchestrates all 13 controls' },
+];
+
+// Agent colors for step markers
+const AGENT_COLORS = {
+  'ReformerAgent': '#FF9800',
+  'SynthesisAgent': '#2196F3',
+  'PurificationAgent': '#9C27B0',
+  'SupervisoryAgent': '#00BCD4',
+};
+
+// Create 3D numbered circle sprites
+const stepSprites = [];
+for (const step of TOUR_STEPS) {
+  const sz = 128;
+  const c = document.createElement('canvas');
+  c.width = sz; c.height = sz;
+  const ctx = c.getContext('2d');
+
+  // Determine color from agent
+  let ringColor = '#00d4aa';
+  if (step.agent) {
+    const agentKey = Object.keys(AGENT_COLORS).find(k => step.agent.startsWith(k));
+    if (agentKey) ringColor = AGENT_COLORS[agentKey];
+  }
+
+  // Circle background
+  ctx.beginPath();
+  ctx.arc(sz/2, sz/2, 52, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(10,14,23,0.88)';
+  ctx.fill();
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = ringColor;
+  ctx.stroke();
+
+  // Number text
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 52px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(String(step.num), sz/2, sz/2);
+
+  const tex = new THREE.CanvasTexture(c);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
+  sp.position.set(step.pos[0], step.pos[1], step.pos[2]);
+  sp.scale.set(2.2, 2.2, 1);
+  sp.userData = { tourStep: step.num, label: `Step ${step.num}: ${step.title}` };
+  plant.add(sp);
+  stepSprites.push(sp);
+}
+
+// Guided tour state
+let currentTourStep = 0;  // 0 = not started, 1-10 = active step
+
+function showTourStep(n) {
+  if (n < 1 || n > TOUR_STEPS.length) return;
+  currentTourStep = n;
+  const step = TOUR_STEPS[n-1];
+
+  // Move camera
+  if (window.setCam) window.setCam(step.cam);
+
+  // Update tour panel
+  const panel = document.getElementById('tour-panel');
+  const agentBadge = step.agent
+    ? `<div style="margin-top:6px;padding:4px 8px;border-radius:4px;background:rgba(255,255,255,0.06);font-size:11px;color:#00d4aa;">Agent: ${step.agent}</div>`
+    : '<div style="margin-top:6px;font-size:11px;color:#666;">No agent — fixed process</div>';
+  panel.innerHTML = `
+    <h3 style="color:#00d4aa;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;">
+      Step ${step.num} of ${TOUR_STEPS.length}
+    </h3>
+    <div style="font-size:15px;font-weight:600;margin-bottom:6px;">${step.title}</div>
+    <div style="font-size:12px;color:#b0bec5;line-height:1.6;white-space:pre-line;">${step.desc}</div>
+    ${agentBadge}
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button onclick="showTourStep(${n-1})" style="flex:1;padding:6px;border-radius:4px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.05);color:#ccc;cursor:pointer;font-size:12px;" ${n<=1?'disabled style="opacity:0.3;flex:1;padding:6px;border-radius:4px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:#555;cursor:default;font-size:12px;"':''}>Prev</button>
+      <button onclick="${n>=TOUR_STEPS.length ? 'closeTour()' : 'showTourStep('+(n+1)+')'}" style="flex:1;padding:6px;border-radius:4px;border:1px solid #00d4aa;background:rgba(0,212,170,0.15);color:#00d4aa;cursor:pointer;font-size:12px;font-weight:600;">${n<TOUR_STEPS.length?'Next &#9654;':'&#10003; Done'}</button>
+    </div>
+  `;
+  panel.style.display = 'block';
+
+  // Pulse the active step marker
+  stepSprites.forEach((sp, i) => {
+    sp.scale.set(i === n-1 ? 3.0 : 2.2, i === n-1 ? 3.0 : 2.2, 1);
+    sp.material.opacity = i === n-1 ? 1.0 : 0.5;
+  });
+}
+window.showTourStep = showTourStep;
+
+function closeTour() {
+  document.getElementById('tour-panel').style.display = 'none';
+  currentTourStep = 0;
+  stepSprites.forEach(sp => { sp.scale.set(2.2, 2.2, 1); sp.material.opacity = 1.0; });
+  if (window.setCam) window.setCam('overview');
+}
+window.closeTour = closeTour;
+
+// Click on numbered markers to jump to that step
+canvas.addEventListener('click', (e) => {
+  const mx = (e.clientX / window.innerWidth) * 2 - 1;
+  const my = -(e.clientY / window.innerHeight) * 2 + 1;
+  raycaster.setFromCamera(new THREE.Vector2(mx, my), camera);
+
+  // Check tour step sprites first
+  const tourHits = raycaster.intersectObjects(stepSprites);
+  if (tourHits.length > 0 && tourHits[0].object.userData.tourStep) {
+    showTourStep(tourHits[0].object.userData.tourStep);
+    return;
+  }
+
+  // Check plant equipment (beds, quench rings, etc.)
+  const plantHits = raycaster.intersectObjects(plant.children, true);
+  for (const h of plantHits) {
+    let obj = h.object;
+    while (obj && !obj.userData?.type) obj = obj.parent;
+    if (obj?.userData?.type === 'catalyst_bed' || obj?.userData?.type === 'quench') {
+      showBedPopup(obj.userData);
+      // Zoom camera to that bed level
+      const by = obj.userData.type === 'catalyst_bed' ? bedY[obj.userData.bedIndex] : bedY[obj.userData.quenchIndex] - 1.5;
+      const startPos = camera.position.clone();
+      const startTarget = ctrl.target.clone();
+      const endPos = new THREE.Vector3(6, by + 1, 5);
+      const endTarget = new THREE.Vector3(0, by, 0);
+      const startTime = performance.now();
+      function animZoom(now) {
+        const t = Math.min(1, (now - startTime) / 800);
+        const ease = t < 0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
+        camera.position.lerpVectors(startPos, endPos, ease);
+        ctrl.target.lerpVectors(startTarget, endTarget, ease);
+        ctrl.update();
+        if (t < 1) requestAnimationFrame(animZoom);
+      }
+      requestAnimationFrame(animZoom);
+      return;
+    }
+  }
+});
+
+// Bed detail popup
+function showBedPopup(ud) {
+  const popup = document.getElementById('bed-popup');
+  const title = document.getElementById('bed-popup-title');
+  const content = document.getElementById('bed-popup-content');
+  const beds = S.bed_temps || [S.temperature, S.temperature, S.temperature, S.temperature];
+  const f = (v, d=1) => Number(v).toFixed(d);
+
+  if (ud.type === 'catalyst_bed') {
+    const bi = ud.bedIndex;
+    const bt = beds[bi] || S.temperature;
+    const statusColor = bt < 240 ? '#2196F3' : bt < 260 ? '#4CAF50' : bt < 280 ? '#FFC107' : bt < 300 ? '#F44336' : '#9C27B0';
+    const statusText = bt < 240 ? 'COOL — Below optimal' : bt < 260 ? 'OPTIMAL — Peak efficiency' : bt < 280 ? 'HOT — Selectivity dropping' : bt < 300 ? 'CRITICAL — Catalyst sintering!' : 'SHUTDOWN — Emergency!';
+    const rr = S.reaction_rate || 0;
+    // Approximate per-bed contribution (top beds do more conversion)
+    const bedFractions = [0.40, 0.28, 0.20, 0.12];
+    const bedRate = rr * bedFractions[bi];
+    const bedMeOH = bedRate * 0.032 * 60; // kg/step
+
+    title.textContent = `Catalyst Bed ${bi+1} — ${bedNames[bi]}`;
+    content.innerHTML = `
+      <div style="background:rgba(255,255,255,0.04);border-radius:6px;padding:10px 12px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="color:#8892a4;font-size:12px;">Temperature</span>
+          <span style="font-size:20px;font-weight:700;color:${statusColor};">${f(bt)}°C</span>
+        </div>
+        <div style="margin-top:6px;height:8px;background:#1a1a2e;border-radius:4px;overflow:hidden;">
+          <div style="height:100%;width:${Math.max(2,Math.min(100,(bt-150)/1.5))}%;background:${statusColor};border-radius:4px;transition:width 0.5s;"></div>
+        </div>
+        <div style="font-size:11px;color:${statusColor};margin-top:4px;">${statusText}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div style="background:rgba(255,255,255,0.03);padding:8px;border-radius:5px;">
+          <div style="font-size:10px;color:#666;text-transform:uppercase;">Reaction Rate</div>
+          <div style="font-size:14px;font-weight:600;color:#e0e0e0;">${f(bedRate,3)} mol/s</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03);padding:8px;border-radius:5px;">
+          <div style="font-size:10px;color:#666;text-transform:uppercase;">MeOH Output</div>
+          <div style="font-size:14px;font-weight:600;color:#e0e0e0;">${f(bedMeOH,2)} kg/step</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03);padding:8px;border-radius:5px;">
+          <div style="font-size:10px;color:#666;text-transform:uppercase;">Catalyst Health</div>
+          <div style="font-size:14px;font-weight:600;color:${S.catalyst_health > 0.7 ? '#4CAF50' : S.catalyst_health > 0.4 ? '#FFC107' : '#F44336'};">${f(S.catalyst_health*100)}%</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03);padding:8px;border-radius:5px;">
+          <div style="font-size:10px;color:#666;text-transform:uppercase;">Conversion Share</div>
+          <div style="font-size:14px;font-weight:600;color:#e0e0e0;">${(bedFractions[bi]*100).toFixed(0)}%</div>
+        </div>
+      </div>
+      ${bi < 3 ? `<div style="background:rgba(221,136,68,0.1);border:1px solid rgba(221,136,68,0.3);border-radius:5px;padding:8px 10px;font-size:12px;">
+        <span style="color:#dd8844;font-weight:600;">&#9660; Quench below</span><br>
+        <span style="color:#aaa;">Cold shot injection cools gas before Bed ${bi+2}</span><br>
+        <span style="color:#dd8844;">Bed ${bi+1}: ${f(bt)}°C → Bed ${bi+2}: ${f(beds[bi+1]||bt)}°C</span>
+      </div>` : `<div style="background:rgba(244,67,54,0.1);border:1px solid rgba(244,67,54,0.3);border-radius:5px;padding:8px 10px;font-size:12px;">
+        <span style="color:#F44336;font-weight:600;">&#9888; Last bed — no quench below</span><br>
+        <span style="color:#aaa;">Hottest point in reactor. If >300°C = emergency shutdown.</span>
+      </div>`}
+      <div style="margin-top:8px;font-size:11px;color:#555;">
+        Position: ${bedNames[bi]} | Y=${bedY[bi]}m | Agent: SynthesisAgent
+      </div>
+    `;
+  } else if (ud.type === 'quench') {
+    const qi = ud.quenchIndex;
+    const above = beds[qi] || S.temperature;
+    const below = beds[qi+1] || S.temperature;
+    const drop = above - below;
+    title.textContent = `Quench Injector ${qi+1}`;
+    content.innerHTML = `
+      <div style="background:rgba(221,136,68,0.08);border-radius:6px;padding:12px;margin-bottom:10px;text-align:center;">
+        <div style="font-size:13px;color:#aaa;">Bed ${qi+1}</div>
+        <div style="font-size:22px;font-weight:700;color:${above > 260 ? '#FFC107' : '#4CAF50'};">${f(above)}°C</div>
+        <div style="font-size:20px;color:#dd8844;margin:4px 0;">&#9660; Cold Shot &#9660;</div>
+        <div style="font-size:13px;color:#aaa;">Bed ${qi+2}</div>
+        <div style="font-size:22px;font-weight:700;color:${below > 260 ? '#FFC107' : '#4CAF50'};">${f(below)}°C</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.04);border-radius:5px;padding:8px 10px;font-size:12px;color:#b0bec5;line-height:1.6;">
+        Cold syngas at <b>${f(S.bed_temps?.[0]-10 || 200)}°C</b> is injected between beds.<br>
+        Temperature drop: <b style="color:#dd8844;">${f(Math.abs(drop))}°C</b><br>
+        Controls: <b>feed_preheat_temp</b> (200-300°C range)
+      </div>
+    `;
+  }
+  popup.style.display = 'block';
+}
+window.showBedPopup = showBedPopup;
+
+// HUD panel bed row click → zoom + popup (same as clicking 3D bed)
+function clickBedFromPanel(bi) {
+  // Build userData matching what the 3D bed would have
+  const ud = { type: 'catalyst_bed', bedIndex: bi, name: `Catalyst Bed ${bi+1}`, desc: bedNames[bi] };
+  showBedPopup(ud);
+  // Zoom camera to that bed level
+  const by = bedY[bi];
+  const startPos = camera.position.clone();
+  const startTarget = ctrl.target.clone();
+  const endPos = new THREE.Vector3(6, by + 1, 5);
+  const endTarget = new THREE.Vector3(0, by, 0);
+  const startTime = performance.now();
+  function animZoom(now) {
+    const t = Math.min(1, (now - startTime) / 800);
+    const ease = t < 0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
+    camera.position.lerpVectors(startPos, endPos, ease);
+    ctrl.target.lerpVectors(startTarget, endTarget, ease);
+    ctrl.update();
+    if (t < 1) requestAnimationFrame(animZoom);
+  }
+  requestAnimationFrame(animZoom);
+}
+window.clickBedFromPanel = clickBedFromPanel;
+
+function closeBedPopup() {
+  document.getElementById('bed-popup').style.display = 'none';
+  // Zoom back to reactor overview
+  const startPos = camera.position.clone();
+  const startTarget = ctrl.target.clone();
+  const endPos = new THREE.Vector3(8, 12, 10);
+  const endTarget = new THREE.Vector3(0, 8, 0);
+  const startTime = performance.now();
+  function animOut(now) {
+    const t = Math.min(1, (now - startTime) / 600);
+    const ease = t < 0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
+    camera.position.lerpVectors(startPos, endPos, ease);
+    ctrl.target.lerpVectors(startTarget, endTarget, ease);
+    ctrl.update();
+    if (t < 1) requestAnimationFrame(animOut);
+  }
+  requestAnimationFrame(animOut);
+}
+window.closeBedPopup = closeBedPopup;
 
 // Steam particles from reformer stack
 const steamCount = 80;
@@ -1191,7 +1889,39 @@ canvas.addEventListener('mousemove', (e) => {
       tooltip.style.display = 'block';
       tooltip.style.left = e.clientX+15+'px';
       tooltip.style.top = e.clientY-10+'px';
-      tooltip.textContent = obj.userData.label;
+
+      let html = obj.userData.label.replace(/\n/g, '<br>');
+
+      // Inject live data for catalyst beds
+      if (obj.userData.type === 'catalyst_bed' && obj.userData.bedIndex !== undefined) {
+        const bi = obj.userData.bedIndex;
+        const beds = S.bed_temps || [S.temperature, S.temperature, S.temperature, S.temperature];
+        const bt = beds[bi] || S.temperature;
+        const statusColor = bt < 240 ? '#2196F3' : bt < 260 ? '#4CAF50' : bt < 280 ? '#FFC107' : bt < 300 ? '#F44336' : '#9C27B0';
+        const statusText = bt < 240 ? 'COOL' : bt < 260 ? 'OPTIMAL' : bt < 280 ? 'HOT' : bt < 300 ? 'CRITICAL' : 'SHUTDOWN';
+        html += `<br><br><span style="font-size:14px;font-weight:700;color:${statusColor};">` +
+          `&#9608; ${bt.toFixed(1)}°C — ${statusText}</span>`;
+        html += `<br><span style="color:#888;font-size:11px;">Cat health: ${(S.catalyst_health*100).toFixed(1)}%</span>`;
+        // Show quench info for beds 1-3
+        if (bi < 3) {
+          const nextBt = beds[bi+1] || bt;
+          const quenchDrop = (bt - nextBt).toFixed(1);
+          html += `<br><span style="color:#dd8844;font-size:11px;">Quench below: ${quenchDrop > 0 ? '-' : '+'}${Math.abs(quenchDrop)}°C cooling</span>`;
+        }
+      }
+
+      // Inject live data for quench injectors
+      if (obj.userData.type === 'quench' && obj.userData.quenchIndex !== undefined) {
+        const qi = obj.userData.quenchIndex;
+        const beds = S.bed_temps || [S.temperature, S.temperature, S.temperature, S.temperature];
+        const above = beds[qi] || S.temperature;
+        const below = beds[qi+1] || S.temperature;
+        const drop = (above - below).toFixed(1);
+        html += `<br><br><span style="color:#dd8844;font-weight:600;">Bed ${qi+1}: ${above.toFixed(1)}°C → Bed ${qi+2}: ${below.toFixed(1)}°C</span>`;
+        html += `<br><span style="color:#aaa;font-size:11px;">Quench effect: ${drop > 0 ? '-' : '+'}${Math.abs(drop).toFixed(1)}°C</span>`;
+      }
+
+      tooltip.innerHTML = html;
       found = true; break;
     }
   }
@@ -1229,7 +1959,12 @@ function updateVisuals() {
   const T = S.temperature, c = tempColor(T), cc = catColor(S.catalyst_health);
 
   M.reactorBody.color.copy(c); M.reactorBody.emissive.copy(c).multiplyScalar(0.12);
-  for (let i = 0; i < 4; i++) { M.catBed[i].color.copy(cc); M.catBed[i].emissive.copy(cc).multiplyScalar(0.15); }
+  // Per-bed coloring based on individual bed temps
+  const beds = S.bed_temps || [T, T+1, T+2, T+3];
+  for (let i = 0; i < 4; i++) {
+    const bc = tempColor(beds[i]);
+    M.catBed[i].color.copy(bc); M.catBed[i].emissive.copy(bc).multiplyScalar(0.15);
+  }
   reactorGlow.intensity = 0.5 + Math.max(0, T-200)/80*2; reactorGlow.color.copy(c);
 
   const fuelF = Math.min(1, (S.reformer_outlet_temp||850)/1000);
@@ -1245,7 +1980,7 @@ function updateVisuals() {
   const el = id => document.getElementById(id);
   const f = (v,d=1) => Number(v).toFixed(d);
   const cls = (id, v, lo, hi) => {
-    const e = el(id); e.classList.remove('warn','danger','good');
+    const e = el(id); if(!e) return; e.classList.remove('warn','danger','good');
     if (v < lo || v > hi) e.classList.add('danger');
     else if (v > hi*0.9 || v < lo*1.1) e.classList.add('warn');
     else e.classList.add('good');
@@ -1273,6 +2008,31 @@ function updateVisuals() {
   el('v-recycle').textContent = f(S.recycle_ratio||3.5,1);
   el('v-purge').textContent = `${f(S.purge_rate||0,2)} mol/s`;
   el('v-reform-t').textContent = `${f(S.reformer_outlet_temp||850)} °C`;
+
+  // Bed temperature bars
+  for (let i = 0; i < 4; i++) {
+    const bt = beds[i] || T;
+    const pct = Math.max(0, Math.min(100, (bt - 150) / 150 * 100));
+    const fill = el(`bed${i+1}-fill`);
+    const val = el(`bed${i+1}-val`);
+    if (fill) {
+      fill.style.width = pct + '%';
+      if (bt < 240) fill.style.background = '#2196F3';
+      else if (bt < 260) fill.style.background = '#4CAF50';
+      else if (bt < 280) fill.style.background = '#FFC107';
+      else fill.style.background = '#F44336';
+    }
+    if (val) val.textContent = `${f(bt)}°C`;
+  }
+
+  // Chemistry panel — individual reaction rates
+  const rr = S.reaction_rate || 0;
+  const r1 = S.rate_R1 || rr * 0.65;
+  const r2 = S.rate_R2 || rr * 0.25;
+  const r3 = S.rate_R3 || rr * 0.10;
+  if (el('v-r1')) el('v-r1').textContent = `${f(r1,3)} mol/s`;
+  if (el('v-r2')) el('v-r2').textContent = `${f(r2,3)} mol/s`;
+  if (el('v-r3')) el('v-r3').textContent = `${f(r3,3)} mol/s`;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1331,36 +2091,53 @@ animate();
    DEMO MODE SIMULATION
    ═══════════════════════════════════════════════════════════════ */
 function simulateDemo() {
+  if (ctrlMode === 'manual') return; // Manual mode — user drives via sliders + Step button
   demoStep++;
   const s = S, t = demoStep;
   if (t < 20) {
+    // STARTUP: ramp from 150°C to 250°C
     s.temperature = 150 + t*5 + (Math.random()-0.5)*2;
     s.task_name = 'startup'; s.feed_rate_h2 = Math.min(5,t*0.3); s.feed_rate_co = Math.min(2.5,t*0.15);
     s.reaction_rate = Math.max(0,(s.temperature-200)/50*3); s.catalyst_health = 1.0;
     s.safety_warning = null; s.flare_valve = 0;
+    s.cooling_water_flow = 20 + t*1.5;
+    s.bed_temps = [s.temperature-2, s.temperature, s.temperature+1, s.temperature+2];
   } else if (t < 60) {
+    // OPTIMIZATION: steady state, maximize profit
     s.temperature = 248 + Math.sin(t*0.3)*4 + (Math.random()-0.5)*2;
     s.task_name = 'optimization'; s.feed_rate_h2 = 4.5+Math.sin(t*0.2)*0.5;
     s.feed_rate_co = 2.2+Math.sin(t*0.15)*0.3; s.reaction_rate = 3.5+Math.sin(t*0.25)*0.5;
     s.catalyst_health = Math.max(0.85, 1.0-(t-20)*0.002);
     s.safety_warning = null; s.flare_valve = 0;
+    s.cooling_water_flow = 45 + Math.sin(t*0.1)*5;
+    // ICI 4-bed quench: each bed ~3°C hotter, quench cools between beds
+    const baseT = s.temperature;
+    s.bed_temps = [baseT-3, baseT-1, baseT+1, baseT+3];
   } else if (t < 80) {
+    // DISTURBANCE: cooling failure at step 25 equivalent — temp rises dangerously
     s.temperature = Math.min(295, s.temperature+1.5+Math.random());
     s.task_name = 'disturbance'; s.cooling_water_flow = 15;
     s.safety_warning = s.temperature > 270 ? 'HIGH TEMPERATURE' : null;
     s.reaction_rate = 4.5-(s.temperature-260)*0.05;
     s.catalyst_health = Math.max(0.4, s.catalyst_health-0.008);
     s.flare_valve = s.temperature > 285 ? 30 : 0;
+    // Hot beds diverge — bed 4 hottest (thermal runaway risk)
+    const baseT = s.temperature;
+    const spread = (baseT - 250) * 0.3;
+    s.bed_temps = [baseT-spread, baseT-spread*0.5, baseT+spread*0.5, baseT+spread];
   } else if (t < 100) {
+    // RECOVERY: agent brings temp back down
     s.temperature = Math.max(250, s.temperature-2);
     s.task_name = 'recovery'; s.cooling_water_flow = 80;
     s.safety_warning = s.temperature > 270 ? 'RECOVERING' : null;
     s.catalyst_health = Math.max(0.35, s.catalyst_health-0.001);
     s.flare_valve = Math.max(0, s.flare_valve-2);
+    s.bed_temps = [s.temperature-1, s.temperature, s.temperature+0.5, s.temperature+1];
   } else {
     demoStep = 0; s.temperature = 150; s.methanol_produced = 0;
     s.cumulative_profit = 0; s.total_co2_emissions = 0;
     s.catalyst_health = 1.0; s.safety_warning = null; s.flare_valve = 0;
+    s.bed_temps = [150, 150, 150, 150];
   }
   s.pressure = 50+(s.compressor_power||40)*0.5+(Math.random()-0.5)*2;
   s.h2_co_ratio = s.feed_rate_co > 0 ? s.feed_rate_h2/s.feed_rate_co : 2.0;
@@ -1369,7 +2146,19 @@ function simulateDemo() {
   s.cumulative_profit += s.profit_this_step;
   s.total_co2_emissions += s.methanol_produced*0.0006;
   s.step_number = t; s.max_steps = 100;
+  // Reaction rate breakdown (approximate from LHHW kinetics proportions)
+  const rr = s.reaction_rate;
+  s.rate_R1 = rr * 0.62 + (Math.random()-0.5)*0.05;
+  s.rate_R2 = rr * 0.28 + (Math.random()-0.5)*0.03;
+  s.rate_R3 = rr * 0.10 + (Math.random()-0.5)*0.02;
+  // Plant stage data
+  s.desulf_bed_life = Math.max(0.5, 0.95 - t*0.001);
+  s.reformer_steam_carbon = 3.0 + Math.sin(t*0.1)*0.2;
+  s.reformer_efficiency = 0.82 + Math.sin(t*0.15)*0.03;
+  s.product_purity = t < 20 ? 0.98 : 0.995 + Math.sin(t*0.2)*0.002;
+  s.selectivity = 0.995 - Math.max(0, s.temperature-260)*0.0002;
   updateVisuals();
+  syncSlidersFromState();
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1399,6 +2188,190 @@ window.startDemo = function() {
   const badge = document.getElementById('status-badge');
   badge.textContent = 'DEMO MODE'; badge.classList.add('connected');
   updateVisuals();
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   LIVE CONTROL PANEL LOGIC
+   ═══════════════════════════════════════════════════════════════ */
+let ctrlMode = 'auto'; // 'auto' = demo drives, 'manual' = user drives
+
+// Toggle collapse
+window.toggleCtrlPanel = function() {
+  const p = document.getElementById('ctrl-panel');
+  const t = document.getElementById('ctrl-toggle');
+  p.classList.toggle('collapsed');
+  t.innerHTML = p.classList.contains('collapsed') ? '&#9664;' : '&#9654;';
+};
+
+// Mode switch
+window.setCtrlMode = function(mode) {
+  ctrlMode = mode;
+  document.getElementById('btn-auto').classList.toggle('active', mode === 'auto');
+  document.getElementById('btn-manual').classList.toggle('active', mode === 'manual');
+  document.getElementById('btn-step').disabled = (mode === 'auto');
+  document.getElementById('ctrl-status-text').textContent =
+    mode === 'auto' ? 'Auto mode \u2014 demo drives controls' : 'Manual mode \u2014 drag sliders, click Step';
+  // If switching to auto, start demo if not running
+  if (mode === 'auto' && !demoMode) {
+    window.startDemo();
+  }
+};
+
+// Read slider values
+function getCtrlValues() {
+  return {
+    feed_rate_h2: parseFloat(document.getElementById('cr-h2').value),
+    feed_rate_co: parseFloat(document.getElementById('cr-co').value),
+    cooling_water_flow: parseFloat(document.getElementById('cr-cool').value),
+    compressor_power: parseFloat(document.getElementById('cr-comp').value),
+    purge_valve: parseFloat(document.getElementById('cr-purge').value),
+    recycle_ratio: parseFloat(document.getElementById('cr-recycle').value),
+  };
+}
+
+// Update slider value labels on input
+window.onCtrl = function() {
+  const cv = getCtrlValues();
+  document.getElementById('cv-h2').textContent = cv.feed_rate_h2.toFixed(1) + ' mol/s';
+  document.getElementById('cv-co').textContent = cv.feed_rate_co.toFixed(1) + ' mol/s';
+  document.getElementById('cv-cool').textContent = cv.cooling_water_flow.toFixed(0) + ' L/min';
+  document.getElementById('cv-comp').textContent = cv.compressor_power.toFixed(0) + ' kW';
+  document.getElementById('cv-purge').textContent = cv.purge_valve.toFixed(0) + '%';
+  document.getElementById('cv-recycle').textContent = cv.recycle_ratio.toFixed(1);
+
+  // In manual mode, immediately apply to reactor state (no step needed for visual feedback)
+  if (ctrlMode === 'manual') {
+    S.feed_rate_h2 = cv.feed_rate_h2;
+    S.feed_rate_co = cv.feed_rate_co;
+    S.cooling_water_flow = cv.cooling_water_flow;
+    S.compressor_power = cv.compressor_power;
+    S.flare_valve = cv.purge_valve;
+    S.recycle_ratio = cv.recycle_ratio;
+    updateVisuals();
+  }
+};
+
+// Sync sliders from state (when auto-demo updates values)
+function syncSlidersFromState() {
+  if (ctrlMode !== 'auto') return;
+  const setSlider = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+  setSlider('cr-h2', S.feed_rate_h2);
+  setSlider('cr-co', S.feed_rate_co);
+  setSlider('cr-cool', S.cooling_water_flow);
+  setSlider('cr-comp', S.compressor_power || 40);
+  setSlider('cr-purge', S.flare_valve || 0);
+  setSlider('cr-recycle', S.recycle_ratio || 3.5);
+  // Update labels
+  document.getElementById('cv-h2').textContent = Number(S.feed_rate_h2).toFixed(1) + ' mol/s';
+  document.getElementById('cv-co').textContent = Number(S.feed_rate_co).toFixed(1) + ' mol/s';
+  document.getElementById('cv-cool').textContent = Number(S.cooling_water_flow).toFixed(0) + ' L/min';
+  document.getElementById('cv-comp').textContent = Number(S.compressor_power||40).toFixed(0) + ' kW';
+  document.getElementById('cv-purge').textContent = Number(S.flare_valve||0).toFixed(0) + '%';
+  document.getElementById('cv-recycle').textContent = Number(S.recycle_ratio||3.5).toFixed(1);
+}
+
+// Manual step — simplified physics simulation
+window.manualStep = function() {
+  if (ctrlMode !== 'manual') return;
+  if (!demoMode) { demoMode = true; document.getElementById('status-badge').textContent = 'MANUAL'; document.getElementById('status-badge').classList.add('connected'); }
+  document.getElementById('connect-dialog').classList.add('hidden');
+
+  const cv = getCtrlValues();
+  S.step_number++;
+  S.feed_rate_h2 = cv.feed_rate_h2;
+  S.feed_rate_co = cv.feed_rate_co;
+  S.cooling_water_flow = cv.cooling_water_flow;
+  S.compressor_power = cv.compressor_power;
+  S.recycle_ratio = cv.recycle_ratio;
+  S.flare_valve = cv.purge_valve;
+
+  // Simplified physics: temperature change
+  const feedHeat = (cv.feed_rate_h2 + cv.feed_rate_co) * 3.5; // heat from reaction
+  const coolingEffect = cv.cooling_water_flow / 100 * Math.max(0, S.temperature - 35) * 0.08;
+  const recycleBoost = Math.max(0, cv.recycle_ratio - 2) * 0.5; // more recycle = more conversion = more heat
+  const noise = (Math.random() - 0.5) * 1.5;
+  S.temperature = Math.max(100, Math.min(310, S.temperature + feedHeat * 0.3 - coolingEffect + recycleBoost * 0.3 + noise));
+
+  // Pressure from compressor
+  S.pressure = 50 + cv.compressor_power * 0.5 + (Math.random() - 0.5) * 2;
+
+  // Reaction rate: depends on temp (bell curve around 250) × feed × catalyst
+  const tempFactor = Math.exp(-0.005 * Math.pow(S.temperature - 255, 2)); // bell curve
+  const feedFactor = Math.min(cv.feed_rate_h2 / 4, cv.feed_rate_co / 2); // limiting reagent
+  const pressureFactor = Math.min(1, S.pressure / 70);
+  S.reaction_rate = Math.max(0, 4.5 * tempFactor * feedFactor * pressureFactor * S.catalyst_health + (Math.random()-0.5)*0.1);
+
+  // Catalyst deactivation accelerated above 270°C
+  if (S.temperature > 270) S.catalyst_health = Math.max(0.1, S.catalyst_health - 0.003 * (S.temperature - 270) / 30);
+  else S.catalyst_health = Math.max(0.1, S.catalyst_health - 0.0002);
+
+  // H2/CO ratio
+  S.h2_co_ratio = cv.feed_rate_co > 0.01 ? cv.feed_rate_h2 / cv.feed_rate_co : 0;
+
+  // Bed temperatures (gradient across 4 beds)
+  const spread = Math.max(0, (S.temperature - 240)) * 0.25;
+  S.bed_temps = [S.temperature - spread, S.temperature - spread * 0.3, S.temperature + spread * 0.3, S.temperature + spread];
+
+  // Reaction rate breakdown
+  S.rate_R1 = S.reaction_rate * 0.62 + (Math.random()-0.5)*0.03;
+  S.rate_R2 = S.reaction_rate * 0.28 + (Math.random()-0.5)*0.02;
+  S.rate_R3 = S.reaction_rate * 0.10 + (Math.random()-0.5)*0.01;
+
+  // Economics
+  S.methanol_produced += S.reaction_rate * 0.032 * 60;
+  S.profit_this_step = S.reaction_rate * 0.032 * 60 * 0.74 - (cv.feed_rate_h2 + cv.feed_rate_co) * 0.002 * 60;
+  S.cumulative_profit += S.profit_this_step;
+  S.total_co2_emissions += S.methanol_produced * 0.0006;
+
+  // Safety
+  S.safety_warning = S.temperature > 290 ? 'EMERGENCY!' : S.temperature > 270 ? 'HIGH TEMP' : null;
+  S.task_name = 'manual_control';
+  S.max_steps = 999;
+
+  // Plant stages
+  S.selectivity = 0.995 - Math.max(0, S.temperature - 260) * 0.0003;
+  S.product_purity = S.reaction_rate > 1 ? 0.995 + (Math.random()-0.5)*0.002 : 0.98;
+
+  updateVisuals();
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   CAMERA PRESETS
+   ═══════════════════════════════════════════════════════════════ */
+const CAM_PRESETS = {
+  overview:     { pos: [30, 25, 35],   target: [0, 6, 0] },
+  desulf:       { pos: [-25, 8, 8],    target: [-28, 3, 0] },
+  reformer:     { pos: [-12, 10, 10],  target: [-18, 5, 0] },
+  reactor:      { pos: [8, 12, 10],    target: [0, 8, 0] },
+  separator:    { pos: [10, 6, 12],    target: [5, 2, 4] },
+  distillation: { pos: [20, 14, 8],    target: [14, 8, 0] },
+  storage:      { pos: [26, 6, 12],    target: [21, 3, 6] },
+  control:      { pos: [-4, 6, -8],    target: [-8, 2, -12] },
+};
+
+window.setCam = function(preset) {
+  const p = CAM_PRESETS[preset];
+  if (!p) return;
+  // Smooth animation
+  const startPos = camera.position.clone();
+  const startTarget = ctrl.target.clone();
+  const endPos = new THREE.Vector3(...p.pos);
+  const endTarget = new THREE.Vector3(...p.target);
+  const duration = 1000; // ms
+  const startTime = performance.now();
+  function animateCam(now) {
+    const elapsed = now - startTime;
+    const t = Math.min(1, elapsed / duration);
+    const ease = t < 0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2; // easeInOutCubic
+    camera.position.lerpVectors(startPos, endPos, ease);
+    ctrl.target.lerpVectors(startTarget, endTarget, ease);
+    ctrl.update();
+    if (t < 1) requestAnimationFrame(animateCam);
+  }
+  requestAnimationFrame(animateCam);
+  // Update active button
+  document.querySelectorAll('#cam-presets button').forEach(b => b.classList.remove('active'));
+  event?.target?.classList?.add('active');
 };
 
 updateVisuals();
