@@ -86,15 +86,59 @@ _ACT = _CFG.get("actuator_limits", {})
 # ---------------------------------------------------------------------------
 R_GAS = 8.314  # J/(mol*K), universal gas constant
 
+# ---------------------------------------------------------------------------
+# Optional DWSIM backend — when available, fugacity coefficients come from
+# DWSIM's industrial SRK solver instead of our internal approximation.
+# Set DWSIM_PATH env var to enable. Falls back silently if unavailable.
+# ---------------------------------------------------------------------------
+_dwsim_backend = None
+_dwsim_cache = {}  # (T_K_rounded, P_bar_rounded) → {species: phi}
+
+def _init_dwsim():
+    global _dwsim_backend
+    if _dwsim_backend is not None:
+        return
+    try:
+        import sys, os
+        # Add integration path
+        _int_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "integrations")
+        if _int_dir not in sys.path:
+            sys.path.insert(0, _int_dir)
+        from dwsim import DWSIMIntegration
+        d = DWSIMIntegration()
+        if d.is_available:
+            _dwsim_backend = d
+    except Exception:
+        pass
+
+_init_dwsim()
+
 
 def _fugacity_coefficient(T_K: float, P_bar: float, species: str = "CO") -> float:
     """SRK fugacity coefficient for key species at reactor conditions.
 
-    Soave-Redlich-Kwong EOS correction for non-ideal gas behavior.
-    At 50-100 bar, ideal gas assumption has ~5-10% error [LeBlanc Ch.3.2.1].
+    When DWSIM is available (DWSIM_PATH set), uses DWSIM's industrial SRK
+    solver via .NET interop. Falls back to internal SRK implementation.
 
     Returns phi (fugacity coefficient, 0 < phi < 1 at high pressure).
     """
+    # Try DWSIM backend first (cached per T,P to avoid repeated .NET calls)
+    if _dwsim_backend is not None:
+        cache_key = (round(T_K, 1), round(P_bar, 1))
+        if cache_key not in _dwsim_cache:
+            try:
+                comp = {"H2": 0.6, "CO": 0.1, "CO2": 0.05, "CH3OH": 0.02,
+                        "H2O": 0.01, "CH4": 0.15, "N2": 0.07}
+                result = _dwsim_backend.get_thermodynamic_properties(
+                    T_K, P_bar * 1e5, comp)
+                _dwsim_cache[cache_key] = result.fugacity_coefficients
+            except Exception:
+                _dwsim_cache[cache_key] = None
+        cached = _dwsim_cache.get(cache_key)
+        if cached and species in cached:
+            return cached[species]
+
+    # Internal SRK fallback
     # Critical properties for key species
     Tc_K = {"H2": 33.2, "CO": 132.9, "CO2": 304.2, "CH3OH": 512.6, "H2O": 647.1}.get(species, 132.9)
     Pc_bar = {"H2": 13.0, "CO": 35.0, "CO2": 73.8, "CH3OH": 80.9, "H2O": 220.6}.get(species, 35.0)
