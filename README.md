@@ -44,6 +44,27 @@
 ![Baseline vs Trained](training_plots/baseline_vs_trained.png)
 *Random baseline (red) vs GRPO-trained agent (green) on the optimization task.*
 
+### What the Agent Learned (Qualitative)
+
+| Behavior | Untrained (Random) Agent | GRPO-Trained Agent |
+|----------|--------------------------|--------------------|
+| **Temperature** | Wildly oscillates, frequently hits 300C shutdown | Maintains 240-260C optimal range |
+| **Safety** | ~40% of episodes end in emergency shutdown | Avoids shutdown, uses predictive lookahead |
+| **Profit** | Negative (high costs, low production) | Consistently positive (balanced feed vs revenue) |
+| **Catalyst** | Rapid degradation from temperature spikes | Preserved by staying below 270C |
+| **Feed ratio** | Random H2/CO = poor selectivity | Learns H2/CO ~ 2.0 (stoichiometric optimum) |
+| **Cooling** | Either overcools (no production) or undercools (runaway) | Dynamic cooling matched to heat generation |
+
+### Curriculum & Self-Improvement
+
+The environment supports **adaptive difficulty** through:
+- **Domain randomization**: Each `reset()` randomizes catalyst health (0.5-1.0), initial temperature (+-3C), pressure (+-1.5 bar), feed composition, and cooling water temp
+- **12 tasks with escalating difficulty**: Easy (startup) → Medium (optimization) → Hard (disturbance rejection, cascading failures) → Expert (500-step catalyst lifecycle)
+- **Monte Carlo disturbances**: Brownian motion on cooling water temp per step — no two episodes are identical
+- **Multi-agent decomposition**: Agents can be trained individually (simpler) then composed (harder)
+
+This means the model is always training near its capability frontier — easy tasks provide warm-start signal, hard tasks provide aspirational targets.
+
 ---
 
 ## Table of Contents
@@ -62,6 +83,7 @@
 - [The Reactor: ICI 4-Bed Quench Design](#the-reactor-ici-4-bed-quench-design)
 - [Process Flow](#process-flow)
 - [Plant Equipment](#plant-equipment)
+- [3D Interactive Digital Twin](#3d-interactive-digital-twin)
 - [Quick Start](#quick-start)
 - [Action Space (13 Continuous Variables)](#action-space-13-continuous-variables)
 - [Observation Space (30+ Fields)](#observation-space-30-fields)
@@ -298,6 +320,77 @@ The full plant includes 10 major equipment items. The agent's 13 action variable
 <p align="center">
   <img src="assets/plant-equipment.svg" width="100%" alt="Complete Plant Equipment Layout: Desulfurizer, Reformer, Heat Exchanger, Compressor, Reactor, Cooling System, Separator, Distillation Column with Condenser and Reboiler, Product Tank">
 </p>
+
+---
+
+## 3D Interactive Digital Twin
+
+An interactive Three.js visualization of the complete methanol plant, built for live demos and judge presentations. Shows all equipment, agent zones, process flows, and real-time reactor behavior.
+
+![alt text](image.png)
+
+### How to Run
+
+**Option 1 — Open directly in browser (no server needed):**
+```bash
+open methanol_apc_env/server/static/3d-plant.html
+# or on Linux:
+xdg-open methanol_apc_env/server/static/3d-plant.html
+```
+
+**Option 2 — Via the FastAPI server (includes live WebSocket data):**
+```bash
+cd methanol_apc_env
+pip install -r server/requirements.txt
+uvicorn server.app:app --reload --port 7860
+# Open http://localhost:7860/viz/3d-plant.html
+```
+
+**Option 3 — Via Docker:**
+```bash
+docker compose up --build
+# Open http://localhost:7860/viz/3d-plant.html
+```
+
+### Features
+
+| Feature | Description |
+|---------|-------------|
+| **10-Step Guided Tour** | Click "▶ Guided Tour" — walks judges through every plant stage with agent explanations |
+| **Live Controls** | 6 sliders (H₂, CO, cooling, compressor, purge, recycle) with Manual/Auto mode |
+| **Clickable Reactor Beds** | Click any of the 4 catalyst beds (3D or HUD panel) → zoom + detail popup with live temp, rate, catalyst health |
+| **Orchestrator Reveal** | Tour Step 10 reveals the Supervisory Agent: hologram, pulsing command lines to 3 sub-agents, MCP tools |
+| **Demo Mode** | Simulates startup → optimization → disturbance → recovery cycle without a server |
+| **Live Mode** | Connects via WebSocket to the HF Space or local server for real environment data |
+| **8 Camera Presets** | Quick-jump to any equipment: Desulfurizer, Reformer, Reactor, Separator, Distillation, Storage, Control Room |
+
+### Guided Tour Steps (for Judge Presentation)
+
+The 10-step guided tour maps to the complete plant process flow. Each step highlights the relevant equipment, the AI agent controlling it, and why that control matters:
+
+| Step | Equipment | Agent | What to Explain |
+|:----:|-----------|-------|-----------------|
+| 1 | **Desulfurization Guard Bed** | *None (fixed)* | Natural gas enters here. ZnO bed removes H₂S to <0.1 ppm — sulfur poisons the Cu/ZnO catalyst downstream. No agent needed; this is a passive protection layer. |
+| 2 | **Steam Reformer** | **ReformerAgent** 🟠 | CH₄ + H₂O → CO + 3H₂ at 850°C. Agent controls `fuel_gas` and `steam_flow` to maintain the optimal steam-to-carbon ratio (~3.0). Too little steam = carbon deposition; too much = wasted energy. |
+| 3 | **Heat Exchanger** | *None (passive)* | Hot syngas from the reformer is cooled before entering the reactor. U=250 W/m²K, A=8 m². This recovers heat and protects the reactor catalyst from thermal shock. |
+| 4 | **ICI 4-Bed Quench Reactor** | **SynthesisAgent** 🔵 | The heart of the plant. 3 simultaneous reactions (CO+2H₂→CH₃OH, CO₂+3H₂→CH₃OH+H₂O, RWGS). Agent controls H₂/CO feed rates, cooling water, compressor, purge, recycle — 6 variables. Click any bed to see its temperature, conversion share, and catalyst health. |
+| 5 | **Cooling Tower** | **SynthesisAgent** 🔵 | Provides cooling water to the reactor heat exchangers. Agent adjusts `cooling_water_flow` (0-100 L/min) to manage reactor temperature. Too little cooling → thermal runaway; too much → reaction rate drops. |
+| 6 | **Compressor** | **SynthesisAgent** 🔵 | Pressurizes the synthesis loop to 50-100 bar. Higher pressure favors methanol formation (Le Chatelier's principle). Agent balances `compressor_power` against electricity cost (day/night pricing cycle). |
+| 7 | **Flash Drum / Separator** | *Passive* | Crude methanol condenses out (96% recovery). Unreacted gas returns via recycle loop (RR=3.5). Only ~5% conversion per pass — the recycle is essential. |
+| 8 | **Distillation Column** | **PurificationAgent** 🟣 | Produces Grade AA methanol (>99.85% purity). Agent controls `reflux_ratio` and `reboiler_duty`. Higher reflux = purer product but more energy cost. Agent optimizes this trade-off. |
+| 9 | **Storage Tank** | *None* | Final product storage. Methanol valued at $0.74/kg (Methanex APAC Apr 2026). Cumulative production tracked for the `long_horizon_production` task (50,000 kg target). |
+| 10 | **Control Room — Orchestrator** | **SupervisoryAgent** 🔷 | The AI "brain". Sees ALL 30+ observations, coordinates 3 sub-agents via `merge_actions()`. Resolves conflicts (profit vs safety vs catalyst life). Uses 4 MCP tools: energy pricing, catalyst status, maintenance schedule, carbon footprint. Game theory for day/night shift strategy. |
+
+### What to Demo for Judges
+
+1. **Start Guided Tour** — walk through all 10 steps, explaining each agent's role
+2. **Click Reactor Beds** — show Bed 1 (coolest, 40% conversion) vs Bed 4 (hottest, thermal runaway risk)
+3. **Switch to Manual Mode** — drag sliders to show cause-and-effect:
+   - *Thermal runaway*: H₂=8, CO=4, Cooling=10 → watch temperature climb, bed colors turn red, safety warning
+   - *Recovery*: Max cooling=100 → temperature drops, green status returns
+   - *Emergency purge*: Purge=60% → flare ignites visually
+4. **Step 10 Orchestrator** — show the hologram, pulsing agent lines, and the 4 MCP tools popup
+5. **Demo Mode** — let it auto-run to show the startup→optimization→disturbance→recovery cycle
 
 ---
 
