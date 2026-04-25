@@ -1,30 +1,30 @@
 {
   "Random": {
-    "episodes": 5,
-    "mean_reward": 39.93206714690941,
-    "std_reward": 1.36058585051886,
-    "mean_production": 171.3712,
-    "mean_final_catalyst": 0.9933799999999999
+    "episodes": 3,
+    "mean_reward": 15.033410478383303,
+    "std_reward": 0.14108297633905648,
+    "mean_production": 151.06020418802896,
+    "mean_final_catalyst": 0.9925724864006042
   },
   "Conservative PID": {
-    "episodes": 5,
-    "mean_reward": 45.385036964919024,
-    "std_reward": 0.013916969807967666,
-    "mean_production": 252.46599999999998,
-    "mean_final_catalyst": 0.9933799999999999
+    "episodes": 3,
+    "mean_reward": 14.977417711789409,
+    "std_reward": 0.041579093503603684,
+    "mean_production": 138.48499552408853,
+    "mean_final_catalyst": 0.9924821654955546
   },
   "Aggressive PID": {
-    "episodes": 5,
-    "mean_reward": 45.405768856367125,
-    "std_reward": 0.011276333910089701,
-    "mean_production": 500.5964,
-    "mean_final_catalyst": 0.9933799999999999
+    "episodes": 3,
+    "mean_reward": 14.909840853263935,
+    "std_reward": 0.03647203351567747,
+    "mean_production": 157.1001180013021,
+    "mean_final_catalyst": 0.9888582229614258
   },
   "Heuristic Expert": {
-    "episodes": 5,
-    "mean_reward": 45.405768856367125,
-    "std_reward": 0.011276333910089701,
-    "mean_production": 428.18999999999994,
-    "mean_final_catalyst": 0.9933799999999999
+    "episodes": 3,
+    "mean_reward": 14.867048036307096,
+    "std_reward": 0.05737175040390484,
+    "mean_production": 209.69375610351562,
+    "mean_final_catalyst": 0.9937292337417603
   }
 }

@@ -1,0 +1,203 @@
+[
+  {
+    "@id": "dtmi:methanol:plant;1",
+    "@type": "Interface",
+    "@context": [
+      "dtmi:dtdl:context;3",
+      "dtmi:dtdl:extension:quantitativeTypes;1"
+    ],
+    "displayName": "Methanol Plant",
+    "description": "Top-level methanol synthesis plant twin. Contains all unit operations.",
+    "contents": [
+      {"@type": "Property", "name": "plantName", "schema": "string"},
+      {"@type": "Property", "name": "plantStatus", "schema": {"@type": "Enum", "valueSchema": "string", "enumValues": [{"name": "running", "enumValue": "running"}, {"name": "startup", "enumValue": "startup"}, {"name": "shutdown", "enumValue": "shutdown"}, {"name": "emergency", "enumValue": "emergency"}]}},
+      {"@type": "Property", "name": "totalMethanolProduced", "schema": "double"},
+      {"@type": "Property", "name": "cumulativeProfit", "schema": "double"},
+      {"@type": "Property", "name": "stepNumber", "schema": "integer"},
+      {"@type": "Relationship", "name": "contains", "target": "dtmi:methanol:syngas_feed;1"},
+      {"@type": "Relationship", "name": "contains", "target": "dtmi:methanol:compressor;1"},
+      {"@type": "Relationship", "name": "contains", "target": "dtmi:methanol:reactor;1"},
+      {"@type": "Relationship", "name": "contains", "target": "dtmi:methanol:separator;1"},
+      {"@type": "Relationship", "name": "contains", "target": "dtmi:methanol:distillation;1"},
+      {"@type": "Relationship", "name": "contains", "target": "dtmi:methanol:cooling_tower;1"},
+      {"@type": "Relationship", "name": "contains", "target": "dtmi:methanol:recycle_loop;1"}
+    ]
+  },
+  {
+    "@id": "dtmi:methanol:syngas_feed;1",
+    "@type": "Interface",
+    "@context": [
+      "dtmi:dtdl:context;3",
+      "dtmi:dtdl:extension:quantitativeTypes;1"
+    ],
+    "displayName": "Syngas Feed System",
+    "description": "Natural gas + steam reformer producing syngas (H2, CO, CO2).",
+    "contents": [
+      {"@type": ["Property", "Temperature"], "name": "reformerOutletTemp", "schema": "double", "unit": "degreeCelsius"},
+      {"@type": ["Property", "Pressure"], "name": "reformerPressure", "schema": "double", "unit": "bar"},
+      {"@type": "Property", "name": "feedRateH2", "schema": "double", "description": "H2 feed rate (mol/s)"},
+      {"@type": "Property", "name": "feedRateCO", "schema": "double", "description": "CO feed rate (mol/s)"},
+      {"@type": "Property", "name": "h2CoRatio", "schema": "double"},
+      {"@type": "Property", "name": "steamToCarbon", "schema": "double"},
+      {"@type": "Property", "name": "fuelGasFlow", "schema": "double"},
+      {"@type": "Property", "name": "controllingAgent", "schema": "string"},
+      {"@type": "Relationship", "name": "feedsTo", "target": "dtmi:methanol:compressor;1"}
+    ]
+  },
+  {
+    "@id": "dtmi:methanol:compressor;1",
+    "@type": "Interface",
+    "@context": [
+      "dtmi:dtdl:context;3",
+      "dtmi:dtdl:extension:quantitativeTypes;1"
+    ],
+    "displayName": "Syngas Compressor",
+    "description": "Multi-stage centrifugal compressor raising syngas to reactor pressure.",
+    "contents": [
+      {"@type": "Property", "name": "power", "schema": "double", "description": "Compressor power (kW)"},
+      {"@type": ["Property", "Pressure"], "name": "inletPressure", "schema": "double", "unit": "bar"},
+      {"@type": ["Property", "Pressure"], "name": "outletPressure", "schema": "double", "unit": "bar"},
+      {"@type": "Property", "name": "compressionRatio", "schema": "double"},
+      {"@type": "Property", "name": "controllingAgent", "schema": "string"},
+      {"@type": "Relationship", "name": "feedsTo", "target": "dtmi:methanol:reactor;1"}
+    ]
+  },
+  {
+    "@id": "dtmi:methanol:reactor;1",
+    "@type": "Interface",
+    "@context": [
+      "dtmi:dtdl:context;3",
+      "dtmi:dtdl:extension:quantitativeTypes;1"
+    ],
+    "displayName": "Methanol Synthesis Reactor",
+    "description": "ICI 4-bed quench reactor with Cu/ZnO/Al2O3 catalyst. Exothermic reaction: CO + 2H2 -> CH3OH.",
+    "contents": [
+      {"@type": ["Property", "Temperature"], "name": "temperature", "schema": "double", "unit": "degreeCelsius", "description": "Average reactor outlet temperature"},
+      {"@type": ["Property", "Pressure"], "name": "pressure", "schema": "double", "unit": "bar"},
+      {"@type": "Property", "name": "catalystHealth", "schema": "double", "description": "Catalyst activity 0-1 (sintering model)"},
+      {"@type": "Property", "name": "reactionRate", "schema": "double", "description": "Methanol production rate (mol/s)"},
+      {"@type": "Property", "name": "selectivity", "schema": "double", "description": "Methanol selectivity (vs DME/methyl formate)"},
+      {"@type": "Property", "name": "bed1Temp", "schema": "double"},
+      {"@type": "Property", "name": "bed2Temp", "schema": "double"},
+      {"@type": "Property", "name": "bed3Temp", "schema": "double"},
+      {"@type": "Property", "name": "bed4Temp", "schema": "double"},
+      {"@type": "Property", "name": "singlePassConversion", "schema": "double"},
+      {"@type": "Property", "name": "carbonEfficiency", "schema": "double"},
+      {"@type": "Property", "name": "currentControlAction", "schema": "string"},
+      {"@type": "Property", "name": "controllingAgent", "schema": "string"},
+      {"@type": "Property", "name": "agentConfidence", "schema": "double"},
+      {"@type": "Property", "name": "emergencyShutdown", "schema": "boolean"},
+      {"@type": "Relationship", "name": "cooledBy", "target": "dtmi:methanol:cooling_tower;1"},
+      {"@type": "Relationship", "name": "feedsTo", "target": "dtmi:methanol:separator;1"},
+      {"@type": "Relationship", "name": "hasQuenchZone", "target": "dtmi:methanol:quench_zone;1"}
+    ]
+  },
+  {
+    "@id": "dtmi:methanol:quench_zone;1",
+    "@type": "Interface",
+    "@context": [
+      "dtmi:dtdl:context;3",
+      "dtmi:dtdl:extension:quantitativeTypes;1"
+    ],
+    "displayName": "Quench Zone",
+    "description": "Cold-shot quench between catalyst beds to control temperature profile.",
+    "contents": [
+      {"@type": ["Property", "Temperature"], "name": "inletTemp", "schema": "double", "unit": "degreeCelsius"},
+      {"@type": ["Property", "Temperature"], "name": "outletTemp", "schema": "double", "unit": "degreeCelsius"},
+      {"@type": "Property", "name": "quenchGasFlow", "schema": "double", "description": "Cold syngas injection rate (mol/s)"},
+      {"@type": "Property", "name": "bedIndex", "schema": "integer", "description": "Position between beds (1-3)"}
+    ]
+  },
+  {
+    "@id": "dtmi:methanol:separator;1",
+    "@type": "Interface",
+    "@context": [
+      "dtmi:dtdl:context;3",
+      "dtmi:dtdl:extension:quantitativeTypes;1"
+    ],
+    "displayName": "Gas-Liquid Separator",
+    "description": "Flash drum separating crude methanol from unreacted syngas at ~30 bar.",
+    "contents": [
+      {"@type": ["Property", "Temperature"], "name": "temperature", "schema": "double", "unit": "degreeCelsius"},
+      {"@type": ["Property", "Pressure"], "name": "pressure", "schema": "double", "unit": "bar"},
+      {"@type": "Property", "name": "liquidLevel", "schema": "double", "description": "Drum level (%)"},
+      {"@type": "Property", "name": "condensationEfficiency", "schema": "double"},
+      {"@type": "Relationship", "name": "liquidTo", "target": "dtmi:methanol:distillation;1"},
+      {"@type": "Relationship", "name": "gasTo", "target": "dtmi:methanol:recycle_loop;1"}
+    ]
+  },
+  {
+    "@id": "dtmi:methanol:distillation;1",
+    "@type": "Interface",
+    "@context": [
+      "dtmi:dtdl:context;3",
+      "dtmi:dtdl:extension:quantitativeTypes;1"
+    ],
+    "displayName": "Distillation Column",
+    "description": "Methanol-water separation column. 10 sieve trays, produces 99.5%+ pure methanol.",
+    "contents": [
+      {"@type": "Property", "name": "refluxRatio", "schema": "double"},
+      {"@type": "Property", "name": "reboilerDuty", "schema": "double", "description": "Reboiler heat duty (kW)"},
+      {"@type": ["Property", "Temperature"], "name": "overheadTemp", "schema": "double", "unit": "degreeCelsius"},
+      {"@type": ["Property", "Temperature"], "name": "bottomsTemp", "schema": "double", "unit": "degreeCelsius"},
+      {"@type": ["Property", "Pressure"], "name": "columnPressure", "schema": "double", "unit": "bar"},
+      {"@type": "Property", "name": "productPurity", "schema": "double", "description": "Methanol purity (mass fraction)"},
+      {"@type": "Property", "name": "productFlowRate", "schema": "double", "description": "Pure methanol output (kg/hr)"},
+      {"@type": "Property", "name": "controllingAgent", "schema": "string"}
+    ]
+  },
+  {
+    "@id": "dtmi:methanol:cooling_tower;1",
+    "@type": "Interface",
+    "@context": [
+      "dtmi:dtdl:context;3",
+      "dtmi:dtdl:extension:quantitativeTypes;1"
+    ],
+    "displayName": "Cooling Tower",
+    "description": "Evaporative cooling tower providing cooling water to reactor and condenser.",
+    "contents": [
+      {"@type": "Property", "name": "coolingWaterFlow", "schema": "double", "description": "CW flow rate (L/min)"},
+      {"@type": ["Property", "Temperature"], "name": "supplyTemp", "schema": "double", "unit": "degreeCelsius"},
+      {"@type": ["Property", "Temperature"], "name": "returnTemp", "schema": "double", "unit": "degreeCelsius"},
+      {"@type": "Property", "name": "fanSpeed", "schema": "double", "description": "Fan speed (%)"},
+      {"@type": "Property", "name": "heatDuty", "schema": "double", "description": "Heat rejection (kW)"},
+      {"@type": "Relationship", "name": "cools", "target": "dtmi:methanol:reactor;1"}
+    ]
+  },
+  {
+    "@id": "dtmi:methanol:recycle_loop;1",
+    "@type": "Interface",
+    "@context": [
+      "dtmi:dtdl:context;3",
+      "dtmi:dtdl:extension:quantitativeTypes;1"
+    ],
+    "displayName": "Recycle Loop",
+    "description": "Unreacted syngas recirculation with purge gas venting to prevent inert buildup.",
+    "contents": [
+      {"@type": "Property", "name": "recycleRatio", "schema": "double", "description": "Moles recycled per mole fresh feed"},
+      {"@type": "Property", "name": "purgeRate", "schema": "double", "description": "Purge gas flow (mol/s)"},
+      {"@type": "Property", "name": "purgeValvePosition", "schema": "double", "description": "Purge valve opening (%)"},
+      {"@type": "Property", "name": "inertFraction", "schema": "double", "description": "Inert gas buildup (CH4+N2 mole fraction)"},
+      {"@type": "Property", "name": "flareValve", "schema": "double", "description": "Emergency flare valve (%)"},
+      {"@type": "Relationship", "name": "recyclesTo", "target": "dtmi:methanol:compressor;1"}
+    ]
+  },
+  {
+    "@id": "dtmi:methanol:agent_controller;1",
+    "@type": "Interface",
+    "@context": "dtmi:dtdl:context;3",
+    "displayName": "Agent Controller",
+    "description": "AI agent controlling a subset of plant equipment. Part of multi-agent MARL system.",
+    "contents": [
+      {"@type": "Property", "name": "agentId", "schema": "string", "description": "Agent identifier (reformer/synthesis/purification/supervisory)"},
+      {"@type": "Property", "name": "agentRole", "schema": {"@type": "Enum", "valueSchema": "string", "enumValues": [{"name": "reformer", "enumValue": "reformer"}, {"name": "synthesis", "enumValue": "synthesis"}, {"name": "purification", "enumValue": "purification"}, {"name": "supervisory", "enumValue": "supervisory"}]}},
+      {"@type": "Property", "name": "currentAction", "schema": "string", "description": "JSON-encoded last action taken"},
+      {"@type": "Property", "name": "confidence", "schema": "double", "description": "Policy confidence (0-1)"},
+      {"@type": "Property", "name": "stepReward", "schema": "double"},
+      {"@type": "Property", "name": "cumulativeReward", "schema": "double"},
+      {"@type": "Property", "name": "modelName", "schema": "string", "description": "LLM model name (e.g. Qwen2.5-7B)"},
+      {"@type": "Property", "name": "isActive", "schema": "boolean"},
+      {"@type": "Relationship", "name": "controls"}
+    ]
+  }
+]
