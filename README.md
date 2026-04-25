@@ -21,6 +21,31 @@
 
 ---
 
+## Submission Links
+
+| Deliverable | Link |
+|-------------|------|
+| HuggingFace Space | [methanol-apc-env](https://huggingface.co/spaces/glitchfilter/methanol-apc-env) |
+| Training Notebook | [train_grpo.ipynb](training/train_grpo.ipynb) |
+| Code Repository | [GitHub](https://github.com/Bhavneet1492/openenv-methanol-apc) |
+| Blog Post | [blog.md](blog.md) |
+| Documentation | [GitHub Pages](https://bhavneet1492.github.io/openenv-methanol-apc/) |
+
+## Training Results
+
+> GRPO training with Unsloth (Qwen2.5-7B, 4-bit LoRA) against the live physics environment.
+
+![Loss Curve](training_plots/loss_curve.png)
+*Training loss over GRPO steps — decreasing loss indicates policy improvement.*
+
+![Reward Curve](training_plots/reward_curve.png)
+*Average reward per environment step — higher reward = better plant control.*
+
+![Baseline vs Trained](training_plots/baseline_vs_trained.png)
+*Random baseline (red) vs GRPO-trained agent (green) on the optimization task.*
+
+---
+
 ## Table of Contents
 
 - [Background: Why This Exists](#background-why-this-exists)
@@ -28,6 +53,8 @@
   - [How is Methanol Made Industrially?](#how-is-methanol-made-industrially)
   - [What is Advanced Process Control (APC)?](#what-is-advanced-process-control-apc)
   - [Why Reinforcement Learning?](#why-reinforcement-learning)
+- [Submission Links](#submission-links)
+- [Training Results](#training-results)
 - [Problem Statement](#problem-statement)
 - [Positioning vs Industry](#positioning-vs-industry)
 - [Architecture](#architecture)

@@ -1,11 +1,35 @@
+# Python
 __pycache__/
 *.pyc
 *.pyo
-.venv/
-.env
-*.log
 *.egg-info/
 dist/
 build/
+
+# Virtual environment
+.venv/
+
+# Secrets
+.env
+
+# OS
+.DS_Store
+
+# Logs
+*.log
+
+# Build artifacts
 site/
 .coverage
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Training model weights
+grpo_methanol_output/
+grpo_methanol_trained/
+*.safetensors
+wandb/
+
+# Test artifacts
+training/test_*
