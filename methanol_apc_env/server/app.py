@@ -44,6 +44,79 @@ if _static_dir.is_dir():
     app.mount("/viz", _StaticFiles(directory=str(_static_dir), html=True), name="viz")
 
 
+# ── Azure Digital Twins proxy endpoint for 3D visualization ──
+@app.get("/adt/state")
+async def adt_state():
+    """Return merged plant state from all Azure DT twins.
+
+    The 3D visualization polls this endpoint every 2s to show
+    live twin data from the cloud. Returns {} if ADT not configured.
+    """
+    try:
+        from integrations.azure_digital_twins import AzureDigitalTwinIntegration, TWIN_IDS
+    except ImportError:
+        try:
+            from ..integrations.azure_digital_twins import AzureDigitalTwinIntegration, TWIN_IDS
+        except ImportError:
+            return {"error": "ADT module not available"}
+
+    # Lazily init a shared ADT client (cached on app state)
+    if not hasattr(app.state, "_adt"):
+        app.state._adt = AzureDigitalTwinIntegration()
+    adt = app.state._adt
+    if not adt.is_available:
+        return {"error": "ADT not connected"}
+
+    # Read key twins and merge into a flat dict matching S fields in 3d-plant.html
+    state = {}
+    reactor = adt.get_twin_state(TWIN_IDS["reactor"])
+    if reactor:
+        state["temperature"] = reactor.get("temperature", 250)
+        state["pressure"] = reactor.get("pressure", 80)
+        state["catalyst_health"] = reactor.get("catalystHealth", 1.0)
+        state["reaction_rate"] = reactor.get("reactionRate", 0)
+        state["selectivity"] = reactor.get("selectivity", 0.995)
+        state["bed_temps"] = [
+            reactor.get("bed1Temp", 250), reactor.get("bed2Temp", 252),
+            reactor.get("bed3Temp", 254), reactor.get("bed4Temp", 256),
+        ]
+
+    plant = adt.get_twin_state(TWIN_IDS["plant"])
+    if plant:
+        state["cumulative_profit"] = plant.get("cumulativeProfit", 0)
+        state["methanol_produced"] = plant.get("totalMethanolProduced", 0)
+        state["step_number"] = plant.get("stepNumber", 0)
+
+    feed = adt.get_twin_state(TWIN_IDS["syngas_feed"])
+    if feed:
+        state["feed_rate_h2"] = feed.get("feedRateH2", 5)
+        state["feed_rate_co"] = feed.get("feedRateCO", 2.5)
+        state["h2_co_ratio"] = feed.get("h2CoRatio", 2.0)
+        state["reformer_outlet_temp"] = feed.get("reformerOutletTemp", 850)
+
+    comp = adt.get_twin_state(TWIN_IDS["compressor"])
+    if comp:
+        state["compressor_power"] = comp.get("power", 65)
+
+    cool = adt.get_twin_state(TWIN_IDS["cooling_tower"])
+    if cool:
+        state["cooling_water_flow"] = cool.get("coolingWaterFlow", 40)
+
+    recycle = adt.get_twin_state(TWIN_IDS["recycle_loop"])
+    if recycle:
+        state["recycle_ratio"] = recycle.get("recycleRatio", 3.5)
+        state["purge_rate"] = recycle.get("purgeRate", 0)
+        state["flare_valve"] = recycle.get("flareValve", 0)
+
+    distill = adt.get_twin_state(TWIN_IDS["distillation"])
+    if distill:
+        state["product_purity"] = distill.get("productPurity", 0.9985)
+        state["distillation_reflux"] = distill.get("refluxRatio", 3.0)
+        state["reboiler_duty"] = distill.get("reboilerDuty", 50)
+
+    return state
+
+
 def main(host: str = "0.0.0.0", port: int = 8000) -> None:
     """Entry point for ``uv run server`` or ``python -m methanol_apc_env.server.app``."""
     import uvicorn

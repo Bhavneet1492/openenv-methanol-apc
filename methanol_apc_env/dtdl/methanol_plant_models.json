@@ -14,13 +14,13 @@
       {"@type": "Property", "name": "totalMethanolProduced", "schema": "double"},
       {"@type": "Property", "name": "cumulativeProfit", "schema": "double"},
       {"@type": "Property", "name": "stepNumber", "schema": "integer"},
-      {"@type": "Relationship", "name": "contains", "target": "dtmi:methanol:syngas_feed;1"},
-      {"@type": "Relationship", "name": "contains", "target": "dtmi:methanol:compressor;1"},
-      {"@type": "Relationship", "name": "contains", "target": "dtmi:methanol:reactor;1"},
-      {"@type": "Relationship", "name": "contains", "target": "dtmi:methanol:separator;1"},
-      {"@type": "Relationship", "name": "contains", "target": "dtmi:methanol:distillation;1"},
-      {"@type": "Relationship", "name": "contains", "target": "dtmi:methanol:cooling_tower;1"},
-      {"@type": "Relationship", "name": "contains", "target": "dtmi:methanol:recycle_loop;1"}
+      {"@type": "Relationship", "name": "containsSyngasFeed", "target": "dtmi:methanol:syngas_feed;1"},
+      {"@type": "Relationship", "name": "containsCompressor", "target": "dtmi:methanol:compressor;1"},
+      {"@type": "Relationship", "name": "containsReactor", "target": "dtmi:methanol:reactor;1"},
+      {"@type": "Relationship", "name": "containsSeparator", "target": "dtmi:methanol:separator;1"},
+      {"@type": "Relationship", "name": "containsDistillation", "target": "dtmi:methanol:distillation;1"},
+      {"@type": "Relationship", "name": "containsCoolingTower", "target": "dtmi:methanol:cooling_tower;1"},
+      {"@type": "Relationship", "name": "containsRecycleLoop", "target": "dtmi:methanol:recycle_loop;1"}
     ]
   },
   {
