@@ -35,14 +35,25 @@
 
 > GRPO training with Unsloth (Qwen2.5-7B, 4-bit LoRA) against the live physics environment.
 
+<table>
+<tr>
+<td width="50%">
+
 ![Loss Curve](training_plots/loss_curve.png)
-*Training loss over GRPO steps — decreasing loss indicates policy improvement.*
+*Training loss over GRPO steps*
+
+</td>
+<td width="50%">
 
 ![Reward Curve](training_plots/reward_curve.png)
-*Average reward per environment step — higher reward = better plant control.*
+*Average reward per step*
+
+</td>
+</tr>
+</table>
 
 ![Baseline vs Trained](training_plots/baseline_vs_trained.png)
-*Random baseline (red) vs GRPO-trained agent (green) on the optimization task.*
+*Random baseline (red) vs GRPO-trained agent (green) — the trained agent maintains stable temperature, avoids shutdowns, and maximizes profit.*
 
 ### What the Agent Learned (Qualitative)
 
@@ -355,23 +366,26 @@ The simulated reactor faithfully models the **ICI (Imperial Chemical Industries)
 
 ---
 
-## Process Flow
+## Process Flow & Plant Equipment
 
-The complete plant is **not a simple linear chain** — it features a recycle loop, purge system, and branching material flows:
+<table>
+<tr>
+<td width="50%">
 
-<p align="center">
-  <img src="assets/process-flow.svg" width="100%" alt="Complete Plant Process Flow: Natural Gas → Desulfurization → Reformer → Compressor → Synthesis Reactor → Separator → Distillation, with recycle loop and purge">
-</p>
+<img src="assets/process-flow.svg" width="100%" alt="Complete Plant Process Flow: Natural Gas → Desulfurization → Reformer → Compressor → Synthesis Reactor → Separator → Distillation, with recycle loop and purge">
 
----
+*Process flow with recycle loop and purge system*
 
-## Plant Equipment
+</td>
+<td width="50%">
 
-The full plant includes 10 major equipment items. The agent's 13 action variables control components across all stages — not just the reactor:
+<img src="assets/plant-equipment.svg" width="100%" alt="Complete Plant Equipment Layout">
 
-<p align="center">
-  <img src="assets/plant-equipment.svg" width="100%" alt="Complete Plant Equipment Layout: Desulfurizer, Reformer, Heat Exchanger, Compressor, Reactor, Cooling System, Separator, Distillation Column with Condenser and Reboiler, Product Tank">
-</p>
+*10 major equipment items controlled by the agent's 13 action variables*
+
+</td>
+</tr>
+</table>
 
 ---
 
