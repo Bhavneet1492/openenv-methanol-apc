@@ -21,6 +21,40 @@
 
 ---
 
+## Table of Contents
+
+- [Submission Links](#submission-links)
+- [Training Results](#training-results)
+- [Azure Digital Twins — Cloud Integration](#azure-digital-twins--cloud-integration)
+- [GPU-Accelerated Physics (48x Speedup)](#gpu-accelerated-physics-48x-speedup)
+- [Background: Why This Exists](#background-why-this-exists)
+- [Problem Statement](#problem-statement)
+- [Positioning vs Industry](#positioning-vs-industry)
+- [Architecture](#architecture)
+- [System Design](#system-design)
+- [The Reactor: ICI 4-Bed Quench Design](#the-reactor-ici-4-bed-quench-design)
+- [Process Flow & Plant Equipment](#process-flow--plant-equipment)
+- [3D Interactive Digital Twin](#3d-interactive-digital-twin)
+- [Quick Start](#quick-start)
+- [Action Space (13 Continuous Variables)](#action-space-13-continuous-variables)
+- [Observation Space (30+ Fields)](#observation-space-30-fields)
+- [Tasks (12 Scenarios)](#tasks-12-scenarios)
+- [Baseline Performance](#baseline-performance)
+- [Multi-Agent Architecture](#multi-agent-architecture)
+- [MCP Tools](#mcp-tools)
+- [TRL / Unsloth Integration](#trl--unsloth-integration-grpo-training)
+- [Physics Engine](#physics-engine)
+- [ChemE Tool Integration](#cheme-tool-integration)
+- [Regional Configurations (10 Bundles)](#regional-configurations-10-bundles)
+- [Fault Detection & Safety](#fault-detection--safety)
+- [Production Readiness](#production-readiness)
+- [Examples](#examples)
+- [Setup & Development](#setup--development)
+- [References](#references)
+- [Citation](#citation)
+
+---
+
 ## Submission Links
 
 | Deliverable | Link |
@@ -127,43 +161,6 @@ states = sim.step(prev_states, actions, disturbances)  # 48x faster
 ```
 
 ---
-
-## Table of Contents
-
-- [Background: Why This Exists](#background-why-this-exists)
-  - [What is Methanol?](#what-is-methanol)
-  - [How is Methanol Made Industrially?](#how-is-methanol-made-industrially)
-  - [What is Advanced Process Control (APC)?](#what-is-advanced-process-control-apc)
-  - [Why Reinforcement Learning?](#why-reinforcement-learning)
-- [Submission Links](#submission-links)
-- [Training Results](#training-results)
-- [Azure Digital Twins — Cloud Integration](#azure-digital-twins--cloud-integration)
-- [GPU-Accelerated Physics (48x Speedup)](#gpu-accelerated-physics-48x-speedup)
-- [Problem Statement](#problem-statement)
-- [Positioning vs Industry](#positioning-vs-industry)
-- [Architecture](#architecture)
-- [System Design](#system-design)
-- [The Reactor: ICI 4-Bed Quench Design](#the-reactor-ici-4-bed-quench-design)
-- [Process Flow](#process-flow)
-- [Plant Equipment](#plant-equipment)
-- [3D Interactive Digital Twin](#3d-interactive-digital-twin)
-- [Quick Start](#quick-start)
-- [Action Space (13 Continuous Variables)](#action-space-13-continuous-variables)
-- [Observation Space (30+ Fields)](#observation-space-30-fields)
-- [Tasks (12 Scenarios)](#tasks-12-scenarios)
-- [Baseline Performance](#baseline-performance)
-- [Multi-Agent Architecture](#multi-agent-architecture)
-- [MCP Tools](#mcp-tools)
-- [TRL / Unsloth Integration](#trl--unsloth-integration-grpo-training)
-- [Physics Engine](#physics-engine)
-- [ChemE Tool Integration](#cheme-tool-integration)
-- [Regional Configurations (10 Bundles)](#regional-configurations-10-bundles)
-- [Fault Detection & Safety](#fault-detection--safety)
-- [Production Readiness](#production-readiness)
-- [Examples](#examples)
-- [Setup & Development](#setup--development)
-- [References](#references)
-- [Citation](#citation)
 
 ---
 
