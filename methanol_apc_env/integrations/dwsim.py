@@ -103,9 +103,30 @@ class DWSIMIntegration:
             clr.AddReference(dwsim_lib)
             clr.AddReference(thermo_lib)
 
+            # Also add SharedClasses for utility functions
+            shared_lib = os.path.join(self._dwsim_path, "DWSIM.SharedClasses.dll")
+            if os.path.isfile(shared_lib):
+                clr.AddReference(shared_lib)
+
             from DWSIM.Automation import Automation2
 
             self._automation = Automation2()
+
+            # Create a default flowsheet with a material stream for thermo queries
+            try:
+                self._flowsheet = self._automation.CreateFlowsheet()
+                # Add required compounds
+                for compound in ["Hydrogen", "Carbon Monoxide", "Carbon Dioxide",
+                                "Methanol", "Water", "Methane", "Nitrogen"]:
+                    try:
+                        self._flowsheet.AddCompound(compound)
+                    except Exception:
+                        pass
+                # Add a material stream
+                self._flowsheet.AddObject("MaterialStream", 0, 0, "ReactorFeed")
+            except Exception:
+                self._flowsheet = None
+
             return True
         except (ImportError, Exception):
             return False
