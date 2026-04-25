@@ -33,7 +33,7 @@
 
 ## Training Results
 
-> GRPO training with Unsloth (Qwen2.5-7B, 4-bit LoRA) against the live physics environment.
+> GRPO training with Unsloth (Qwen2.5-3B-Instruct, 4-bit LoRA, r=16/α=32) against the live physics environment. Notebook fits a Colab T4 (16 GB); a one-line switch upgrades to 7B for A100/H100. See [`training_plots/run_metadata.json`](training_plots/run_metadata.json) for the full run config.
 
 <table>
 <tr>
@@ -580,16 +580,25 @@ The agent controls the full plant — not just the reactor:
 
 ## Baseline Performance
 
-Three classical controllers are included for benchmarking:
+Three classical controllers benchmarked head-to-head across six tasks (single seed=42, scores in (0.01, 0.99) — see [`examples/baseline_comparison.json`](examples/baseline_comparison.json) for the full table including profit, methanol output, economic regret, and constraint violations):
 
-| Controller | Type | Optimization | Startup | Disturbance | Emergency | Aged Cat. | Average |
-|-----------|------|:-----------:|:-------:|:-----------:|:---------:|:---------:|:-------:|
-| **PID** | Proportional-Integral | 0.98 | 0.03 | 0.98 | 0.95 | 0.98 | 0.82 |
-| **MPC** | Dynamic Matrix Control | 0.98 | 0.03 | 0.98 | 0.95 | 0.98 | 0.82 |
-| **Heuristic** | Rule-based | 0.98 | 0.03 | 0.98 | 0.95 | 0.98 | 0.82 |
+| Controller | Type | Optimization | Startup | Disturbance | Emergency | Cost Min. | Aged Cat. | Average |
+|-----------|------|:-----------:|:-------:|:-----------:|:---------:|:---------:|:---------:|:-------:|
+| **PID** | Proportional-Integral | 0.387 | 0.094 | 0.812 | 0.361 | 0.694 | 0.775 | 0.521 |
+| **MPC** | Dynamic Matrix Control | 0.519 | 0.094 | 0.857 | 0.432 | 0.718 | 0.766 | 0.564 |
+| **Heuristic** | Rule-based | 0.720 | 0.094 | 0.956 | 0.454 | 0.694 | 0.860 | 0.630 |
+
+The Heuristic controller (rule-based with temperature zones) outperforms classical PID and MPC overall — a deliberately strong baseline for an RL agent to beat. The `startup` task is intentionally hard for all three (target 250 °C from cold start with no overshoot — no controller manages it without violations).
+
+| Task | Best baseline profit | Best baseline MeOH (kg) |
+|------|---------------------:|------------------------:|
+| Optimization (100 steps) | $560 (Heuristic) | 1,009 |
+| Disturbance rejection (100 steps) | $560 (Heuristic) | 1,009 |
+| Emergency recovery (80 steps) | $532 (MPC) | 908 |
+| Aged catalyst (100 steps) | $216 (Heuristic) | 543 |
 
 ```bash
-# Run baselines
+# Reproduce
 python examples/pid_baseline.py
 python examples/mpc_baseline.py
 python examples/compare_baselines.py
@@ -671,10 +680,11 @@ config = MethanolGRPOConfig.get_unsloth_config()    # 4-bit quantized (LoRA, fit
 
 **How it works:** The LLM generates JSON action strings → `MethanolRewardFunction` parses them → steps the environment → returns the reward. This plugs directly into TRL's `GRPOTrainer` as the `reward_model` parameter.
 
-| Config | Model | Precision | GPU Memory | Training |
-|--------|-------|-----------|------------|----------|
-| Standard | Qwen2.5-7B-Instruct | FP16 | ~32 GB | Full fine-tune |
-| Unsloth | Qwen2.5-7B-Instruct-bnb-4bit | 4-bit LoRA | ~16 GB | LoRA (r=16, α=32) |
+| Config | Model | Precision | GPU Memory | Training | Notes |
+|--------|-------|-----------|------------|----------|-------|
+| Default (notebook) | Qwen2.5-3B-Instruct-bnb-4bit | 4-bit LoRA | ~12 GB | LoRA (r=16, α=32) | Fits Colab T4; used for committed plots |
+| Larger | Qwen2.5-7B-Instruct-bnb-4bit | 4-bit LoRA | ~16 GB | LoRA (r=16, α=32) | A100 / H100 only |
+| Full | Qwen2.5-7B-Instruct | FP16 | ~32 GB | Full fine-tune | Reference; not used in this submission |
 
 > **Related resources from the OpenEnv ecosystem:**
 > - [TRL + OpenEnv docs](https://huggingface.co/docs/trl/openenv) — official integration guide

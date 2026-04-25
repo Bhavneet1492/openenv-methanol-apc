@@ -1,22 +1,30 @@
-"""
-Rubric-based reward computation for the Methanol APC Environment.
+"""Rubric-based reward computation for the Methanol APC Environment.
 
-Implements the OpenEnv Rubric system (RFC 004) for structured reward
-computation. Provides both per-step process rewards and trajectory-based
-outcome scoring.
+Implements OpenEnv's Rubric system (RFC 004) as a *composition* of
+small, independently-meaningful rubrics rather than a single monolithic
+score. Each sub-rubric returns a value in a known range; the composite
+``MethanolStepRubric`` applies task-specific weights and the env then
+sigmoid-maps the total to (0.01, 0.99).
 
-Rubrics
--------
-MethanolStepRubric : per-step dense reward (6 components)
-MethanolStartupRubric : trajectory score for startup task
-MethanolOptimizationRubric : trajectory score for optimization task
-MethanolDisturbanceRubric : trajectory score for disturbance rejection
-MethanolLongHorizonRubric : trajectory score for long-horizon production
-MethanolAPCRubric : composite rubric that selects per task
+Sub-rubrics
+-----------
+SafetyRubric        : -0.30 → +0.20  distance from 300 °C limit
+ProfitRubric        : -0.20 → +0.40  per-step profit
+StabilityRubric     :   0.0 → +0.10  low temperature variance
+CatalystRubric      :   0.0 → +0.10  catalyst health preservation
+TaskProgressRubric  :  task-specific progress signal
+
+Trajectory rubrics
+------------------
+MethanolStartupRubric / MethanolOptimizationRubric / etc. wrap each
+task's grader via ``TrajectoryRubric``. The composite ``MethanolAPCRubric``
+selects the right trajectory rubric per task and falls back to the
+step-level composite during the episode.
 """
 
 from __future__ import annotations
 
+import math
 from typing import Any, List, Tuple
 
 from openenv.core.rubrics.base import Rubric
@@ -29,7 +37,8 @@ try:
         grade_emergency_recovery, grade_feed_upset, grade_cost_minimization,
         grade_pressure_loss, grade_day_night, grade_aged_catalyst,
         grade_multi_disturbance, grade_max_yield,
-        compute_step_reward, TASKS, TaskConfig, _clamp_score,
+        TASK_PROGRESS_FNS, _progress_default,
+        TASKS, TaskConfig, _clamp_score,
     )
 except ImportError:
     from .reactor_sim import EMERGENCY_SHUTDOWN_TEMP
@@ -38,103 +47,151 @@ except ImportError:
         grade_emergency_recovery, grade_feed_upset, grade_cost_minimization,
         grade_pressure_loss, grade_day_night, grade_aged_catalyst,
         grade_multi_disturbance, grade_max_yield,
-        compute_step_reward, TASKS, TaskConfig, _clamp_score,
+        TASK_PROGRESS_FNS, _progress_default,
+        TASKS, TaskConfig, _clamp_score,
     )
 
 
-class MethanolStepRubric(Rubric):
-    """Per-step dense reward rubric (6 components).
+# ---------------------------------------------------------------------------
+# Composable per-step sub-rubrics
+# ---------------------------------------------------------------------------
 
-    Returns a reward in [-1.0, 1.0] at every step based on:
-    profit, safety, stability, catalyst health, task progress,
-    and emergency shutdown penalty.
+class SafetyRubric(Rubric):
+    """Distance-from-shutdown reward in [-0.30, +0.20].
+
+    Hard penalty above 280 °C (catalyst sintering zone), small linear
+    bonus when comfortably below 270 °C. Returns -1.0 on emergency
+    shutdown so the composite catches it before any other component.
+    """
+
+    def forward(self, action: Any, observation: Any) -> float:
+        if getattr(observation, "emergency_shutdown", False) or getattr(observation, "done", False) and observation.temperature >= EMERGENCY_SHUTDOWN_TEMP:
+            return -1.0
+        T = observation.temperature
+        margin = (EMERGENCY_SHUTDOWN_TEMP - T) / EMERGENCY_SHUTDOWN_TEMP
+        if T > 280:
+            return -0.3 * (T - 280) / 20.0
+        if T > 270:
+            return -0.1
+        return 0.1 * margin
+
+
+class ProfitRubric(Rubric):
+    """Per-step profit reward in [-0.2, +0.4]."""
+
+    def forward(self, action: Any, observation: Any) -> float:
+        return max(-0.2, min(0.4, observation.profit_this_step / 0.5))
+
+
+class StabilityRubric(Rubric):
+    """Low temperature-change reward in [0.0, +0.1].
+
+    Holds prev observation across calls; first call returns 0.0.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._prev_temp: float | None = None
+
+    def forward(self, action: Any, observation: Any) -> float:
+        if self._prev_temp is None:
+            self._prev_temp = observation.temperature
+            return 0.0
+        delta = abs(observation.temperature - self._prev_temp)
+        self._prev_temp = observation.temperature
+        return 0.1 * max(0.0, 1.0 - delta / 5.0)
+
+
+class CatalystRubric(Rubric):
+    """Catalyst preservation reward in [0.0, +0.1]."""
+
+    def forward(self, action: Any, observation: Any) -> float:
+        return 0.1 * observation.catalyst_health
+
+
+class TaskProgressRubric(Rubric):
+    """Task-specific progress signal. Delegates to the shared
+    ``TASK_PROGRESS_FNS`` table in ``tasks.py`` so progress logic lives
+    in exactly one place across the env hot path and the rubric system.
     """
 
     def __init__(self, task_config: TaskConfig) -> None:
         super().__init__()
         self._task = task_config
-        self._prev_obs: Any = None
+        self._prev: Any = None
 
     def forward(self, action: Any, observation: Any) -> float:
-        if self._prev_obs is None:
-            self._prev_obs = observation
-            return 0.01
-
-        reward = _obs_step_reward(self._prev_obs, observation, self._task)
-        self._prev_obs = observation
-        return reward
-
-
-class MethanolStartupRubric(TrajectoryRubric):
-    """Trajectory rubric for the startup task."""
-
-    def __init__(self):
-        super().__init__(intermediate_reward=0.01)
-
-    def score_trajectory(self, trajectory: List[Tuple[Any, Any]]) -> float:
-        states = _extract_reactor_states(trajectory)
-        return grade_startup(states)
-
-    def compute_step_rewards(self) -> List[float]:
-        score = self.score_trajectory(self._trajectory)
-        return [score] * len(self._trajectory)
-
-
-class MethanolOptimizationRubric(TrajectoryRubric):
-    """Trajectory rubric for the optimization task."""
-
-    def __init__(self):
-        super().__init__(intermediate_reward=0.01)
-
-    def score_trajectory(self, trajectory: List[Tuple[Any, Any]]) -> float:
-        states = _extract_reactor_states(trajectory)
-        return grade_optimization(states)
-
-    def compute_step_rewards(self) -> List[float]:
-        score = self.score_trajectory(self._trajectory)
-        return [score] * len(self._trajectory)
-
-
-class MethanolDisturbanceRubric(TrajectoryRubric):
-    """Trajectory rubric for the disturbance rejection task."""
-
-    def __init__(self):
-        super().__init__(intermediate_reward=0.01)
-
-    def score_trajectory(self, trajectory: List[Tuple[Any, Any]]) -> float:
-        states = _extract_reactor_states(trajectory)
-        return grade_disturbance(states)
-
-    def compute_step_rewards(self) -> List[float]:
-        score = self.score_trajectory(self._trajectory)
-        return [score] * len(self._trajectory)
-
-
-class MethanolLongHorizonRubric(TrajectoryRubric):
-    """Trajectory rubric for long-horizon production task."""
-
-    def __init__(self):
-        super().__init__(intermediate_reward=0.01)
-
-    def score_trajectory(self, trajectory: List[Tuple[Any, Any]]) -> float:
-        states = _extract_reactor_states(trajectory)
-        return grade_long_horizon(states)
-
-    def compute_step_rewards(self) -> List[float]:
-        score = self.score_trajectory(self._trajectory)
-        return [score] * len(self._trajectory)
+        prev = self._prev
+        self._prev = observation
+        if prev is None:
+            return 0.0
+        fn = TASK_PROGRESS_FNS.get(self._task.name, _progress_default)
+        return fn(prev, observation)
 
 
 # ---------------------------------------------------------------------------
-# Rubrics for 8 additional tasks (reuse TrajectoryRubric pattern)
+# Composite per-step rubric (RFC 004 composable composition)
+# ---------------------------------------------------------------------------
+
+# Default weights — tuneable per task by passing ``weights=`` to
+# ``MethanolStepRubric``. Values reflect the previous monolithic balance:
+# safety dominates penalties, profit dominates rewards, the rest are
+# fine-tuning signals.
+DEFAULT_WEIGHTS = {
+    "safety": 1.0,
+    "profit": 1.0,
+    "stability": 1.0,
+    "catalyst": 1.0,
+    "progress": 1.0,
+}
+
+
+class MethanolStepRubric(Rubric):
+    """Per-step dense reward as a weighted composition of sub-rubrics.
+
+    Returns a value in (0.01, 0.99). The signature ``(task_config)`` is
+    preserved for backwards-compat with the previous monolithic version;
+    pass ``weights`` to retune the composition.
+    """
+
+    def __init__(self, task_config: TaskConfig, weights: dict | None = None) -> None:
+        super().__init__()
+        self._task = task_config
+        self.weights = {**DEFAULT_WEIGHTS, **(weights or {})}
+        self.safety = SafetyRubric()
+        self.profit = ProfitRubric()
+        self.stability = StabilityRubric()
+        self.catalyst = CatalystRubric()
+        self.progress = TaskProgressRubric(task_config)
+
+    def forward(self, action: Any, observation: Any) -> float:
+        # Hard short-circuit on shutdown — a sigmoid map of -1.0 yields ~0.06.
+        s = self.safety(action, observation)
+        if s <= -0.99:
+            return 0.01 + 0.98 * (1.0 / (1.0 + math.exp(3.0)))
+
+        total = (
+            self.weights["safety"] * s
+            + self.weights["profit"] * self.profit(action, observation)
+            + self.weights["stability"] * self.stability(action, observation)
+            + self.weights["catalyst"] * self.catalyst(action, observation)
+            + self.weights["progress"] * self.progress(action, observation)
+        )
+        # Sigmoid mapping (k=3) keeps small differences visible inside (0.01, 0.99).
+        mapped = 1.0 / (1.0 + math.exp(-3.0 * total))
+        return 0.01 + 0.98 * mapped
+
+
+# ---------------------------------------------------------------------------
+# Trajectory rubrics — one per task, all share the same wrapping pattern
 # ---------------------------------------------------------------------------
 
 class _GraderRubric(TrajectoryRubric):
-    """Generic trajectory rubric wrapping any grader function."""
+    """Generic trajectory rubric wrapping a grader function."""
 
     _grader = staticmethod(grade_startup)  # overridden by subclasses
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(intermediate_reward=0.01)
 
     def score_trajectory(self, trajectory: List[Tuple[Any, Any]]) -> float:
@@ -146,34 +203,53 @@ class _GraderRubric(TrajectoryRubric):
         return [score] * len(self._trajectory)
 
 
+class MethanolStartupRubric(_GraderRubric):
+    _grader = staticmethod(grade_startup)
+
+
+class MethanolOptimizationRubric(_GraderRubric):
+    _grader = staticmethod(grade_optimization)
+
+
+class MethanolDisturbanceRubric(_GraderRubric):
+    _grader = staticmethod(grade_disturbance)
+
+
+class MethanolLongHorizonRubric(_GraderRubric):
+    _grader = staticmethod(grade_long_horizon)
+
+
 class MethanolEmergencyRecoveryRubric(_GraderRubric):
     _grader = staticmethod(grade_emergency_recovery)
+
 
 class MethanolFeedUpsetRubric(_GraderRubric):
     _grader = staticmethod(grade_feed_upset)
 
+
 class MethanolCostMinimizationRubric(_GraderRubric):
     _grader = staticmethod(grade_cost_minimization)
+
 
 class MethanolPressureLossRubric(_GraderRubric):
     _grader = staticmethod(grade_pressure_loss)
 
+
 class MethanolDayNightRubric(_GraderRubric):
     _grader = staticmethod(grade_day_night)
+
 
 class MethanolAgedCatalystRubric(_GraderRubric):
     _grader = staticmethod(grade_aged_catalyst)
 
+
 class MethanolMultiDisturbanceRubric(_GraderRubric):
     _grader = staticmethod(grade_multi_disturbance)
+
 
 class MethanolMaxYieldRubric(_GraderRubric):
     _grader = staticmethod(grade_max_yield)
 
-
-# ---------------------------------------------------------------------------
-# Composite rubric — auto-selects based on task
-# ---------------------------------------------------------------------------
 
 TASK_RUBRICS = {
     "startup": MethanolStartupRubric,
@@ -191,17 +267,19 @@ TASK_RUBRICS = {
 }
 
 
-class MethanolAPCRubric(Rubric):
-    """Composite rubric that selects the correct trajectory rubric per task.
+# ---------------------------------------------------------------------------
+# Composite rubric — selects the right trajectory rubric per task
+# ---------------------------------------------------------------------------
 
-    Combines per-step dense reward with trajectory-based final scoring.
-    The ``rubric_reward`` field in observations uses this.
+class MethanolAPCRubric(Rubric):
+    """Composite rubric: per-step composite reward during the episode,
+    trajectory-scored grader on the terminal step.
     """
 
-    def __init__(self, task_name: str = "startup") -> None:
+    def __init__(self, task_name: str = "startup", weights: dict | None = None) -> None:
         super().__init__()
         task_config = TASKS.get(task_name, TASKS["startup"])
-        self.step_rubric = MethanolStepRubric(task_config)
+        self.step_rubric = MethanolStepRubric(task_config, weights=weights)
         rubric_cls = TASK_RUBRICS.get(task_name, MethanolStartupRubric)
         self.trajectory_rubric = rubric_cls()
 
@@ -220,10 +298,13 @@ class MethanolAPCRubric(Rubric):
 def _extract_reactor_states(trajectory):
     """Convert (action, observation) tuples to ReactorState-like objects.
 
-    The grader functions expect ReactorState objects. Observations have
-    the same fields so we create lightweight proxies.
+    Graders expect ReactorState; observations have the same fields so we
+    construct lightweight proxies.
     """
-    from .reactor_sim import ReactorState
+    try:
+        from reactor_sim import ReactorState
+    except ImportError:
+        from .reactor_sim import ReactorState
 
     states = []
     for _, obs in trajectory:
@@ -246,27 +327,3 @@ def _extract_reactor_states(trajectory):
             emergency_shutdown=getattr(obs, "done", False) and getattr(obs, "temperature", 0) >= EMERGENCY_SHUTDOWN_TEMP,
         ))
     return states
-
-
-def _obs_step_reward(prev_obs: Any, curr_obs: Any, task: TaskConfig) -> float:
-    """Compute step reward from observation pair using the task's reward fn."""
-    from .reactor_sim import ReactorState
-
-    prev = ReactorState(
-        temperature=prev_obs.temperature,
-        pressure=prev_obs.pressure,
-        catalyst_health=prev_obs.catalyst_health,
-        methanol_produced=prev_obs.methanol_produced,
-        profit_this_step=prev_obs.profit_this_step,
-        time_step=prev_obs.step_number,
-    )
-    curr = ReactorState(
-        temperature=curr_obs.temperature,
-        pressure=curr_obs.pressure,
-        catalyst_health=curr_obs.catalyst_health,
-        methanol_produced=curr_obs.methanol_produced,
-        profit_this_step=curr_obs.profit_this_step,
-        time_step=curr_obs.step_number,
-        emergency_shutdown=curr_obs.done and curr_obs.temperature >= EMERGENCY_SHUTDOWN_TEMP,
-    )
-    return compute_step_reward(prev, curr, task)
