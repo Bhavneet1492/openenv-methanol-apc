@@ -70,7 +70,7 @@
   <text x="60" y="72" font-family="'Segoe UI', system-ui, -apple-system, sans-serif" font-size="38" font-weight="700" fill="white" letter-spacing="-0.5">Methanol APC Environment</text>
 
   <!-- Subtitle -->
-  <text x="60" y="105" font-family="'Segoe UI', system-ui, sans-serif" font-size="17" fill="#94a3b8">RL-Powered Autonomous Process Control for Industrial Methanol Reactors</text>
+  <text x="60" y="105" font-family="'Segoe UI', system-ui, sans-serif" font-size="17" fill="#94a3b8">Multi-Agent RL for Autonomous Process Control of an Industrial Methanol Synthesis Plant</text>
 
   <!-- Chemical equation -->
   <text x="60" y="140" font-family="'Segoe UI', system-ui, sans-serif" font-size="14" fill="#60a5fa" filter="url(#glow)">
@@ -92,7 +92,7 @@
     <text x="435" y="180" fill="#fbbf24" text-anchor="middle">5 Kinetic Models</text>
 
     <rect x="502" y="162" width="78" height="26" rx="13" fill="#1e293b" stroke="#ef4444" stroke-width="1"/>
-    <text x="541" y="180" fill="#f87171" text-anchor="middle">36 Tests</text>
+    <text x="541" y="180" fill="#f87171" text-anchor="middle">86 Tests</text>
 
     <rect x="588" y="162" width="98" height="26" rx="13" fill="#1e293b" stroke="#06b6d4" stroke-width="1"/>
     <text x="637" y="180" fill="#22d3ee" text-anchor="middle">4 MCP Tools</text>
