@@ -10,7 +10,7 @@
 
 ---
 
-## TL;DR
+## Summary
 
 | | |
 |---|---|
@@ -404,11 +404,15 @@ states = sim.step(prev_states, actions, disturbances)  # 48x faster
 
 ---
 
-## 8. Results
+## 9. Results
 
-### 8.1 Training Curves (Unsloth vs TRL GRPO, Side by Side)
+### 9.1 Training Curves (Unsloth vs TRL GRPO, Side by Side)
 
 Two independent training runs with different frameworks, same base model (Qwen2.5-3B-Instruct, 4-bit LoRA r=16):
+
+**Unsloth (Google Colab T4):** Trained using the Unsloth library with 4-bit quantization on a free Google Colab T4 GPU (16 GB VRAM). Unsloth provides optimized LoRA fine-tuning with lower memory overhead, enabling the full 200-step GRPO curriculum to complete in approximately 35 minutes. The adapter is available at [glitchfilter/methanol-apc](https://huggingface.co/glitchfilter/methanol-apc).
+
+**TRL GRPO (HuggingFace Jobs T4):** Trained using the TRL (Transformer Reinforcement Learning) library with PEFT and BitsAndBytes on a HuggingFace Jobs T4 instance (15.8 GB VRAM). This run used the same LoRA configuration (r=16, alpha=32) but with TRL's GRPOTrainer directly, completing 150 steps in 86.9 minutes. The adapter is available at [glitchfilter/methanol-apc-grpo-qwen2.5-3b](https://huggingface.co/glitchfilter/methanol-apc-grpo-qwen2.5-3b).
 
 | | Unsloth (Google Colab T4) | TRL GRPO (HF Jobs T4) |
 |---|---|---|
@@ -416,7 +420,7 @@ Two independent training runs with different frameworks, same base model (Qwen2.
 | **Reward** | ![Reward](training_plots/unsloth/reward_curve.png) | ![Reward](training_plots/trl/reward_curve.png) |
 | **Baseline vs Trained** | ![BvT](training_plots/unsloth/baseline_vs_trained.png) | ![BvT](training_plots/trl/baseline_vs_trained.png) |
 
-### 8.2 Classical Controller Comparison
+### 9.2 Classical Controller Comparison
 
 | Controller | Avg Score | Optimization $ | Disturbance $ | Aged Catalyst $ | Violations/ep |
 |---|---:|---:|---:|---:|---:|
@@ -437,9 +441,9 @@ Two independent training runs with different frameworks, same base model (Qwen2.
 
 ---
 
-## 9. Code Examples
+## 10. Code Examples
 
-### 9.1 Connect to the Live HF Space
+### 10.1 Connect to the Live HF Space
 
 ```python
 import requests
@@ -472,7 +476,7 @@ obs = result["observation"]
 print(f"Reward: {result['reward']:.4f}, Profit: ${obs['cumulative_profit']:.2f}")
 ```
 
-### 9.2 Run Multi-Agent with Azure Digital Twins
+### 10.2 Run Multi-Agent with Azure Digital Twins
 
 ```python
 from methanol_apc_env.agents import (
@@ -493,7 +497,7 @@ for step in range(100):
           f"Rate={obs.reaction_rate:.3f}, Profit=${obs.cumulative_profit:.2f}")
 ```
 
-### 9.3 Switch Regional Economics
+### 10.3 Switch Regional Economics
 
 ```python
 import os
@@ -507,7 +511,7 @@ os.environ["REACTOR_CONFIG"] = "trinidad"
 env = MethanolAPCEnvironment()  # Now uses $0.38/kg MeOH, $0.001/mol syngas
 ```
 
-### 9.4 Cross-Validate with DWSIM
+### 10.4 Cross-Validate with DWSIM
 
 ```python
 import os
@@ -523,7 +527,7 @@ if dwsim.is_available:
         print(f"  phi({species}) = {phi:.6f}")
 ```
 
-### 9.5 Train with GRPO (Colab T4)
+### 10.5 Train with GRPO (Colab T4)
 
 ```python
 from methanol_apc_env.trl_bridge import MethanolRewardFunction, MethanolGRPOConfig
@@ -543,7 +547,7 @@ trainer.train()
 
 ---
 
-## 10. Architecture and Deployment
+## 11. Architecture and Deployment
 
 <p align="center"><img src="assets/architecture.svg" width="100%" alt="System architecture"/></p>
 
