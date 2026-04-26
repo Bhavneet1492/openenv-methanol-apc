@@ -40,7 +40,7 @@ This project automates that entire distributed control problem using **multi-age
 
 ## 2. The Physics Engine: Reactor, Catalyst, and Thermodynamics
 
-The environment is not a toy. It implements a reduced-order control-oriented model of an ICI Low-Pressure methanol synthesis reactor, the same class of model used in production APC/MPC systems. Every timestep applies three fundamental balances: mass balance (species molar flows, single-pass conversion, pressure), energy balance (exothermic heat generation vs shell-side cooling), and catalyst deactivation (three-zone sintering model).
+The environment implements a reduced-order control-oriented model of an ICI Low-Pressure methanol synthesis reactor, the same class of model used in production APC/MPC systems. Every timestep applies three fundamental balances: mass balance (species molar flows, single-pass conversion, pressure), energy balance (exothermic heat generation vs shell-side cooling), and catalyst deactivation (three-zone sintering model).
 
 ### 2.1 Three Simultaneous Reactions
 

@@ -117,6 +117,126 @@ async def adt_state():
     return state
 
 
+# ── Model inference endpoint for Testing mode ──
+_loaded_models = {}  # cache: model_id -> (model, tokenizer)
+
+AVAILABLE_MODELS = {
+    "unsloth": {"id": "glitchfilter/methanol-apc", "label": "Unsloth (Qwen2.5-3B)"},
+    "trl": {"id": "glitchfilter/methanol-apc-grpo-qwen2.5-3b", "label": "TRL GRPO (Qwen2.5-3B)"},
+}
+
+SYSTEM_PROMPT = (
+    "You control a methanol synthesis reactor. Output a JSON object with these fields: "
+    "feed_rate_h2 (0-10 mol/s), feed_rate_co (0-5 mol/s), cooling_water_flow (0-100 L/min), "
+    "compressor_power (0-100 kW). The reactor is exothermic: 240-260C is optimal, >300C = shutdown. "
+    "Maintain H2/CO ratio near 2.0. Revenue is $0.74/kg methanol."
+)
+
+def _load_model(model_key):
+    """Lazy-load a LoRA adapter. Cached after first load."""
+    if model_key in _loaded_models:
+        return _loaded_models[model_key]
+    try:
+        import torch
+        from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+        from peft import PeftModel
+
+        info = AVAILABLE_MODELS[model_key]
+        adapter_id = info["id"]
+
+        # Determine base model from adapter_config
+        from huggingface_hub import hf_hub_download
+        import json
+        cfg_path = hf_hub_download(adapter_id, "adapter_config.json")
+        with open(cfg_path) as f:
+            adapter_cfg = json.load(f)
+        base_model_id = adapter_cfg.get("base_model_name_or_path", "Qwen/Qwen2.5-3B-Instruct")
+
+        bnb = BitsAndBytesConfig(
+            load_in_4bit=True, bnb_4bit_quant_type="nf4",
+            bnb_4bit_compute_dtype=torch.float16, bnb_4bit_use_double_quant=True)
+        base = AutoModelForCausalLM.from_pretrained(
+            base_model_id, quantization_config=bnb, device_map="auto", trust_remote_code=True)
+        model = PeftModel.from_pretrained(base, adapter_id)
+        model.eval()
+        tokenizer = AutoTokenizer.from_pretrained(adapter_id, trust_remote_code=True)
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
+        _loaded_models[model_key] = (model, tokenizer)
+        return (model, tokenizer)
+    except Exception as e:
+        raise RuntimeError(f"Failed to load model {model_key}: {e}")
+
+
+def _obs_to_text(obs_dict):
+    """Convert observation dict to compact sensor text for the model prompt."""
+    parts = []
+    for k in ["temperature", "pressure", "feed_rate_h2", "feed_rate_co", "h2_co_ratio",
+              "cooling_water_flow", "catalyst_health", "reaction_rate", "methanol_produced",
+              "cumulative_profit", "step_number", "max_steps"]:
+        v = obs_dict.get(k)
+        if v is not None:
+            parts.append(f"{k}={v}")
+    task = obs_dict.get("task_name", "")
+    if task:
+        parts.append(f"task={task}")
+    return " ".join(parts)
+
+
+@app.get("/model/list")
+async def list_models():
+    """Return available trained models."""
+    return {"models": {k: v["label"] for k, v in AVAILABLE_MODELS.items()}}
+
+
+@app.post("/model/step")
+async def model_step(request):
+    """Run one step using a trained model: load adapter, generate action, step env."""
+    import json as _json
+    body = await request.json()
+    model_key = body.get("model", "trl")
+    obs_dict = body.get("observation", {})
+
+    if model_key not in AVAILABLE_MODELS:
+        return {"error": f"Unknown model: {model_key}. Available: {list(AVAILABLE_MODELS.keys())}"}
+
+    try:
+        model, tokenizer = _load_model(model_key)
+    except Exception as e:
+        return {"error": f"Model load failed: {str(e)[:200]}"}
+
+    # Build prompt
+    sensor_text = _obs_to_text(obs_dict)
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": f"Sensors:\n{sensor_text}\n\nAction JSON:"},
+    ]
+    prompt = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+    inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+
+    import torch
+    with torch.no_grad():
+        output = model.generate(
+            **inputs, max_new_tokens=150, temperature=0.3,
+            do_sample=True, pad_token_id=tokenizer.eos_token_id)
+    response = tokenizer.decode(output[0][inputs["input_ids"].shape[1]:], skip_special_tokens=True)
+
+    # Parse action from model response
+    try:
+        text = response.strip()
+        start, end = text.find("{"), text.rfind("}") + 1
+        action_dict = _json.loads(text[start:end])
+    except Exception:
+        action_dict = {"feed_rate_h2": 3.0, "feed_rate_co": 1.5,
+                       "cooling_water_flow": 60.0, "compressor_power": 50.0}
+
+    return {
+        "action": action_dict,
+        "raw_response": response[:300],
+        "model": AVAILABLE_MODELS[model_key]["label"],
+    }
+
+
 # ── Override /web/ to serve 3D Digital Twin instead of default OpenEnv UI ──
 from starlette.responses import RedirectResponse as _RedirectResponse, FileResponse as _FileResponse
 from starlette.routing import Route as _Route
