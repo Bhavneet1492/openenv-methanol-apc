@@ -12,22 +12,41 @@
 #   "accelerate",
 #   "bitsandbytes",
 #   "transformers",
+#   "huggingface_hub>=0.24",
 # ]
 # ///
 """GRPO Training for Methanol APC — HF Jobs runner.
 
 Run with:
-    hf jobs uv run training/train_hf_job.py --flavor t4-small --timeout 2h
+    hf jobs uv run \
+        --flavor a100-large --timeout 4h --secret HF_TOKEN \
+        -e HUB_MODEL_ID=glitchfilter/methanol-apc \
+        -e NUM_STEPS=500 -e NUM_PROMPTS=400 \
+        https://raw.githubusercontent.com/Bhavneet1492/openenv-methanol-apc/main/training/train_hf_job.py
+
+Environment variables:
+    HUB_MODEL_ID  Target model repo (e.g. 'glitchfilter/methanol-apc').
+                  If set + HF_TOKEN present, repo is created up-front and
+                  checkpoints are pushed during training (every save_steps).
+    HF_TOKEN      Write-scoped token (auto-injected by `--secret HF_TOKEN`).
+    NUM_STEPS     GRPO training steps (default: 500).
+    NUM_PROMPTS   Dataset size (default: 400).
 """
 import json, os, random, sys, time
 
-# Clone env repo
+# Clone env repo (always main branch)
 REPO_DIR = "/tmp/methanol-apc"
 if not os.path.exists(REPO_DIR):
-    os.system(f"git clone https://github.com/Bhavneet1492/openenv-methanol-apc.git {REPO_DIR}")
+    rc = os.system(
+        "git clone --depth 1 --branch main "
+        f"https://github.com/Bhavneet1492/openenv-methanol-apc.git {REPO_DIR}"
+    )
+    if rc != 0:
+        raise RuntimeError(f"git clone failed (rc={rc})")
 sys.path.insert(0, REPO_DIR)
 sys.path.insert(0, f"{REPO_DIR}/methanol_apc_env/server")
 sys.path.insert(0, f"{REPO_DIR}/methanol_apc_env")
+
 
 import numpy as np
 import matplotlib
@@ -75,10 +94,21 @@ from methanol_apc_env.server.methanol_environment import MethanolAPCEnvironment
 from methanol_apc_env.models import MethanolAPCAction
 
 TASKS = ["optimization", "startup", "disturbance_rejection"]
-NUM_STEPS = 150
-NUM_PROMPTS = 200
+NUM_STEPS = int(os.environ.get("NUM_STEPS", 500))
+NUM_PROMPTS = int(os.environ.get("NUM_PROMPTS", 400))
 PLOT_DIR = "/data" if os.path.isdir("/data") else "./training_plots"
 os.makedirs(PLOT_DIR, exist_ok=True)
+
+# ── Hub config (resolve EARLY so we can fail fast and push during training) ──
+HUB_MODEL_ID = os.environ.get("HUB_MODEL_ID")
+HF_TOKEN = os.environ.get("HF_TOKEN")
+PUSH_ENABLED = bool(HUB_MODEL_ID and HF_TOKEN)
+if HUB_MODEL_ID and not HF_TOKEN:
+    print("WARNING: HUB_MODEL_ID set but HF_TOKEN missing — pushes disabled.")
+if PUSH_ENABLED:
+    from huggingface_hub import create_repo, HfApi
+    create_repo(HUB_MODEL_ID, token=HF_TOKEN, exist_ok=True, repo_type="model")
+    print(f"Hub repo ready: https://huggingface.co/{HUB_MODEL_ID}")
 
 SYSTEM_PROMPT = """You are an AI controller for a methanol synthesis reactor.
 Given sensor readings, output a JSON control action:
@@ -175,16 +205,35 @@ args = GRPOConfig(
     num_generations=4, temperature=0.7,
     logging_steps=5, save_steps=50, report_to='none',
     fp16=not torch.cuda.is_bf16_supported(),
-    bf16=torch.cuda.is_bf16_supported(), seed=42)
+    bf16=torch.cuda.is_bf16_supported(), seed=42,
+    # Push checkpoints during training so partial progress survives crashes
+    push_to_hub=PUSH_ENABLED,
+    hub_model_id=HUB_MODEL_ID if PUSH_ENABLED else None,
+    hub_token=HF_TOKEN if PUSH_ENABLED else None,
+    hub_strategy='every_save' if PUSH_ENABLED else 'end',
+    hub_private_repo=False)
 
 trainer = GRPOTrainer(model=model, args=args, train_dataset=dataset,
     reward_funcs=reward_fn, processing_class=tokenizer, callbacks=[logger])
 
 print(f"\nTraining: {NUM_STEPS} steps...")
 t0 = time.time()
-result = trainer.train()
-elapsed = time.time() - t0
-print(f"\nDone in {elapsed/60:.1f}min. Loss: {result.training_loss:.4f}")
+try:
+    result = trainer.train()
+    elapsed = time.time() - t0
+    print(f"\nDone in {elapsed/60:.1f}min. Loss: {result.training_loss:.4f}")
+except Exception as e:
+    elapsed = time.time() - t0
+    print(f"\n✗ Training crashed after {elapsed/60:.1f}min: {type(e).__name__}: {e}")
+    # Best-effort: push whatever LoRA weights we have so far
+    if PUSH_ENABLED:
+        try:
+            model.push_to_hub(HUB_MODEL_ID, token=HF_TOKEN, commit_message=f"Crash recovery @ step {trainer.state.global_step}")
+            tokenizer.push_to_hub(HUB_MODEL_ID, token=HF_TOKEN)
+            print(f"✓ Pushed crash-recovery adapter to https://huggingface.co/{HUB_MODEL_ID}")
+        except Exception as ee:
+            print(f"✗ Crash-recovery push failed: {ee}")
+    raise
 
 # ── Plots ──
 h = trainer.state.log_history
@@ -269,9 +318,34 @@ ax.legend(loc='lower right'); ax.grid(alpha=0.3); fig.tight_layout()
 fig.savefig(f'{PLOT_DIR}/baseline_vs_trained.png', dpi=150)
 print(f'All plots saved to {PLOT_DIR}/')
 
-# Save model
-model.save_pretrained(f'{PLOT_DIR}/grpo_methanol_trained')
-tokenizer.save_pretrained(f'{PLOT_DIR}/grpo_methanol_trained')
+# Save model locally
+LOCAL_CKPT = f'{PLOT_DIR}/grpo_methanol_trained'
+model.save_pretrained(LOCAL_CKPT)
+tokenizer.save_pretrained(LOCAL_CKPT)
+print(f'LoRA adapter + tokenizer saved to: {LOCAL_CKPT}')
+
+# ── Push final adapter + plots to Hugging Face Hub ──
+if PUSH_ENABLED:
+    try:
+        model.push_to_hub(HUB_MODEL_ID, token=HF_TOKEN, commit_message='Final adapter')
+        tokenizer.push_to_hub(HUB_MODEL_ID, token=HF_TOKEN)
+        api = HfApi(token=HF_TOKEN)
+        for fname in ['loss_curve.png', 'reward_curve.png', 'baseline_vs_trained.png']:
+            src = f'{PLOT_DIR}/{fname}'
+            if os.path.exists(src):
+                api.upload_file(
+                    path_or_fileobj=src,
+                    path_in_repo=f'plots/{fname}',
+                    repo_id=HUB_MODEL_ID,
+                    token=HF_TOKEN,
+                    commit_message=f'Add {fname}',
+                )
+        print(f'\n✓ Pushed adapter + plots to: https://huggingface.co/{HUB_MODEL_ID}')
+    except Exception as e:
+        print(f'✗ Hub push failed: {type(e).__name__}: {e}')
+else:
+    print('HUB_MODEL_ID/HF_TOKEN not set — adapter saved only locally (will be lost when job ends).')
+    print('  Re-run with: hf jobs uv run --secret HF_TOKEN -e HUB_MODEL_ID=<user>/<repo> ...')
 
 # Summary
 print(f'\n{"="*50}')
@@ -280,4 +354,6 @@ print(f'Training: {NUM_STEPS} steps in {elapsed/60:.1f} min')
 print(f'Baseline: {np.mean(bl):.4f}')
 print(f'Trained:  {np.mean(tr):.4f}')
 print(f'Delta:    {imp:+.4f} ({imp/max(np.mean(bl),1e-6)*100:+.1f}%)')
+if HUB_MODEL_ID and HF_TOKEN:
+    print(f'Hub:      https://huggingface.co/{HUB_MODEL_ID}')
 print(f'{"="*50}')
