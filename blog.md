@@ -333,14 +333,12 @@ bp = chemsep.get_bubble_point(P=101325, x={"CH3OH": 0.5, "H2O": 0.5})
 print(f"Bubble point = {bp.temperature:.1f} K")
 ```
 
-### 6.6 OPC-UA Bridge (Real Plant DCS)
+### 6.6 OPC-UA Bridge (Real Plant DCS - Distributed Control System)
 
-Bi-directional communication with real plant DCS/SCADA systems (Honeywell Experion, ABB 800xA, Siemens PCS 7). Supports two modes:
+Bi-directional communication with real plant DCS (Distributed Control System) / SCADA systems (Honeywell Experion, ABB 800xA, Siemens PCS 7). Supports two modes:
 
 - **Server mode**: Exposes the simulation as an OPC-UA server for HMI/SCADA systems to connect for shadow-mode testing
 - **Client mode**: Connects to a real plant OPC-UA server to read sensor values and write actuator setpoints
-
-Uses ISA-95 tag naming convention with 25 tags (13 process values like `METHANOL.REACTOR.TI001.PV` for temperature, 12 setpoint tags like `METHANOL.REACTOR.FI001.SP` for feed rate).
 
 ```python
 from methanol_apc_env.integrations import OPCUABridge, OPCUAConfig
