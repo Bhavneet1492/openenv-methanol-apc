@@ -353,7 +353,38 @@ await bridge.publish_state(obs)  # Push current state to OPC tags
 
 ---
 
-## 7. GPU-Accelerated Physics (48x Speedup)
+## 7. Interactive 3D Digital Twin with Training and Testing Modes
+
+The 3D visualization includes a built-in Training and Testing interface directly in the browser. Users can switch between two modes from the top bar.
+
+### Testing Mode: Watch Trained Models Perform Live
+
+In Testing mode, select a trained model from the dropdown and click Auto Run. The model generates actions step by step, and the 3D plant updates in real time with live reward tracking.
+
+Two trained models are available:
+- **Unsloth (Qwen2.5-3B)** trained on Google Colab with Unsloth 4-bit quantization
+- **TRL GRPO (Qwen2.5-3B)** trained on HuggingFace Jobs with TRL and PEFT
+
+![Testing Mode](assets/ui-testing-mode.png)
+*Testing mode with model selection dropdown showing both Unsloth and TRL GRPO adapters. The model generates actions automatically and the reward updates each step.*
+
+### 12 Task Scenarios with Difficulty Levels
+
+Select from 12 different tasks ranging from Easy (Cold Start) to Expert (Multi-Failure). Each task tests different aspects of plant control.
+
+![Tasks Dropdown](assets/ui-tasks-dropdown.png)
+*Task selector showing all 12 scenarios: Optimization, Cold Start, Cost Min, Max Yield, Disturbance, Emergency, Aged Catalyst, Pressure Loss, Feed Upset, Day/Night, Long Horizon, and Multi-Failure.*
+
+### Training Mode: Manual Control with Step-by-Step Rewards
+
+In Training mode, the Reset and Step buttons appear. Adjust the control sliders (H2 feed, CO feed, cooling, compressor, purge, recycle), click Step, and see the reward assigned for your action. This is how you manually explore the environment.
+
+![Training Mode](assets/ui-training-mode.png)
+*Training mode showing Reset and Step buttons with live reward display. Each step shows the reward score and current step number.*
+
+---
+
+## 8. GPU-Accelerated Physics (48x Speedup)
 
 The reactor simulation includes a PyTorch-vectorized backend (`BatchedReactorSim`) that runs 256 parallel environments on GPU simultaneously, achieving 48x speedup over the scalar CPU version on an RTX 3060.
 
@@ -552,7 +583,7 @@ openenv validate methanol_apc_env/
 
 ---
 
-## 11. Try It Yourself
+## 12. Try It Yourself
 
 | | |
 |---|---|
