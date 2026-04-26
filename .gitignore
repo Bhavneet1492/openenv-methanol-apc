@@ -8,6 +8,7 @@ build/
 
 # Virtual environment
 .venv/
+.env/
 
 # Secrets
 .env
@@ -37,4 +38,3 @@ training/test_*
 # Miscellaneous
 context/
 .claude
-

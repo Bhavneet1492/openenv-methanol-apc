@@ -38,14 +38,14 @@ pip install azure-digitaltwins-core azure-identity
 
 ```bash
 # Create resource group
-az group create --name methanol-apc-rg --location eastus
+az group create --name <your-rg-name> --location eastus
 
 # Create Azure Digital Twins instance
-az dt create --dt-name methanol-apc-adt --resource-group methanol-apc-rg
+az dt create --dt-name <your-adt-name> --resource-group <your-rg-name>
 
 # Get the instance URL
-az dt show --dt-name methanol-apc-adt --query "hostName" -o tsv
-# Output: methanol-apc-adt.api.eus.digitaltwins.azure.net
+az dt show --dt-name <your-adt-name> --query "hostName" -o tsv
+# Output: <your-adt-name>.api.eus.digitaltwins.azure.net
 ```
 
 ### 3. Assign yourself as owner
@@ -56,7 +56,7 @@ USER_ID=$(az ad signed-in-user show --query id -o tsv)
 
 # Assign "Azure Digital Twins Data Owner" role
 az dt role-assignment create \
-    --dt-name methanol-apc-adt \
+    --dt-name <your-adt-name> \
     --assignee $USER_ID \
     --role "Azure Digital Twins Data Owner"
 ```
@@ -79,14 +79,14 @@ with open("methanol_reactor.json", "w") as f:
 
 Upload it:
 ```bash
-az dt model create --dt-name methanol-apc-adt --models methanol_reactor.json
+az dt model create --dt-name <your-adt-name> --models methanol_reactor.json
 ```
 
 ### 5. Create a twin instance
 
 ```bash
 az dt twin create \
-    --dt-name methanol-apc-adt \
+    --dt-name <your-adt-name> \
     --dtmi "dtmi:openenv:MethanolReactor;1" \
     --twin-id "methanol-reactor-001" \
     --properties '{
@@ -107,7 +107,7 @@ az dt twin create \
 Add to your `.env` file (never commit this):
 
 ```
-AZURE_DIGITAL_TWINS_URL=https://methanol-apc-adt.api.eus.digitaltwins.azure.net
+AZURE_DIGITAL_TWINS_URL=https://<your-adt-name>.api.eus.digitaltwins.azure.net
 ```
 
 ### 7. Authenticate

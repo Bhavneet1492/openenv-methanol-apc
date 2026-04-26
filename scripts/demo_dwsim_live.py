@@ -1,5 +1,4 @@
-"""DWSIM Integration Live Demo — for video recording.
-
+"""DWSIM Integration
 Shows the transparent backend swap between internal SRK and DWSIM.
 """
 import sys, os

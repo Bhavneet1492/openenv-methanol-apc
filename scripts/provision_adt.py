@@ -1,5 +1,6 @@
 """Provision Azure Digital Twins: assign RBAC, upload DTDL models, create twins + relationships."""
 import json
+import os
 import time
 import sys
 from pathlib import Path
@@ -8,11 +9,11 @@ from azure.identity import InteractiveBrowserCredential
 import requests
 
 # ── Config ──
-SUB_ID = "a87ef111-a233-4bec-a754-58b02f39cc2b"
-TENANT_ID = "4803f9ef-12cd-46f4-ad6c-c5245df0714f"
-RG_NAME = "methanol-apc-rg"
-ADT_NAME = "methanol-apc-adt"
-ADT_HOST = f"https://{ADT_NAME}.api.eus.digitaltwins.azure.net"
+SUB_ID = os.environ["AZURE_SUBSCRIPTION_ID"]
+TENANT_ID = os.environ["AZURE_TENANT_ID"]
+RG_NAME = os.environ["AZURE_RESOURCE_GROUP"]
+ADT_NAME = os.environ["AZURE_ADT_NAME"]
+ADT_HOST = os.environ["AZURE_DIGITAL_TWINS_URL"].rstrip("/")
 
 DTDL_PATH = Path(__file__).parent.parent / "methanol_apc_env" / "dtdl" / "methanol_plant_models.json"
 

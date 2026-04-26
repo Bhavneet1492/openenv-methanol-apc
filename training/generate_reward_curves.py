@@ -2,7 +2,7 @@
 Reward curve generation for Methanol APC Environment.
 
 Run this script to generate baseline reward curves using rule-based agents
-and the LLM-based agent. Produces publication-ready plots for Round 2 submission.
+and the LLM-based agent.
 
 Usage:
     python training/generate_reward_curves.py --env-url https://glitchfilter-methanol-apc-env.hf.space

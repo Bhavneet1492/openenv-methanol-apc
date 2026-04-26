@@ -207,7 +207,7 @@ def run_task(env, task_info):
             obs = result.get("observation", {})
             reward = result.get("reward") or 0.0
             done = result.get("done", False)
-            reward = max(0.01, min(0.99, reward))  # clamp strictly (0,1) AFTER 2dp rounding
+            reward = max(0.01, min(0.99, reward))
             rewards.append(reward)
             steps_taken = step
             log_step(step=step, action=json.dumps(action), reward=reward, done=done, error=None)
@@ -219,7 +219,7 @@ def run_task(env, task_info):
         if not rewards:
             rewards = [0.01]  # ensure at least one reward value
         score = sum(rewards) / len(rewards)
-        score = max(0.01, min(0.99, score))  # strict (0, 1)
+        score = max(0.01, min(0.99, score))
         success = score > 0.1
         log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
 

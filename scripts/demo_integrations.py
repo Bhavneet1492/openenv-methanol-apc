@@ -1,4 +1,4 @@
-"""Live Integration Demo — DWSIM, ChemSep, and internal physics comparison.
+"""Integration — DWSIM, ChemSep, and internal physics comparison.
 
 Shows that the environment's internal thermodynamic models match
 industry-standard chemical engineering tools.
@@ -124,7 +124,7 @@ def demo_chemsep():
         print(f"\n  (ChemSep not installed — showing Antoine+Margules results)")
         print(f"  Install ChemSep LITE from http://chemsep.org for cross-validation")
 
-    # Also demo bubble point
+    # Bubble Point
     print(f"\n  ── Bubble Point Calculation ──")
     bp = cs.get_bubble_point(P, x)
     print(f"  Bubble point temperature: {bp.get('T_bubble_K', 0) - 273.15:.1f}°C")
