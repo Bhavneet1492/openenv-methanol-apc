@@ -57,10 +57,12 @@ We built an environment where an AI agent replaces this entire control stack , h
 - **Azure Digital Twins integration** , 10 DTDL v3 models, 15 live cloud twins, 25 relationships; every `env.step()` pushes to the cloud graph for real-time 3D visualization
 
 https://github.com/user-attachments/assets/4665fc76-0dd1-4d75-9661-46cfd9241767
+
 - **GPU-accelerated physics** , PyTorch-vectorized `BatchedReactorSim` runs 256 parallel environments on GPU (48�, speedup over scalar CPU)
 - **Industrial integrations** , DWSIM, Cantera, ChemSep, OPC-UA, Redis , all optional with graceful fallbacks
 
 https://github.com/user-attachments/assets/535b00e3-39ca-4177-a6a7-60e34b98cbe8
+
 - **4 MCP tools** , energy pricing, catalyst status, maintenance schedule, carbon footprint , giving the agent external context just like a real operator
 
 ---
