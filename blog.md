@@ -272,10 +272,7 @@ Each task has a calibrated grader with scoring based on measured PID/MPC baselin
 
 The environment connects to a **live Azure Digital Twins instance** with 10 DTDL v3 models, 15 digital twins, and 25 relationships. Every `env.step()` pushes state to 7 equipment twins; each of the 4 AI agents has its own twin tracking actions, rewards, and confidence.
 
-<video controls width="100%">
-  <source src="https://github.com/Bhavneet1492/openenv-methanol-apc/raw/main/assets/azure-dt-graph-explorer.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+https://github.com/user-attachments/assets/4665fc76-0dd1-4d75-9661-46cfd9241767
 
 *Azure Digital Twin Graph Explorer showing the live twin graph with 15 twins and 25 relationships.*
 
@@ -288,10 +285,7 @@ python scripts/run_marl_adt.py --steps 100 --task optimization
 
 ### 6.2 3D Interactive Digital Twin (Three.js)
 
-<video controls width="100%">
-  <source src="https://github.com/Bhavneet1492/openenv-methanol-apc/raw/main/assets/3d-digital-twin-demo.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+https://github.com/user-attachments/assets/da60e4ef-d2cf-4e47-8d40-210fba128542
 
 *3D plant visualization with 10-step guided tour, clickable reactor beds, live control sliders, and WebSocket connection to the running environment.*
 
@@ -299,10 +293,7 @@ python scripts/run_marl_adt.py --steps 100 --task optimization
 
 Cross-validates the environment's SRK equation of state against [DWSIM](https://dwsim.org), the open-source process simulator, via .NET interop (pythonnet). Loads `DWSIM.Automation.dll` and `DWSIM.Thermodynamics.dll` to compute fugacity coefficients using DWSIM's industrial property packages. Falls back to a pure-Python SRK implementation when DWSIM is not installed.
 
-<video controls width="100%">
-  <source src="https://github.com/Bhavneet1492/openenv-methanol-apc/raw/main/assets/dwsim-integration.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+https://github.com/user-attachments/assets/535b00e3-39ca-4177-a6a7-60e34b98cbe8
 
 *DWSIM application showing material stream properties at 250 degrees C, 80 bar, matching the environment's internal calculations.*
 
