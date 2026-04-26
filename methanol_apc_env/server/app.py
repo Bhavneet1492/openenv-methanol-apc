@@ -117,6 +117,26 @@ async def adt_state():
     return state
 
 
+# ── Override /web/ to serve 3D Digital Twin instead of default OpenEnv UI ──
+from starlette.responses import RedirectResponse as _RedirectResponse, FileResponse as _FileResponse
+from starlette.routing import Route as _Route
+
+_3d_plant_path = _Path(__file__).parent / "static" / "3d-plant.html"
+
+# Remove any existing /web routes mounted by create_app
+app.routes[:] = [r for r in app.routes if not (hasattr(r, 'path') and str(getattr(r, 'path', '')).startswith('/web'))]
+
+# Mount 3D plant at /web/
+async def _serve_3d_plant(request):
+    return _FileResponse(str(_3d_plant_path), media_type="text/html")
+
+app.routes.insert(0, _Route("/web", endpoint=_serve_3d_plant, methods=["GET"]))
+app.routes.insert(0, _Route("/web/", endpoint=_serve_3d_plant, methods=["GET"]))
+
+# Root redirects to /web/
+app.routes.insert(0, _Route("/", endpoint=lambda request: _RedirectResponse(url="/web/"), methods=["GET"]))
+
+
 def main(host: str = "0.0.0.0", port: int = 8000) -> None:
     """Entry point for ``uv run server`` or ``python -m methanol_apc_env.server.app``."""
     import uvicorn
