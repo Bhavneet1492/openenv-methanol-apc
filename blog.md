@@ -4,7 +4,9 @@
 
 ![Methanol APC banner](assets/banner.svg)
 
-🤗 [Live demo on HF Space](https://huggingface.co/spaces/glitchfilter/methanol-apc-env) · 💻 [GitHub](https://github.com/Bhavneet1492/openenv-methanol-apc) · 📓 [Training notebook](https://github.com/Bhavneet1492/openenv-methanol-apc/blob/main/training/train_grpo.ipynb) · 📖 [Docs](https://bhavneet1492.github.io/openenv-methanol-apc/) · 🎮 [3D plant viz](methanol_apc_env/server/static/3d-plant.html)
+[![Demo Video](https://img.shields.io/badge/%E2%96%B6%20Demo%20Video-YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/pSLQR5CEQHg)
+
+🤗 [Live demo on HF Space](https://huggingface.co/spaces/glitchfilter/methanol-apc-env) · 💻 [GitHub](https://github.com/Bhavneet1492/openenv-methanol-apc) · 📓 [Training notebook](https://github.com/Bhavneet1492/openenv-methanol-apc/blob/main/training/train_grpo.ipynb) · 📖 [Docs](https://bhavneet1492.github.io/openenv-methanol-apc/) · 🎮 [3D plant viz](methanol_apc_env/server/static/3d-plant.html) · ▶ [Demo Video](https://youtu.be/pSLQR5CEQHg)
 
 ---
 
