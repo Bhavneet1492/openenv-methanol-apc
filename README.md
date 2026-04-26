@@ -33,7 +33,7 @@
 
 ## Demo Video
 
-https://github.com/user-attachments/assets/https://github.com/user-attachments/assets/eea6520e-0ddc-42b6-ad8e-4ce344a366b5
+https://github.com/user-attachments/assets/eea6520e-0ddc-42b6-ad8e-4ce344a366b5
 
 ---
 
@@ -56,7 +56,7 @@ We built an environment where an AI agent replaces this entire control stack , h
 - **12 graded tasks** from steady-state optimization (easy) to simultaneous multi-disturbance survival (expert), each with a **deterministic composable rubric** (Safety + Profit + Catalyst + Stability + TaskProgress) that cannot be gamed
 - **Multi-agent MARL** , 4 agents (Reformer, Synthesis, Purification, Supervisory) mirror real plant organization, each with its own observation slice and action subset
 - **Azure Digital Twins integration** , 10 DTDL v3 models, 15 live cloud twins, 25 relationships; every `env.step()` pushes to the cloud graph for real-time 3D visualization
-- **GPU-accelerated physics** , PyTorch-vectorized `BatchedReactorSim` runs 256 parallel environments on GPU (48Ã, speedup over scalar CPU)
+- **GPU-accelerated physics** , PyTorch-vectorized `BatchedReactorSim` runs 256 parallel environments on GPU (48ï¿½, speedup over scalar CPU)
 - **Industrial integrations** , DWSIM, Cantera, ChemSep, OPC-UA, Redis , all optional with graceful fallbacks
 - **4 MCP tools** , energy pricing, catalyst status, maintenance schedule, carbon footprint , giving the agent external context just like a real operator
 
