@@ -570,5 +570,3 @@ openenv validate methanol_apc_env/
 | **3D plant** | Open [3d-plant.html](methanol_apc_env/server/static/3d-plant.html) and click Guided Tour |
 
 ---
-
-*Built for the OpenEnv Hackathon (India 2026). MIT License.*
