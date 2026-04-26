@@ -406,20 +406,17 @@ states = sim.step(prev_states, actions, disturbances)  # 48x faster
 
 ## 8. Results
 
-### 8.1 Training Curves
+### 8.1 Training Curves (Unsloth vs TRL GRPO, Side by Side)
 
-![GRPO training loss](training_plots/loss_curve.png)
-*GRPO loss over 200 steps on a Colab T4. Steady descent at fixed KL coefficient (beta = 0.05).*
+Two independent training runs with different frameworks, same base model (Qwen2.5-3B-Instruct, 4-bit LoRA r=16):
 
-![GRPO mean reward](training_plots/reward_curve.png)
-*Mean reward per step across all three curriculum phases.*
+| | Unsloth (Google Colab T4) | TRL GRPO (HF Jobs T4) |
+|---|---|---|
+| **Loss** | ![Loss](training_plots/unsloth/loss_curve.png) | ![Loss](training_plots/trl/loss_curve.png) |
+| **Reward** | ![Reward](training_plots/unsloth/reward_curve.png) | ![Reward](training_plots/trl/reward_curve.png) |
+| **Baseline vs Trained** | ![BvT](training_plots/unsloth/baseline_vs_trained.png) | ![BvT](training_plots/trl/baseline_vs_trained.png) |
 
-### 8.2 Baseline vs Trained Agent
-
-![Baseline vs trained agent](training_plots/baseline_vs_trained.png)
-*Random baseline (red) vs GRPO-trained Qwen-3B (green). The trained agent maintains stable temperature, avoids shutdowns, and maximizes profit.*
-
-### 8.3 Classical Controller Comparison
+### 8.2 Classical Controller Comparison
 
 | Controller | Avg Score | Optimization $ | Disturbance $ | Aged Catalyst $ | Violations/ep |
 |---|---:|---:|---:|---:|---:|
