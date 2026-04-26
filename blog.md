@@ -1,6 +1,6 @@
 # Multi-Agent Reinforcement Learning for Automating Distributed Process Control in Industrial Methanol Manufacturing
 
-### How we built a production-grade digital twin with GRPO, curriculum learning, and 4 specialized AI agents to replace manual plant operations
+### How we built a production-grade digital twin with GRPO, curriculum learning, and 4 specialized AI agents for advanced process control
 
 ![Methanol APC banner](assets/banner.svg)
 
