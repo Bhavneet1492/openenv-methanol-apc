@@ -32,7 +32,7 @@
 
 ## Demo Video
 
-https://github.com/user-attachments/assets/3be3c998-62a9-43ed-9a48-5680023c7bb3
+https://github.com/user-attachments/assets/9a27a339-ee59-4722-9d6d-6d6f19a0b865
 
 ---
 
