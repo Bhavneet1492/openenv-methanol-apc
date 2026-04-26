@@ -167,7 +167,11 @@
 <div id="hud">
   <div id="title-bar">
     <h1><span>&#9670;</span> Methanol APC &mdash; 3D Digital Twin</h1>
-    <div style="display:flex;align-items:center;gap:12px;pointer-events:auto;">
+    <div style="display:flex;align-items:center;gap:8px;pointer-events:auto;">
+      <select id="mode-select" onchange="onModeChange()" style="background:#1a2030;color:#ffa000;border:1px solid rgba(255,160,0,0.5);border-radius:6px;padding:4px 8px;font-size:11px;font-family:inherit;cursor:pointer;font-weight:600;">
+        <option value="training">Training</option>
+        <option value="testing">Testing</option>
+      </select>
       <select id="task-select" style="background:#1a2030;color:#e0e0e0;border:1px solid rgba(0,212,170,0.4);border-radius:6px;padding:4px 8px;font-size:11px;font-family:inherit;cursor:pointer;">
         <option value="optimization">Optimization (Medium)</option>
         <option value="startup">Cold Start (Easy)</option>
@@ -182,12 +186,19 @@
         <option value="long_horizon_production">Long Horizon (Expert)</option>
         <option value="multi_disturbance">Multi-Failure (Expert)</option>
       </select>
+      <select id="model-select" style="display:none;background:#1a2030;color:#9c27b0;border:1px solid rgba(156,39,176,0.5);border-radius:6px;padding:4px 8px;font-size:11px;font-family:inherit;cursor:pointer;font-weight:600;">
+        <option value="unsloth">Unsloth (Qwen2.5-3B)</option>
+        <option value="trl">TRL GRPO (Qwen2.5-3B)</option>
+      </select>
       <button id="btn-api-reset" onclick="apiReset()" style="background:rgba(0,212,170,0.2);color:#00d4aa;border:1px solid rgba(0,212,170,0.4);border-radius:6px;padding:4px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">Reset</button>
-      <button id="btn-api-step" onclick="apiStep()" style="background:rgba(255,160,0,0.2);color:#ffa000;border:1px solid rgba(255,160,0,0.4);border-radius:6px;padding:4px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;" disabled>Step</button>
-      <div id="reward-display" style="background:rgba(10,14,23,0.9);border:1px solid rgba(100,180,255,0.3);border-radius:6px;padding:4px 10px;font-size:11px;min-width:160px;text-align:center;">
+      <button id="btn-api-step" onclick="currentStep()" style="background:rgba(255,160,0,0.2);color:#ffa000;border:1px solid rgba(255,160,0,0.4);border-radius:6px;padding:4px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;" disabled>Step</button>
+      <button id="btn-auto-run" onclick="toggleAutoRun()" style="display:none;background:rgba(156,39,176,0.2);color:#9c27b0;border:1px solid rgba(156,39,176,0.4);border-radius:6px;padding:4px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;" disabled>Auto Run</button>
+      <div id="reward-display" style="background:rgba(10,14,23,0.9);border:1px solid rgba(100,180,255,0.3);border-radius:6px;padding:4px 10px;font-size:11px;min-width:220px;text-align:center;">
         <span style="color:#8892a4;">Reward:</span> <span id="v-reward" style="color:#64b5f6;font-weight:600;">--</span>
         <span style="color:#555;margin:0 4px;">|</span>
         <span style="color:#8892a4;">Step:</span> <span id="v-step-num" style="color:#e0e0e0;font-weight:600;">--</span>
+        <span id="model-label" style="display:none;color:#555;margin:0 4px;">|</span>
+        <span id="model-name-display" style="display:none;color:#9c27b0;font-weight:600;font-size:10px;"></span>
       </div>
       <div id="status-badge">OFFLINE</div>
     </div>
@@ -2681,6 +2692,135 @@ function applyObservation(obs, reward) {
   // Update all visuals
   updateVisuals();
 }
+
+// ── Mode switching: Training vs Testing ──
+let currentMode = 'training';
+let autoRunInterval = null;
+let lastObsDict = {};
+
+window.onModeChange = function() {
+  currentMode = document.getElementById('mode-select').value;
+  const modelSelect = document.getElementById('model-select');
+  const autoBtn = document.getElementById('btn-auto-run');
+  const modelLabel = document.getElementById('model-label');
+  const modelNameDisplay = document.getElementById('model-name-display');
+
+  if (currentMode === 'testing') {
+    modelSelect.style.display = 'inline-block';
+    autoBtn.style.display = 'inline-block';
+    modelLabel.style.display = 'inline';
+    modelNameDisplay.style.display = 'inline';
+    document.getElementById('ctrl-status-text').textContent = 'Testing mode: model generates actions';
+  } else {
+    modelSelect.style.display = 'none';
+    autoBtn.style.display = 'none';
+    modelLabel.style.display = 'none';
+    modelNameDisplay.style.display = 'none';
+    modelNameDisplay.textContent = '';
+    if (autoRunInterval) { clearInterval(autoRunInterval); autoRunInterval = null; autoBtn.textContent = 'Auto Run'; }
+    document.getElementById('ctrl-status-text').textContent = 'Training mode: manual slider control';
+  }
+};
+
+window.currentStep = function() {
+  if (currentMode === 'testing') {
+    modelStep();
+  } else {
+    apiStep();
+  }
+};
+
+window.modelStep = async function() {
+  if (!apiConnected) return;
+  const badge = document.getElementById('status-badge');
+  const modelKey = document.getElementById('model-select').value;
+  badge.textContent = 'MODEL THINKING...'; badge.className = '';
+
+  try {
+    // Ask model for action
+    const mr = await fetch(apiBase + '/model/step', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ model: modelKey, observation: lastObsDict })
+    });
+    const mdata = await mr.json();
+    if (mdata.error) {
+      badge.textContent = 'MODEL ERROR'; badge.className = '';
+      console.error('Model error:', mdata.error);
+      return;
+    }
+
+    // Use model's action to step the env
+    const action = mdata.action;
+    // Fill in defaults for missing fields
+    const fullAction = {
+      feed_rate_h2: action.feed_rate_h2 || 3.0,
+      feed_rate_co: action.feed_rate_co || 1.5,
+      cooling_water_flow: action.cooling_water_flow || 50.0,
+      compressor_power: action.compressor_power || 50.0,
+      purge_valve_position: action.purge_valve_position || 2.0,
+      recycle_ratio: action.recycle_ratio || 3.5,
+      feed_preheat_temp: action.feed_preheat_temp || 200.0,
+      reformer_fuel_gas: action.reformer_fuel_gas || 5.0,
+      reformer_steam_flow: action.reformer_steam_flow || 15.0,
+      distillation_reflux: action.distillation_reflux || 3.0,
+      reboiler_duty: action.reboiler_duty || 50.0,
+      flare_valve: action.flare_valve || 0.0,
+    };
+
+    const r = await fetch(apiBase + '/step', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({action: fullAction})
+    });
+    const data = await r.json();
+    const obs = data.observation || data;
+    const reward = data.reward != null ? data.reward : (obs.reward || 0);
+    lastObsDict = obs;
+    applyObservation(obs, reward);
+
+    // Update model name display
+    document.getElementById('model-name-display').textContent = mdata.model || modelKey;
+
+    badge.textContent = 'MODEL CONNECTED'; badge.classList.add('connected');
+    if (obs.done) {
+      badge.textContent = 'EPISODE DONE'; badge.className = '';
+      document.getElementById('btn-api-step').disabled = true;
+      document.getElementById('btn-auto-run').disabled = true;
+      if (autoRunInterval) { clearInterval(autoRunInterval); autoRunInterval = null; }
+    }
+  } catch(e) {
+    badge.textContent = 'MODEL ERROR'; badge.className = '';
+    console.error('Model step failed:', e);
+  }
+};
+
+window.toggleAutoRun = function() {
+  const btn = document.getElementById('btn-auto-run');
+  if (autoRunInterval) {
+    clearInterval(autoRunInterval);
+    autoRunInterval = null;
+    btn.textContent = 'Auto Run';
+    btn.style.background = 'rgba(156,39,176,0.2)';
+  } else {
+    btn.textContent = 'Stop';
+    btn.style.background = 'rgba(244,67,54,0.2)';
+    autoRunInterval = setInterval(() => {
+      if (!apiConnected) { clearInterval(autoRunInterval); autoRunInterval = null; btn.textContent = 'Auto Run'; return; }
+      modelStep();
+    }, 2000);
+  }
+};
+
+// Override apiReset to also store obs for model
+const _origApiReset = window.apiReset;
+window.apiReset = async function() {
+  await _origApiReset();
+  // After reset, enable auto-run button in testing mode
+  if (currentMode === 'testing') {
+    document.getElementById('btn-auto-run').disabled = false;
+  }
+};
 </script>
 </body>
 </html>
