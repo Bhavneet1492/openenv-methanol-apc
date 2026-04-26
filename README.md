@@ -30,9 +30,9 @@
 
 ---
 
-## 3D Digital Twin Integration
+## Demo Video
 
-https://github.com/user-attachments/assets/eea6520e-0ddc-42b6-ad8e-4ce344a366b5
+https://github.com/user-attachments/assets/3be3c998-62a9-43ed-9a48-5680023c7bb3
 
 ---
 
