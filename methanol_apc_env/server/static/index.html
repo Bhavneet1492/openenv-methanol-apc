@@ -167,7 +167,30 @@
 <div id="hud">
   <div id="title-bar">
     <h1><span>&#9670;</span> Methanol APC &mdash; 3D Digital Twin</h1>
-    <div id="status-badge">OFFLINE</div>
+    <div style="display:flex;align-items:center;gap:12px;pointer-events:auto;">
+      <select id="task-select" style="background:#1a2030;color:#e0e0e0;border:1px solid rgba(0,212,170,0.4);border-radius:6px;padding:4px 8px;font-size:11px;font-family:inherit;cursor:pointer;">
+        <option value="optimization">Optimization (Medium)</option>
+        <option value="startup">Cold Start (Easy)</option>
+        <option value="cost_minimization">Cost Min (Medium)</option>
+        <option value="maximum_yield">Max Yield (Medium)</option>
+        <option value="disturbance_rejection">Disturbance (Hard)</option>
+        <option value="emergency_recovery">Emergency (Medium)</option>
+        <option value="aged_catalyst">Aged Catalyst (Hard)</option>
+        <option value="pressure_loss">Pressure Loss (Hard)</option>
+        <option value="feed_composition_upset">Feed Upset (Medium)</option>
+        <option value="day_night_cycle">Day/Night (Hard)</option>
+        <option value="long_horizon_production">Long Horizon (Expert)</option>
+        <option value="multi_disturbance">Multi-Failure (Expert)</option>
+      </select>
+      <button id="btn-api-reset" onclick="apiReset()" style="background:rgba(0,212,170,0.2);color:#00d4aa;border:1px solid rgba(0,212,170,0.4);border-radius:6px;padding:4px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">Reset</button>
+      <button id="btn-api-step" onclick="apiStep()" style="background:rgba(255,160,0,0.2);color:#ffa000;border:1px solid rgba(255,160,0,0.4);border-radius:6px;padding:4px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;" disabled>Step</button>
+      <div id="reward-display" style="background:rgba(10,14,23,0.9);border:1px solid rgba(100,180,255,0.3);border-radius:6px;padding:4px 10px;font-size:11px;min-width:160px;text-align:center;">
+        <span style="color:#8892a4;">Reward:</span> <span id="v-reward" style="color:#64b5f6;font-weight:600;">--</span>
+        <span style="color:#555;margin:0 4px;">|</span>
+        <span style="color:#8892a4;">Step:</span> <span id="v-step-num" style="color:#e0e0e0;font-weight:600;">--</span>
+      </div>
+      <div id="status-badge">OFFLINE</div>
+    </div>
   </div>
 
   <div id="cam-presets">
@@ -2552,6 +2575,112 @@ window.setCam = function(preset) {
 };
 
 updateVisuals();
+
+// ── API Integration: Reset & Step ──────────────────────────
+let apiConnected = false;
+let apiBase = window.location.origin;
+
+window.apiReset = async function() {
+  const task = document.getElementById('task-select').value;
+  const badge = document.getElementById('status-badge');
+  const btnStep = document.getElementById('btn-api-step');
+  badge.textContent = 'RESETTING...'; badge.className = '';
+  try {
+    const r = await fetch(apiBase + '/reset', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({task_name: task})
+    });
+    const data = await r.json();
+    const obs = data.observation || data;
+    apiConnected = true;
+    btnStep.disabled = false;
+    badge.textContent = 'API CONNECTED'; badge.classList.add('connected');
+    // Update state from API response
+    applyObservation(obs, data.reward || 0);
+    document.getElementById('v-task').textContent = task;
+    document.getElementById('ctrl-status-text').textContent = 'API mode: select task, step through episodes';
+  } catch(e) {
+    badge.textContent = 'API ERROR'; badge.className = '';
+    console.error('Reset failed:', e);
+  }
+};
+
+window.apiStep = async function() {
+  if (!apiConnected) return;
+  const badge = document.getElementById('status-badge');
+  const cv = getCtrlValues();
+  const action = {
+    feed_rate_h2: cv.feed_rate_h2,
+    feed_rate_co: cv.feed_rate_co,
+    cooling_water_flow: cv.cooling_water_flow,
+    compressor_power: cv.compressor_power,
+    purge_valve_position: cv.purge_valve,
+    recycle_ratio: cv.recycle_ratio,
+    feed_preheat_temp: 200,
+    reformer_fuel_gas: 5,
+    reformer_steam_flow: 15,
+    distillation_reflux: 3,
+    reboiler_duty: 50,
+    flare_valve: 0,
+  };
+  try {
+    const r = await fetch(apiBase + '/step', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({action: action})
+    });
+    const data = await r.json();
+    const obs = data.observation || data;
+    const reward = data.reward != null ? data.reward : (obs.reward || 0);
+    applyObservation(obs, reward);
+    if (obs.done) {
+      badge.textContent = 'EPISODE DONE'; badge.className = '';
+      document.getElementById('btn-api-step').disabled = true;
+    }
+  } catch(e) {
+    console.error('Step failed:', e);
+  }
+};
+
+function applyObservation(obs, reward) {
+  // Update reactor state object S
+  if (obs.temperature != null) S.temperature = obs.temperature;
+  if (obs.pressure != null) S.pressure = obs.pressure;
+  if (obs.reaction_rate != null) S.reaction_rate = obs.reaction_rate;
+  if (obs.h2_co_ratio != null) S.h2_co_ratio = obs.h2_co_ratio;
+  if (obs.feed_rate_h2 != null) S.feed_rate_h2 = obs.feed_rate_h2;
+  if (obs.feed_rate_co != null) S.feed_rate_co = obs.feed_rate_co;
+  if (obs.catalyst_health != null) S.catalyst_health = obs.catalyst_health;
+  if (obs.methanol_produced != null) S.methanol_produced = obs.methanol_produced;
+  if (obs.cumulative_profit != null) S.cumulative_profit = obs.cumulative_profit;
+  if (obs.cooling_water_flow != null) S.cooling_water_flow = obs.cooling_water_flow;
+  if (obs.product_purity != null) S.product_purity = obs.product_purity;
+  if (obs.recycle_ratio != null) S.recycle_ratio = obs.recycle_ratio;
+  if (obs.profit_this_step != null) S.profit_this_step = obs.profit_this_step;
+  if (obs.selectivity != null) S.selectivity = obs.selectivity;
+  if (obs.step_number != null) S.step_number = obs.step_number;
+  if (obs.max_steps != null) S.max_steps = obs.max_steps;
+  if (obs.total_co2_emissions != null) S.total_co2_emissions = obs.total_co2_emissions;
+  if (obs.safety_warning) S.safety_warning = obs.safety_warning;
+
+  // Update reward display in title bar
+  const rewardEl = document.getElementById('v-reward');
+  rewardEl.textContent = reward.toFixed(4);
+  if (reward > 0.7) { rewardEl.style.color = '#00d4aa'; }
+  else if (reward > 0.4) { rewardEl.style.color = '#ffc107'; }
+  else { rewardEl.style.color = '#ff4444'; }
+
+  // Update step counter
+  document.getElementById('v-step-num').textContent =
+    (obs.step_number != null ? obs.step_number : '--') + ' / ' + (obs.max_steps || '--');
+
+  // Sync sliders
+  syncSlidersFromState();
+  window.onCtrl();
+  // Update all visuals
+  updateVisuals();
+}
 </script>
 </body>
 </html>
