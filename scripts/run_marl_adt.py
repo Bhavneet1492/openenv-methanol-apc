@@ -10,8 +10,8 @@ the cloud digital twin.
 
 Usage:
     # Set env vars first:
-    $env:AZURE_DIGITAL_TWINS_URL = "https://methanol-apc-adt.api.eus.digitaltwins.azure.net"
-    $env:AZURE_TENANT_ID = "4803f9ef-12cd-46f4-ad6c-c5245df0714f"
+    $env:AZURE_DIGITAL_TWINS_URL = "https://<your-adt-instance>.api.<region-short>.digitaltwins.azure.net"
+    $env:AZURE_TENANT_ID = "<your-azure-tenant-id>"
 
     python scripts/run_marl_adt.py --steps 100 --task optimization
 """
@@ -124,8 +124,11 @@ def run_marl_episode(task: str = "optimization", steps: int = 100, delay: float 
     print(f"{'='*60}\n")
 
     if adt.is_available:
+        import os
+        adt_url = os.environ.get("AZURE_DIGITAL_TWINS_URL", "")
         print("  Twin graph updated in real-time. View at:")
-        print("  https://explorer.digitaltwins.azure.net/?adt=https://methanol-apc-adt.api.eus.digitaltwins.azure.net")
+        if adt_url:
+            print(f"  https://explorer.digitaltwins.azure.net/?adt={adt_url}")
         print("  Or open 3d-plant.html → click 'Azure DT Live'\n")
 
     return score

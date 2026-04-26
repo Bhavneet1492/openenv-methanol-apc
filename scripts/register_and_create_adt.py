@@ -1,13 +1,15 @@
 """Register Microsoft.DigitalTwins provider and create ADT instance."""
+import os
+
 from azure.identity import InteractiveBrowserCredential
 import requests
 import time
 
-SUB_ID = "a87ef111-a233-4bec-a754-58b02f39cc2b"
-TENANT_ID = "4803f9ef-12cd-46f4-ad6c-c5245df0714f"
-RG_NAME = "methanol-apc-rg"
-LOCATION = "eastus"
-ADT_NAME = "methanol-apc-adt"
+SUB_ID = os.environ["AZURE_SUBSCRIPTION_ID"]
+TENANT_ID = os.environ["AZURE_TENANT_ID"]
+RG_NAME = os.environ["AZURE_RESOURCE_GROUP"]
+LOCATION = os.environ["AZURE_LOCATION"]
+ADT_NAME = os.environ["AZURE_ADT_NAME"]
 
 cred = InteractiveBrowserCredential(tenant_id=TENANT_ID)
 token = cred.get_token("https://management.azure.com/.default")

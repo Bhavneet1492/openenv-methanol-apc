@@ -1,11 +1,13 @@
 """Retry just the data operations (models + twins + relationships) — RBAC already assigned."""
 import json
+import os
 from pathlib import Path
 from azure.identity import InteractiveBrowserCredential
 import requests
 
-TENANT_ID = "4803f9ef-12cd-46f4-ad6c-c5245df0714f"
-ADT_HOST = "https://methanol-apc-adt.api.eus.digitaltwins.azure.net"
+TENANT_ID = os.environ["AZURE_TENANT_ID"]
+ADT_HOST = os.environ["AZURE_DIGITAL_TWINS_URL"].rstrip("/")
+ADT_NAME = os.environ.get("AZURE_ADT_NAME", "<your-adt>")
 DTDL_PATH = Path(__file__).parent.parent / "methanol_apc_env" / "dtdl" / "methanol_plant_models.json"
 
 cred = InteractiveBrowserCredential(tenant_id=TENANT_ID)
@@ -19,7 +21,7 @@ r = requests.get(f"{ADT_HOST}/models?api-version=2023-10-31", headers=H)
 print(f"   GET /models: {r.status_code}")
 if r.status_code == 403:
     print("   RBAC still not propagated. Please wait a few more minutes and retry.")
-    print("   Or go to Azure Portal → methanol-apc-adt → Access Control (IAM) → Add role assignment")
+    print(f"   Or go to Azure Portal → {ADT_NAME} → Access Control (IAM) → Add role assignment")
     print("   → Azure Digital Twins Data Owner → assign to your user")
     exit(1)
 

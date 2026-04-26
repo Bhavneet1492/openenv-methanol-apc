@@ -1,15 +1,17 @@
 """Create Azure Digital Twins resources using known subscription."""
+import os
+
 from azure.identity import InteractiveBrowserCredential
 import requests
 import json
 
-SUB_ID = "a87ef111-a233-4bec-a754-58b02f39cc2b"
-TENANT_ID = "4803f9ef-12cd-46f4-ad6c-c5245df0714f"
-RG_NAME = "methanol-apc-rg"
-LOCATION = "eastus"
-ADT_NAME = "methanol-apc-adt"
-IOT_NAME = "methanol-apc-iothub"
-STORAGE_NAME = "methanolacpstorage"
+SUB_ID = os.environ["AZURE_SUBSCRIPTION_ID"]
+TENANT_ID = os.environ["AZURE_TENANT_ID"]
+RG_NAME = os.environ["AZURE_RESOURCE_GROUP"]
+LOCATION = os.environ["AZURE_LOCATION"]
+ADT_NAME = os.environ["AZURE_ADT_NAME"]
+IOT_NAME = os.environ["AZURE_IOT_HUB_NAME"]
+STORAGE_NAME = os.environ["AZURE_STORAGE_ACCOUNT"]
 
 print(f"Using subscription: {SUB_ID}")
 print(f"Tenant: {TENANT_ID}")
@@ -35,10 +37,9 @@ r = requests.put(
 )
 print(f"   Status: {r.status_code}")
 adt = r.json()
-if "hostName" in adt:
-    print(f"   URL: https://{adt['hostName']}")
-elif "properties" in adt and "hostName" in adt.get("properties", {}):
-    print(f"   URL: https://{adt['properties']['hostName']}")
+adt_host_name = adt.get("hostName") or adt.get("properties", {}).get("hostName")
+if adt_host_name:
+    print(f"   URL: https://{adt_host_name}")
 else:
     print(f"   Response: {json.dumps(adt, indent=2)[:500]}")
 
@@ -56,5 +57,8 @@ else:
     print(f"   Response: {r.text[:300]}")
 
 print("\nDone! Resources are being provisioned.")
-print(f"\nSet this env var:")
-print(f'  $env:AZURE_DIGITAL_TWINS_URL = "https://{ADT_NAME}.api.eus.digitaltwins.azure.net"')
+if adt_host_name:
+    print(f"\nSet this env var:")
+    print(f'  $env:AZURE_DIGITAL_TWINS_URL = "https://{adt_host_name}"')
+else:
+    print("\nGet your ADT URL with: az dt show --dt-name <name> --query hostName -o tsv")

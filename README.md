@@ -106,8 +106,6 @@ Rewards use **composable rubrics** (per RFC 004) — not a single monolithic sco
 | `StabilityRubric` | 0.0 → +0.10 | Low temperature variance across reactor beds |
 | `TaskProgressRubric` | task-specific | Progress toward the task's terminal grader |
 
-> *"An agent that exploits the reward without solving the task should not get high scores."* — judging guide
-
 ---
 
 ## Training Pipeline
