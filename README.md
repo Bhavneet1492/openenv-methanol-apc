@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.svg" width="100%" alt="Methanol APC Environment — RL-Powered Autonomous Process Control for Industrial Methanol Reactors">
+  <img src="assets/banner.svg" width="100%" alt="Methanol APC Environment , RL-Powered Autonomous Process Control for Industrial Methanol Reactors">
 </p>
 
 <p align="center">
@@ -39,9 +39,9 @@ https://github.com/user-attachments/assets/https://github.com/user-attachments/a
 
 ## Why This Matters
 
-In a methanol plant, 4–6 operators per shift manually manage hundreds of control loops 24/7. They make ~15 decisions/hour under cognitive load, with 3–5 second reaction times during emergencies. This costs **$2–5M/year in lost yield** from conservative operation, plus **$500K–$2M per unplanned shutdown**.
+In a methanol plant, 4-6 operators per shift manually manage hundreds of control loops 24/7. They make ~15 decisions/hour under cognitive load, with 3-5 second reaction times during emergencies. This costs **$2-5M/year in lost yield** from conservative operation, plus **$500K-$2M per unplanned shutdown**.
 
-We built an environment where an AI agent replaces this entire control stack — handling **13 variables simultaneously** across 5 plant stages, responding in milliseconds, and never losing context at shift handover. It trains via domain-randomized physics simulations and uses **MCP tools** for real-world context like energy prices and maintenance schedules.
+We built an environment where an AI agent replaces this entire control stack , handling **13 variables simultaneously** across 5 plant stages, responding in milliseconds, and never losing context at shift handover. It trains via domain-randomized physics simulations and uses **MCP tools** for real-world context like energy prices and maintenance schedules.
 
 ---
 
@@ -51,18 +51,18 @@ We built an environment where an AI agent replaces this entire control stack —
   <img src="assets/architecture.svg" width="100%" alt="System Architecture">
 </p>
 
-- **Full-plant physics engine** — 5 published kinetic models (LHHW, Graaf, VBF, Seyfert, Nestler), SRK equation of state, RK4 ODE integration, 3-reaction system with thermodynamically consistent equilibrium
-- **13-dimensional continuous action space** — feed rates, cooling, compression, purge, recycle, reformer, distillation, and safety valves — not a toy single-variable control problem
+- **Full-plant physics engine** , 5 published kinetic models (LHHW, Graaf, VBF, Seyfert, Nestler), SRK equation of state, RK4 ODE integration, 3-reaction system with thermodynamically consistent equilibrium
+- **13-dimensional continuous action space** , feed rates, cooling, compression, purge, recycle, reformer, distillation, and safety valves , not a toy single-variable control problem
 - **12 graded tasks** from steady-state optimization (easy) to simultaneous multi-disturbance survival (expert), each with a **deterministic composable rubric** (Safety + Profit + Catalyst + Stability + TaskProgress) that cannot be gamed
-- **Multi-agent MARL** — 4 agents (Reformer, Synthesis, Purification, Supervisory) mirror real plant organization, each with its own observation slice and action subset
-- **Azure Digital Twins integration** — 10 DTDL v3 models, 15 live cloud twins, 25 relationships; every `env.step()` pushes to the cloud graph for real-time 3D visualization
-- **GPU-accelerated physics** — PyTorch-vectorized `BatchedReactorSim` runs 256 parallel environments on GPU (48× speedup over scalar CPU)
-- **Industrial integrations** — DWSIM, Cantera, ChemSep, OPC-UA, Redis — all optional with graceful fallbacks
-- **4 MCP tools** — energy pricing, catalyst status, maintenance schedule, carbon footprint — giving the agent external context just like a real operator
+- **Multi-agent MARL** , 4 agents (Reformer, Synthesis, Purification, Supervisory) mirror real plant organization, each with its own observation slice and action subset
+- **Azure Digital Twins integration** , 10 DTDL v3 models, 15 live cloud twins, 25 relationships; every `env.step()` pushes to the cloud graph for real-time 3D visualization
+- **GPU-accelerated physics** , PyTorch-vectorized `BatchedReactorSim` runs 256 parallel environments on GPU (48�, speedup over scalar CPU)
+- **Industrial integrations** , DWSIM, Cantera, ChemSep, OPC-UA, Redis , all optional with graceful fallbacks
+- **4 MCP tools** , energy pricing, catalyst status, maintenance schedule, carbon footprint , giving the agent external context just like a real operator
 
 ---
 
-## Training Results — +7.3% Reward Improvement via GRPO
+## Training Results , +7.3% Reward Improvement via GRPO
 
 GRPO training with **Unsloth** (Qwen2.5-3B-Instruct, 4-bit LoRA, r=16/α=32) against the live physics environment. Runs on a free **Colab T4** (16 GB); one-line switch upgrades to 7B for A100/H100. Full config in [`training_plots/run_metadata.json`](training_plots/run_metadata.json).
 
@@ -74,12 +74,12 @@ GRPO training with **Unsloth** (Qwen2.5-3B-Instruct, 4-bit LoRA, r=16/α=32) aga
 </table>
 
 ![Baseline vs Trained](training_plots/baseline_vs_trained.png)
-*Random baseline (red) vs GRPO-trained agent (green) — stable temperature, no shutdowns, positive profit.*
+*Random baseline (red) vs GRPO-trained agent (green) , stable temperature, no shutdowns, positive profit.*
 
 | Metric | Untrained Agent | GRPO-Trained Agent |
 |--------|----------------|--------------------|
 | **Avg Reward** | 0.844 | **0.906 (+7.3%)** |
-| **Temperature** | Oscillates, hits 300°C shutdown | Maintains 240–260°C optimal range |
+| **Temperature** | Oscillates, hits 300°C shutdown | Maintains 240-260°C optimal range |
 | **Safety** | ~40% emergency shutdowns | Zero shutdowns, predictive lookahead |
 | **Profit** | Negative | Consistently positive |
 | **Feed ratio** | Random H₂/CO | Learns H₂/CO ≈ 2.0 (stoichiometric optimum) |
@@ -96,7 +96,7 @@ GRPO training with **Unsloth** (Qwen2.5-3B-Instruct, 4-bit LoRA, r=16/α=32) aga
 
 ## Composable Reward Rubrics
 
-Rewards use **composable rubrics** (per RFC 004) — not a single monolithic score. Each rubric returns 0–1 and cannot be exploited independently:
+Rewards use **composable rubrics** (per RFC 004) , not a single monolithic score. Each rubric returns 0-1 and cannot be exploited independently:
 
 | Sub-rubric | Range | What It Captures |
 |---|---|---|
@@ -112,10 +112,10 @@ Rewards use **composable rubrics** (per RFC 004) — not a single monolithic sco
 
 The full training pipeline runs end-to-end on a **free Colab T4**:
 
-1. **Environment** — HF Space serves the physics engine via REST API
-2. **Agent** — Qwen2.5-3B-Instruct with 4-bit QLoRA (Unsloth)
-3. **Algorithm** — TRL GRPO with the `trl_bridge.py` reward function calling the live environment
-4. **Artifacts** — Loss/reward curves, trained adapter, run metadata — all saved and reproducible
+1. **Environment** , HF Space serves the physics engine via REST API
+2. **Agent** , Qwen2.5-3B-Instruct with 4-bit QLoRA (Unsloth)
+3. **Algorithm** , TRL GRPO with the `trl_bridge.py` reward function calling the live environment
+4. **Artifacts** , Loss/reward curves, trained adapter, run metadata , all saved and reproducible
 
 See [`training/train_grpo.ipynb`](training/train_grpo.ipynb) for the notebook and [`training/train_hf_job.py`](training/train_hf_job.py) for the HF Jobs script.
 

@@ -272,11 +272,7 @@ Each task has a calibrated grader with scoring based on measured PID/MPC baselin
 
 The environment connects to a **live Azure Digital Twins instance** with 10 DTDL v3 models, 15 digital twins, and 25 relationships. Every `env.step()` pushes state to 7 equipment twins; each of the 4 AI agents has its own twin tracking actions, rewards, and confidence.
 
-<p align="center">
-  <video src="assets/azure-dt-graph-explorer.mp4" controls width="100%">
-    Azure Digital Twin Graph Explorer
-  </video>
-</p>
+https://github.com/Bhavneet1492/openenv-methanol-apc/raw/main/assets/azure-dt-graph-explorer.mp4
 
 *Azure Digital Twin Graph Explorer showing the live twin graph with 15 twins and 25 relationships.*
 
@@ -289,11 +285,7 @@ python scripts/run_marl_adt.py --steps 100 --task optimization
 
 ### 6.2 3D Interactive Digital Twin (Three.js)
 
-<p align="center">
-  <video src="assets/3d-digital-twin-demo.mp4" controls width="100%">
-    3D Digital Twin visualization
-  </video>
-</p>
+https://github.com/Bhavneet1492/openenv-methanol-apc/raw/main/assets/3d-digital-twin-demo.mp4
 
 *3D plant visualization with 10-step guided tour, clickable reactor beds, live control sliders, and WebSocket connection to the running environment.*
 
@@ -301,11 +293,7 @@ python scripts/run_marl_adt.py --steps 100 --task optimization
 
 Cross-validates the environment's SRK equation of state against [DWSIM](https://dwsim.org), the open-source process simulator, via .NET interop (pythonnet). Loads `DWSIM.Automation.dll` and `DWSIM.Thermodynamics.dll` to compute fugacity coefficients using DWSIM's industrial property packages. Falls back to a pure-Python SRK implementation when DWSIM is not installed.
 
-<p align="center">
-  <video src="assets/dwsim-integration.mp4" controls width="100%">
-    DWSIM integration
-  </video>
-</p>
+https://github.com/Bhavneet1492/openenv-methanol-apc/raw/main/assets/dwsim-integration.mp4
 
 *DWSIM application showing material stream properties at 250 degrees C, 80 bar, matching the environment's internal calculations.*
 
@@ -554,10 +542,13 @@ python -m pytest methanol_apc_env/tests/ -v  # 86 tests, 92% coverage
 openenv validate methanol_apc_env/
 ```
 
-<table><tr>
-<td width="50%"><img src="assets/process-flow.svg" width="100%" alt="Process Flow"><br><em>Complete plant: Natural Gas to Desulfurization to Reformer to Compressor to Reactor to Separator to Distillation</em></td>
-<td width="50%"><img src="assets/plant-equipment.svg" width="100%" alt="Plant Equipment"><br><em>10 major equipment items controlled by 13 action variables</em></td>
-</tr></table>
+<img src="assets/process-flow.svg" width="100%" alt="Process Flow">
+
+*Complete plant: Natural Gas to Desulfurization to Reformer to Compressor to Reactor to Separator to Distillation*
+
+<img src="assets/plant-equipment.svg" width="100%" alt="Plant Equipment">
+
+*10 major equipment items controlled by 13 action variables*
 
 ---
 
