@@ -125,51 +125,58 @@ AVAILABLE_MODELS = {
     "trl": {"id": "glitchfilter/methanol-apc-grpo-qwen2.5-3b", "label": "TRL GRPO (Qwen2.5-3B)"},
 }
 
-SYSTEM_PROMPT = (
+_MODEL_SYSTEM_PROMPT = (
     "You control a methanol synthesis reactor. Output a JSON object with these fields: "
     "feed_rate_h2 (0-10 mol/s), feed_rate_co (0-5 mol/s), cooling_water_flow (0-100 L/min), "
     "compressor_power (0-100 kW). The reactor is exothermic: 240-260C is optimal, >300C = shutdown. "
     "Maintain H2/CO ratio near 2.0. Revenue is $0.74/kg methanol."
 )
 
+_GPU_AVAILABLE = False
+try:
+    import torch as _torch
+    _GPU_AVAILABLE = _torch.cuda.is_available()
+except ImportError:
+    pass
+
+
 def _load_model(model_key):
     """Lazy-load a LoRA adapter. Cached after first load."""
     if model_key in _loaded_models:
         return _loaded_models[model_key]
-    try:
-        import torch
-        from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
-        from peft import PeftModel
 
-        info = AVAILABLE_MODELS[model_key]
-        adapter_id = info["id"]
+    if not _GPU_AVAILABLE:
+        raise RuntimeError("No GPU available. Use pre-recorded mode or HF Inference API.")
 
-        # Determine base model from adapter_config
-        from huggingface_hub import hf_hub_download
-        import json
-        cfg_path = hf_hub_download(adapter_id, "adapter_config.json")
-        with open(cfg_path) as f:
-            adapter_cfg = json.load(f)
-        base_model_id = adapter_cfg.get("base_model_name_or_path", "Qwen/Qwen2.5-3B-Instruct")
+    import torch
+    from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+    from peft import PeftModel
 
-        bnb = BitsAndBytesConfig(
-            load_in_4bit=True, bnb_4bit_quant_type="nf4",
-            bnb_4bit_compute_dtype=torch.float16, bnb_4bit_use_double_quant=True)
-        base = AutoModelForCausalLM.from_pretrained(
-            base_model_id, quantization_config=bnb, device_map="auto", trust_remote_code=True)
-        model = PeftModel.from_pretrained(base, adapter_id)
-        model.eval()
-        tokenizer = AutoTokenizer.from_pretrained(adapter_id, trust_remote_code=True)
-        if tokenizer.pad_token is None:
-            tokenizer.pad_token = tokenizer.eos_token
-        _loaded_models[model_key] = (model, tokenizer)
-        return (model, tokenizer)
-    except Exception as e:
-        raise RuntimeError(f"Failed to load model {model_key}: {e}")
+    info = AVAILABLE_MODELS[model_key]
+    adapter_id = info["id"]
+
+    from huggingface_hub import hf_hub_download
+    import json
+    cfg_path = hf_hub_download(adapter_id, "adapter_config.json")
+    with open(cfg_path) as f:
+        adapter_cfg = json.load(f)
+    base_model_id = adapter_cfg.get("base_model_name_or_path", "Qwen/Qwen2.5-3B-Instruct")
+
+    bnb = BitsAndBytesConfig(
+        load_in_4bit=True, bnb_4bit_quant_type="nf4",
+        bnb_4bit_compute_dtype=torch.float16, bnb_4bit_use_double_quant=True)
+    base = AutoModelForCausalLM.from_pretrained(
+        base_model_id, quantization_config=bnb, device_map="auto", trust_remote_code=True)
+    model = PeftModel.from_pretrained(base, adapter_id)
+    model.eval()
+    tokenizer = AutoTokenizer.from_pretrained(adapter_id, trust_remote_code=True)
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+    _loaded_models[model_key] = (model, tokenizer)
+    return (model, tokenizer)
 
 
 def _obs_to_text(obs_dict):
-    """Convert observation dict to compact sensor text for the model prompt."""
     parts = []
     for k in ["temperature", "pressure", "feed_rate_h2", "feed_rate_co", "h2_co_ratio",
               "cooling_water_flow", "catalyst_health", "reaction_rate", "methanol_produced",
@@ -183,57 +190,98 @@ def _obs_to_text(obs_dict):
     return " ".join(parts)
 
 
+# Pre-recorded fallback actions (rule-based heuristic mimicking trained model)
+def _heuristic_action(obs_dict):
+    """Generate a good action from observation using rule-based heuristic.
+    Used as fallback when GPU is not available."""
+    T = float(obs_dict.get("temperature", 250))
+    cat = float(obs_dict.get("catalyst_health", 1.0))
+
+    h2 = 5.0
+    co = 2.5
+    cool = 50.0
+    comp = 65.0
+
+    if T > 270:
+        h2 = max(2.0, h2 - (T - 270) * 0.3)
+        co = max(1.0, co - (T - 270) * 0.15)
+        cool = min(100.0, cool + (T - 270) * 3.0)
+    elif T < 240:
+        h2 = min(8.0, h2 + (240 - T) * 0.2)
+        co = min(4.0, co + (240 - T) * 0.1)
+        cool = max(10.0, cool - (240 - T) * 2.0)
+
+    if cat < 0.6:
+        h2 *= 0.8
+        co *= 0.8
+
+    return {
+        "feed_rate_h2": round(h2, 2),
+        "feed_rate_co": round(co, 2),
+        "cooling_water_flow": round(cool, 1),
+        "compressor_power": round(comp, 1),
+    }
+
+
 @app.get("/model/list")
 async def list_models():
-    """Return available trained models."""
-    return {"models": {k: v["label"] for k, v in AVAILABLE_MODELS.items()}}
+    return {"models": {k: v["label"] for k, v in AVAILABLE_MODELS.items()}, "gpu": _GPU_AVAILABLE}
 
+
+from starlette.requests import Request as _Request
 
 @app.post("/model/step")
-async def model_step(request):
-    """Run one step using a trained model: load adapter, generate action, step env."""
+async def model_step(request: _Request):
     import json as _json
     body = await request.json()
     model_key = body.get("model", "trl")
     obs_dict = body.get("observation", {})
 
     if model_key not in AVAILABLE_MODELS:
-        return {"error": f"Unknown model: {model_key}. Available: {list(AVAILABLE_MODELS.keys())}"}
+        return {"error": f"Unknown model: {model_key}"}
 
-    try:
-        model, tokenizer = _load_model(model_key)
-    except Exception as e:
-        return {"error": f"Model load failed: {str(e)[:200]}"}
+    # Try GPU inference first
+    if _GPU_AVAILABLE:
+        try:
+            model, tokenizer = _load_model(model_key)
+            sensor_text = _obs_to_text(obs_dict)
+            messages = [
+                {"role": "system", "content": _MODEL_SYSTEM_PROMPT},
+                {"role": "user", "content": f"Sensors:\n{sensor_text}\n\nAction JSON:"},
+            ]
+            prompt = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+            inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
 
-    # Build prompt
-    sensor_text = _obs_to_text(obs_dict)
-    messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": f"Sensors:\n{sensor_text}\n\nAction JSON:"},
-    ]
-    prompt = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-    inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+            import torch
+            with torch.no_grad():
+                output = model.generate(
+                    **inputs, max_new_tokens=150, temperature=0.3,
+                    do_sample=True, pad_token_id=tokenizer.eos_token_id)
+            response = tokenizer.decode(output[0][inputs["input_ids"].shape[1]:], skip_special_tokens=True)
 
-    import torch
-    with torch.no_grad():
-        output = model.generate(
-            **inputs, max_new_tokens=150, temperature=0.3,
-            do_sample=True, pad_token_id=tokenizer.eos_token_id)
-    response = tokenizer.decode(output[0][inputs["input_ids"].shape[1]:], skip_special_tokens=True)
+            try:
+                text = response.strip()
+                s, e = text.find("{"), text.rfind("}") + 1
+                action_dict = _json.loads(text[s:e])
+            except Exception:
+                action_dict = _heuristic_action(obs_dict)
 
-    # Parse action from model response
-    try:
-        text = response.strip()
-        start, end = text.find("{"), text.rfind("}") + 1
-        action_dict = _json.loads(text[start:end])
-    except Exception:
-        action_dict = {"feed_rate_h2": 3.0, "feed_rate_co": 1.5,
-                       "cooling_water_flow": 60.0, "compressor_power": 50.0}
+            return {
+                "action": action_dict,
+                "raw_response": response[:300],
+                "model": AVAILABLE_MODELS[model_key]["label"],
+                "mode": "gpu_inference",
+            }
+        except Exception as e:
+            _env_log.warning(f"GPU inference failed, falling back to heuristic: {e}")
 
+    # Fallback: rule-based heuristic (works everywhere, no GPU needed)
+    action_dict = _heuristic_action(obs_dict)
     return {
         "action": action_dict,
-        "raw_response": response[:300],
-        "model": AVAILABLE_MODELS[model_key]["label"],
+        "raw_response": "heuristic fallback (no GPU)",
+        "model": AVAILABLE_MODELS[model_key]["label"] + " (heuristic)",
+        "mode": "heuristic_fallback",
     }
 
 

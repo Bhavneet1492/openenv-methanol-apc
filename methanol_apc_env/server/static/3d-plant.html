@@ -2607,10 +2607,17 @@ window.apiReset = async function() {
     apiConnected = true;
     btnStep.disabled = false;
     badge.textContent = 'API CONNECTED'; badge.classList.add('connected');
+    // Store obs for model step
+    lastObsDict = obs;
     // Update state from API response
     applyObservation(obs, data.reward || 0);
     document.getElementById('v-task').textContent = task;
-    document.getElementById('ctrl-status-text').textContent = 'API mode: select task, step through episodes';
+    document.getElementById('ctrl-status-text').textContent =
+      currentMode === 'testing' ? 'Testing mode: click Auto Run' : 'API mode: select task, step through episodes';
+    // Enable auto-run in testing mode
+    if (currentMode === 'testing') {
+      document.getElementById('btn-auto-run').disabled = false;
+    }
   } catch(e) {
     badge.textContent = 'API ERROR'; badge.className = '';
     console.error('Reset failed:', e);
@@ -2704,19 +2711,25 @@ window.onModeChange = function() {
   const autoBtn = document.getElementById('btn-auto-run');
   const modelLabel = document.getElementById('model-label');
   const modelNameDisplay = document.getElementById('model-name-display');
+  const resetBtn = document.getElementById('btn-api-reset');
+  const stepBtn = document.getElementById('btn-api-step');
 
   if (currentMode === 'testing') {
     modelSelect.style.display = 'inline-block';
     autoBtn.style.display = 'inline-block';
     modelLabel.style.display = 'inline';
     modelNameDisplay.style.display = 'inline';
-    document.getElementById('ctrl-status-text').textContent = 'Testing mode: model generates actions';
+    resetBtn.style.display = 'none';
+    stepBtn.style.display = 'none';
+    document.getElementById('ctrl-status-text').textContent = 'Testing mode: select model, click Auto Run';
   } else {
     modelSelect.style.display = 'none';
     autoBtn.style.display = 'none';
     modelLabel.style.display = 'none';
     modelNameDisplay.style.display = 'none';
     modelNameDisplay.textContent = '';
+    resetBtn.style.display = 'inline-block';
+    stepBtn.style.display = 'inline-block';
     if (autoRunInterval) { clearInterval(autoRunInterval); autoRunInterval = null; autoBtn.textContent = 'Auto Run'; }
     document.getElementById('ctrl-status-text').textContent = 'Training mode: manual slider control';
   }
@@ -2795,7 +2808,7 @@ window.modelStep = async function() {
   }
 };
 
-window.toggleAutoRun = function() {
+window.toggleAutoRun = async function() {
   const btn = document.getElementById('btn-auto-run');
   if (autoRunInterval) {
     clearInterval(autoRunInterval);
@@ -2803,12 +2816,19 @@ window.toggleAutoRun = function() {
     btn.textContent = 'Auto Run';
     btn.style.background = 'rgba(156,39,176,0.2)';
   } else {
+    // Auto-reset if not connected
+    if (!apiConnected) {
+      await apiReset();
+    }
+    if (!apiConnected) return; // reset failed
     btn.textContent = 'Stop';
     btn.style.background = 'rgba(244,67,54,0.2)';
-    autoRunInterval = setInterval(() => {
-      if (!apiConnected) { clearInterval(autoRunInterval); autoRunInterval = null; btn.textContent = 'Auto Run'; return; }
-      modelStep();
-    }, 2000);
+    // Run first step immediately
+    await modelStep();
+    autoRunInterval = setInterval(async () => {
+      if (!apiConnected) { clearInterval(autoRunInterval); autoRunInterval = null; btn.textContent = 'Auto Run'; btn.style.background = 'rgba(156,39,176,0.2)'; return; }
+      await modelStep();
+    }, 2500);
   }
 };
 
